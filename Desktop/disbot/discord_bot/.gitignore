@@ -1,0 +1,14 @@
+# Secrets — NE JAMAIS committer (contient le token Discord)
+.env
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Données runtime (IDs Discord ↔ matricules, usurpations)
+data/
+
+# Listes étudiants locales (données personnelles)
+etudiants.csv
+etudiants.xlsx

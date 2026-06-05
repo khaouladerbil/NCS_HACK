@@ -1,0 +1,29 @@
+{
+  "channels": {
+    "verification":  "ecrire-votre-matricule",
+    "alertes":       "alertes-admin",
+    "logs":          "logs-verifications",
+    "logs_admin":    "logs-admin",
+    "tickets":       "ouvrir-un-ticket"
+  },
+  "timeout_dm": 120,
+  "welcome_message": "👋 Bienvenue !\n\nPour accéder aux salons, écris ton matricule dans **#ecrire-votre-matricule**.",
+  "warns": {
+    "mute_threshold": 3,
+    "mute_duration_seconds": 3600,
+    "ban_threshold": 5,
+    "ban_duration_seconds": 86400
+  },
+  "antispam": {
+    "max_messages":       5,
+    "time_window_seconds": 5,
+    "max_mentions":        5,
+    "max_repeated":        3,
+    "mute_duration_seconds": 300
+  },
+  "newaccount": {
+    "min_age_days": 7,
+    "action": "quarantine",
+    "quarantine_role": "Quarantaine"
+  }
+}
