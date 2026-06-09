@@ -67,91 +67,57 @@ body {
 
 .ns {
   position:absolute;
-  display:flex; flex-direction:column; align-items:center; gap:9px;
   transform:translate(-50%,-50%);
+  display:flex; flex-direction:column; align-items:center; gap:10px;
 }
-.ns-body {
-  position:relative; width:56px; height:56px;
+.ns-star {
+  position:relative; width:54px; height:54px;
   display:flex; align-items:center; justify-content:center;
 }
 
-/* large soft nebula glow */
-.ns-halo {
-  position:absolute; inset:-22px; border-radius:50%;
-  background:radial-gradient(circle, var(--c) 0%, transparent 60%);
-  opacity:.14;
-  animation:nsHalo 3s ease-in-out infinite;
+/* Large soft nebula behind the star */
+.ns-glow {
+  position:absolute; inset:-24px; border-radius:50%;
+  background:radial-gradient(circle, var(--c) 0%, transparent 55%);
+  opacity:.2; animation:nsGlowPulse 3s ease-in-out infinite;
 }
-@keyframes nsHalo {
-  0%,100%{ opacity:.14; transform:scale(1); }
-  50%    { opacity:.28; transform:scale(1.15); }
-}
-
-/* 4 long cross spikes */
-.ns-sh, .ns-sv, .ns-sd1, .ns-sd2 {
-  position:absolute; border-radius:2px;
-  top:50%; left:50%; transform-origin:center;
-}
-.ns-sh {
-  width:48px; height:1.5px;
-  margin-top:-.75px; margin-left:-24px;
-  background:linear-gradient(to right, transparent 0%, var(--c) 35%, #fff 50%, var(--c) 65%, transparent 100%);
-  animation:nsSpike 3s ease-in-out infinite;
-}
-.ns-sv {
-  width:1.5px; height:48px;
-  margin-top:-24px; margin-left:-.75px;
-  background:linear-gradient(to bottom, transparent 0%, var(--c) 35%, #fff 50%, var(--c) 65%, transparent 100%);
-  animation:nsSpike 3s ease-in-out infinite .15s;
-}
-.ns-sd1 {
-  width:26px; height:1px;
-  margin-top:-.5px; margin-left:-13px;
-  background:linear-gradient(to right, transparent, var(--c), transparent);
-  transform:rotate(45deg);
-  animation:nsSpike 3s ease-in-out infinite .4s;
-}
-.ns-sd2 {
-  width:26px; height:1px;
-  margin-top:-.5px; margin-left:-13px;
-  background:linear-gradient(to right, transparent, var(--c), transparent);
-  transform:rotate(-45deg);
-  animation:nsSpike 3s ease-in-out infinite .55s;
-}
-@keyframes nsSpike {
-  0%,100%{ opacity:.55; }
-  50%    { opacity:1; }
+@keyframes nsGlowPulse {
+  0%,100%{ opacity:.18; transform:scale(1); }
+  50%    { opacity:.38; transform:scale(1.18); }
 }
 
-/* bright glowing core */
-.ns-core {
-  position:relative; z-index:3;
-  width:9px; height:9px; border-radius:50%;
-  background:radial-gradient(circle, #fff 20%, var(--c) 65%, transparent 100%);
-  box-shadow:0 0 6px 3px var(--c), 0 0 18px 7px var(--c), 0 0 2px 1px #fff inset;
-  animation:nsCore 3s ease-in-out infinite;
+/* 4-pointed star diamond shape */
+.ns-shape {
+  position:relative; z-index:2;
+  width:32px; height:32px;
+  background:linear-gradient(160deg, #ffffff 0%, var(--c) 50%, #ffffff 100%);
+  clip-path:polygon(50% 0%, 56% 44%, 100% 50%, 56% 56%, 50% 100%, 44% 56%, 0% 50%, 44% 44%);
+  filter:drop-shadow(0 0 5px var(--c)) drop-shadow(0 0 14px var(--c)) drop-shadow(0 0 28px var(--c));
+  animation:nsShapePulse 3s ease-in-out infinite;
 }
-@keyframes nsCore {
-  0%,100%{ transform:scale(1); box-shadow:0 0 6px 3px var(--c),0 0 18px 7px var(--c); }
-  50%    { transform:scale(1.4); box-shadow:0 0 10px 5px var(--c),0 0 30px 12px var(--c),0 0 4px 2px #fff; }
+@keyframes nsShapePulse {
+  0%,100%{
+    transform:scale(1) rotate(0deg);
+    filter:drop-shadow(0 0 4px var(--c)) drop-shadow(0 0 12px var(--c));
+  }
+  50%{
+    transform:scale(1.22) rotate(22.5deg);
+    filter:drop-shadow(0 0 8px var(--c)) drop-shadow(0 0 22px var(--c)) drop-shadow(0 0 45px var(--c));
+  }
 }
 
 .ns-label {
   font-family:'Dancing Script',cursive;
-  font-size:.78rem; font-weight:700;
-  letter-spacing:.2em; white-space:nowrap;
+  font-size:.8rem; font-weight:700;
+  letter-spacing:.22em; white-space:nowrap;
   color:#fff;
-  text-shadow:0 0 8px var(--c), 0 0 20px var(--c), 0 0 40px var(--c);
-  opacity:.95;
+  text-shadow:0 0 8px var(--c), 0 0 22px var(--c), 0 0 44px var(--c);
 }
 
 @media(max-width:480px){
-  .ns-body  { width:42px; height:42px; }
-  .ns-sh    { width:36px; margin-left:-18px; }
-  .ns-sv    { height:36px; margin-top:-18px; }
-  .ns-sd1, .ns-sd2 { width:20px; margin-left:-10px; }
-  .ns-core  { width:7px; height:7px; }
-  .ns-label { font-size:.63rem; }
+  .ns-star  { width:40px; height:40px; }
+  .ns-shape { width:24px; height:24px; }
+  .ns-label { font-size:.65rem; }
 }
 
 /* ═══ PAGE WRAPPER */
@@ -453,7 +419,10 @@ section {
 
 /* ═══ DATE OVERLAY */
 #dateOverlay {
-  position:fixed; inset:0; z-index:500; overflow-y:auto;
+  position:fixed; inset:0; z-index:500;
+  overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
   background:transparent;
   display:none; flex-direction:column;
   align-items:center; justify-content:flex-start;
@@ -466,8 +435,8 @@ section {
 body.date-open .page,
 body.date-open footer { opacity:0; pointer-events:none; transition:opacity .3s; }
 
-.d-step { display:none; width:100%; min-height:100vh; padding:100px 24px 60px;
-  flex-direction:column; align-items:center; justify-content:center; position:relative; }
+.d-step { display:none; width:100%; min-height:100vh; padding:90px 24px 80px;
+  flex-direction:column; align-items:center; justify-content:flex-start; position:relative; }
 .d-step.on { display:flex; }
 
 /* ═══ DATE STYLES */
@@ -739,44 +708,36 @@ footer p { font-family:'Dancing Script',cursive; font-size:1rem; color:var(--gre
 
   <!-- Ray — green -->
   <div class="ns" style="left:10%;top:19%;--c:rgba(0,220,100,1)">
-    <div class="ns-body">
-      <div class="ns-halo"></div>
-      <div class="ns-sh"></div><div class="ns-sv"></div>
-      <div class="ns-sd1"></div><div class="ns-sd2"></div>
-      <div class="ns-core"></div>
+    <div class="ns-star">
+      <div class="ns-glow"></div>
+      <div class="ns-shape"></div>
     </div>
     <span class="ns-label">Ray</span>
   </div>
 
   <!-- Lola — gold -->
   <div class="ns" style="left:74%;top:11%;--c:rgba(255,210,60,1)">
-    <div class="ns-body" style="animation-delay:.8s">
-      <div class="ns-halo"></div>
-      <div class="ns-sh"></div><div class="ns-sv"></div>
-      <div class="ns-sd1"></div><div class="ns-sd2"></div>
-      <div class="ns-core"></div>
+    <div class="ns-star" style="animation-delay:.9s">
+      <div class="ns-glow"></div>
+      <div class="ns-shape" style="animation-delay:.9s"></div>
     </div>
     <span class="ns-label">Lola</span>
   </div>
 
   <!-- Alice — purple -->
   <div class="ns" style="left:18%;top:71%;--c:rgba(185,130,255,1)">
-    <div class="ns-body" style="animation-delay:1.6s">
-      <div class="ns-halo"></div>
-      <div class="ns-sh"></div><div class="ns-sv"></div>
-      <div class="ns-sd1"></div><div class="ns-sd2"></div>
-      <div class="ns-core"></div>
+    <div class="ns-star" style="animation-delay:1.7s">
+      <div class="ns-glow"></div>
+      <div class="ns-shape" style="animation-delay:1.7s"></div>
     </div>
     <span class="ns-label">Alice</span>
   </div>
 
   <!-- Byazid — blue -->
   <div class="ns" style="left:83%;top:54%;--c:rgba(80,200,255,1)">
-    <div class="ns-body" style="animation-delay:2.4s">
-      <div class="ns-halo"></div>
-      <div class="ns-sh"></div><div class="ns-sv"></div>
-      <div class="ns-sd1"></div><div class="ns-sd2"></div>
-      <div class="ns-core"></div>
+    <div class="ns-star" style="animation-delay:2.5s">
+      <div class="ns-glow"></div>
+      <div class="ns-shape" style="animation-delay:2.5s"></div>
     </div>
     <span class="ns-label">Byazid</span>
   </div>
