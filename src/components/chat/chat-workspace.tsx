@@ -15,7 +15,6 @@ export function ChatWorkspace() {
             draft={draft}
             loading={loading}
             onDraftChange={setDraft}
-            onReset={() => window.location.reload()}
             onSubmit={() => send()}
           />
         </div>

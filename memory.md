@@ -7,6 +7,7 @@ Last updated: 2026-06-25
 - Fresh Vite React + TypeScript app restored.
 - Git repo re-initialized.
 - shadcn/ui and Prompt Kit components installed.
+- HeroUI installed for top mode buttons.
 - Single active route:
   - `/assistant`
 
@@ -14,11 +15,13 @@ Last updated: 2026-06-25
 
 - Main reusable shell in `src/components/layout/app-shell.tsx`.
 - Chat feature in `src/components/chat/**`.
+- Top mode switch in `src/components/modes/workspace-modes.tsx`.
 - Assistant page is primary implemented route.
 - Main content is full-screen.
 - Left navigation overlays above content instead of affecting width.
 - Visible content is message stream only.
 - Composer floats at viewport bottom.
+- Composer has upload and voice actions; reset removed.
 
 ## Notes
 

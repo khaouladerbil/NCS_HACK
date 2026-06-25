@@ -14,7 +14,11 @@
 - Rebuilt as minimal React app.
 - Prompt Kit components drive chat surface.
 - Main content is chat only.
+- Top mode switch uses HeroUI buttons.
+- Modes: consultant, editor, professor.
+- Consultant shows chat; editor/professor stay empty until later.
 - Prompt input floats at bottom.
+- Input actions: upload + voice.
 - Left navigation overlays content and must collapse/expand correctly.
 - Copy should stay terse.
 

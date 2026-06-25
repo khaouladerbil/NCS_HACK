@@ -13,7 +13,7 @@ type ChatListProps = {
 export function ChatList({ loading, messages }: ChatListProps) {
   return (
     <div className="relative min-h-dvh flex-1 overflow-hidden">
-      <ChatContainerRoot className="h-dvh px-4 pt-20 pb-32 md:px-6 md:pt-24 md:pb-36">
+      <ChatContainerRoot className="h-dvh px-4 pt-32 pb-32 md:px-6 md:pt-36 md:pb-36">
         <ChatContainerContent className="mx-auto flex w-full max-w-3xl gap-4">
           {messages.map((message) =>
             message.role === "assistant" ? (
