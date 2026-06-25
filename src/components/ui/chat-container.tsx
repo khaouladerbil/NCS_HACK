@@ -1,5 +1,3 @@
-"use client"
-
 import { cn } from "@/lib/utils"
 import { StickToBottom } from "use-stick-to-bottom"
 

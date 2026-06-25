@@ -34,7 +34,9 @@ export function Source({ href, children }: SourceProps) {
 
   return (
     <SourceContext.Provider value={{ href, domain }}>
-      <HoverCard>{children}</HoverCard>
+      <HoverCard>
+        {children}
+      </HoverCard>
     </SourceContext.Provider>
   )
 }
