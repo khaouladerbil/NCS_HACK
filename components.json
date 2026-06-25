@@ -17,5 +17,13 @@
     "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
+  },
+  "registries": {
+    "@creative-tim": {
+      "url": "https://www.creative-tim.com/ui/r/{name}.json",
+      "headers": {
+        "Authorization": "Bearer ${CREATIVE_TIM_UI_API_KEY}"
+      }
+    }
   }
 }
