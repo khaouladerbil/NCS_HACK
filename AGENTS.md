@@ -10,6 +10,7 @@ JusticePath is a React/Vite civic legal guidance interface. Keep work grounded i
 - Commit and push after every completed prompt when credentials/network allow it.
 - Preserve the calm editorial JusticePath visual direction: paper, espresso, sand, sun, thin borders, restrained motion.
 - Build with existing components first. Current reusable component source lives in `src/components/prompt-kit`.
+- When user asks for logic/placeholder-only passes, prefer state scaffolding and empty shells over finished UI composition.
 - Do not treat generated legal guidance as legal advice. Keep UI language educational and referral-oriented.
 
 ## Verification
