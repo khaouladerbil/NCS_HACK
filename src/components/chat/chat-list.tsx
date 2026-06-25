@@ -12,9 +12,9 @@ type ChatListProps = {
 
 export function ChatList({ loading, messages }: ChatListProps) {
   return (
-    <div className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-background/65">
-      <ChatContainerRoot className="h-full px-4 py-4">
-        <ChatContainerContent className="mx-auto flex w-full max-w-3xl gap-4 pb-16">
+    <div className="relative min-h-dvh flex-1 overflow-hidden">
+      <ChatContainerRoot className="h-dvh px-4 pt-20 pb-32 md:px-6 md:pt-24 md:pb-36">
+        <ChatContainerContent className="mx-auto flex w-full max-w-3xl gap-4">
           {messages.map((message) =>
             message.role === "assistant" ? (
               <div key={message.id} className="space-y-2">
@@ -64,7 +64,7 @@ export function ChatList({ loading, messages }: ChatListProps) {
           ) : null}
 
           <ChatContainerScrollAnchor />
-          <div className="pointer-events-none sticky bottom-0 flex justify-center pb-1">
+          <div className="pointer-events-none sticky bottom-4 flex justify-center">
             <div className="pointer-events-auto">
               <ScrollButton className="border-border bg-background" />
             </div>

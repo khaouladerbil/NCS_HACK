@@ -3,7 +3,7 @@ import { AppShell } from "@/components/layout/app-shell"
 
 export function AssistantPage() {
   return (
-    <AppShell title="Assistant">
+    <AppShell>
       <ChatWorkspace />
     </AppShell>
   )

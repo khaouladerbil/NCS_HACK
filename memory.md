@@ -7,20 +7,18 @@ Last updated: 2026-06-25
 - Fresh Vite React + TypeScript app restored.
 - Git repo re-initialized.
 - shadcn/ui and Prompt Kit components installed.
-- Minimal routes:
+- Single active route:
   - `/assistant`
-  - `/intake`
-  - `/matters`
-  - `/research`
 
 ## Layout Rules
 
 - Main reusable shell in `src/components/layout/app-shell.tsx`.
 - Chat feature in `src/components/chat/**`.
 - Assistant page is primary implemented route.
-- Placeholder routes stay thin and use shared page component.
 - Main content is full-screen.
 - Left navigation overlays above content instead of affecting width.
+- Visible content is message stream only.
+- Composer floats at viewport bottom.
 
 ## Notes
 

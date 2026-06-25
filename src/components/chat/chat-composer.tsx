@@ -29,11 +29,11 @@ export function ChatComposer({
       onValueChange={onDraftChange}
       onSubmit={onSubmit}
       isLoading={loading}
-      className="rounded-2xl border-border bg-background/90 p-3 shadow-none"
+      className="rounded-3xl border-border bg-background/96 p-3 shadow-lg shadow-black/5 backdrop-blur"
     >
       <PromptInputTextarea
         placeholder="Issue, deadline, output."
-        className="min-h-20 text-sm leading-6 text-foreground placeholder:text-muted-foreground"
+        className="min-h-16 text-sm leading-6 text-foreground placeholder:text-muted-foreground"
       />
         <PromptInputActions className="mt-2 justify-between">
           <PromptInputAction tooltip="Reset">
