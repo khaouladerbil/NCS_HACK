@@ -17,6 +17,12 @@ urlpatterns = [
         "api/legal/",
         include("legal_twin.urls")
     ),
+    
+       
+       
+    path("api/legal-path/", include("legal_path.urls")),
+
+
 ]
 urlpatterns += static(
     settings.MEDIA_URL,

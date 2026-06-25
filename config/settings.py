@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     'users',
     'legal_twin',
+    'legal_path',
     'ai_assistant',
 ]
 
