@@ -8,7 +8,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarHeader,
-  SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -29,6 +28,7 @@ export function AppShell({ title, children }: AppShellProps) {
   return (
     <SidebarProvider
       defaultOpen
+      className="min-h-dvh [&_[data-slot=sidebar-gap]]:hidden"
       style={
         {
           "--sidebar-width": "4rem",
@@ -37,7 +37,11 @@ export function AppShell({ title, children }: AppShellProps) {
         } as CSSProperties
       }
     >
-      <Sidebar collapsible="icon" variant="floating" className="border-0">
+      <Sidebar
+        collapsible="icon"
+        variant="floating"
+        className="z-30 border-0"
+      >
         <SidebarHeader className="p-2">
           <div className="flex h-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             J
@@ -65,9 +69,9 @@ export function AppShell({ title, children }: AppShellProps) {
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset className="bg-transparent">
-        <div className="grid min-h-dvh gap-3 p-3 md:grid-cols-[14rem_minmax(0,1fr)]">
-          <aside className="hidden rounded-2xl border border-border/80 bg-card/85 p-4 backdrop-blur md:flex md:flex-col">
+      <div className="relative min-h-dvh w-full">
+        <aside className="pointer-events-none absolute top-3 left-20 z-20 hidden w-64 md:block">
+          <div className="pointer-events-auto rounded-2xl border border-border/80 bg-card/88 p-4 shadow-sm backdrop-blur">
             <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               JusticePath
             </div>
@@ -83,13 +87,17 @@ export function AppShell({ title, children }: AppShellProps) {
                 </div>
               ))}
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          <main className={cn("min-h-0 rounded-2xl border border-border/80 bg-card/88 backdrop-blur")}>
-            {children}
-          </main>
-        </div>
-      </SidebarInset>
+        <main
+          className={cn(
+            "min-h-dvh w-full bg-card/88 backdrop-blur"
+          )}
+        >
+          {children}
+        </main>
+      </div>
     </SidebarProvider>
   )
 }

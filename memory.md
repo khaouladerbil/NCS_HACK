@@ -19,6 +19,8 @@ Last updated: 2026-06-25
 - Chat feature in `src/components/chat/**`.
 - Assistant page is primary implemented route.
 - Placeholder routes stay thin and use shared page component.
+- Main content is full-screen.
+- Left navigation overlays above content instead of affecting width.
 
 ## Notes
 

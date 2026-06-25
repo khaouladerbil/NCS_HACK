@@ -13,7 +13,8 @@
 
 - Rebuilt as minimal React app.
 - Prompt Kit components drive chat surface.
-- Thin dual-sidebar shell retained, but stripped down.
+- Main content owns full viewport.
+- Left navigation floats above content and does not reserve layout space.
 - Copy should stay terse.
 
 ## Workflow
