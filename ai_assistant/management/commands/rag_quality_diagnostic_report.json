@@ -1,0 +1,2822 @@
+{
+  "summary": {
+    "n_questions": 31,
+    "n_real_questions": 26,
+    "n_distractors": 5,
+    "indexed_vectors": 3349,
+    "embedding_available": true,
+    "chroma_no_result_rate": 0.0,
+    "pipeline_no_result_rate": 0.0,
+    "chroma_keyword_hit_rate": 0.68,
+    "pipeline_keyword_hit_rate": 0.8,
+    "chroma_false_positive_rate": 1.0,
+    "pipeline_false_positive_rate": 1.0,
+    "pipeline_improved_count": 5,
+    "pipeline_regressed_count": 2,
+    "avg_chroma_latency_ms": 248.81,
+    "avg_pipeline_latency_ms": 2542.87
+  },
+  "rows": [
+    {
+      "category": "travail",
+      "question": "Mon patron veut me virer sans preavis, il a le droit ?",
+      "expected_keywords": [
+        "licenciement",
+        "preavis",
+        "travail",
+        "employeur"
+      ],
+      "diagnosis": "pipeline_improved_chroma",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9196,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "587",
+            "chunk_id": 915
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "518",
+            "chunk_id": 836
+          },
+          {
+            "source": "Ord-N°-21-13.pdf",
+            "article": "2",
+            "chunk_id": 3201
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "588",
+            "chunk_id": 916
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "508",
+            "chunk_id": 826
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7527,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "123 ter",
+            "section": "",
+            "chunk_id": 424
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "553",
+            "section": "",
+            "chunk_id": 871
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "587",
+            "section": "",
+            "chunk_id": 915
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "588",
+            "section": "",
+            "chunk_id": 916
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "568",
+            "section": "",
+            "chunk_id": 886
+          }
+        ],
+        "context_chars": 3409
+      }
+    },
+    {
+      "category": "travail",
+      "question": "Combien de jours de conge j'ai droit par an en Algerie ?",
+      "expected_keywords": [
+        "conge",
+        "travail",
+        "annuel"
+      ],
+      "diagnosis": "pipeline_improved_chroma",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9141,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "14",
+            "chunk_id": 255
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "14",
+            "chunk_id": 1718
+          },
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "19",
+            "chunk_id": 260
+          },
+          {
+            "source": "ord_06-03.pdf",
+            "article": "12",
+            "chunk_id": 3343
+          },
+          {
+            "source": "Ordonance-N°-20-01.pdf",
+            "article": "3",
+            "chunk_id": 3346
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7673,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "122",
+            "section": "",
+            "chunk_id": 3073
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "224",
+            "section": "",
+            "chunk_id": 2086
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "14",
+            "section": "",
+            "chunk_id": 1718
+          },
+          {
+            "type": "law",
+            "source": "code_nation_alger.pdf",
+            "reference": "n° 70-86",
+            "article": "14",
+            "section": "",
+            "chunk_id": 255
+          },
+          {
+            "type": "law",
+            "source": "Ord-N°-21-13.pdf",
+            "reference": "n° 21-13",
+            "article": "2",
+            "section": "",
+            "chunk_id": 3201
+          }
+        ],
+        "context_chars": 1021
+      }
+    },
+    {
+      "category": "travail",
+      "question": "J'ai eu un accident au travail, qu'est-ce que je dois faire ?",
+      "expected_keywords": [
+        "accident",
+        "travail",
+        "cnss"
+      ],
+      "diagnosis": "pipeline_regression",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9104,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "Ord-N°-21-13.pdf",
+            "article": "2",
+            "chunk_id": 3201
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "126",
+            "chunk_id": 428
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "125",
+            "chunk_id": 427
+          },
+          {
+            "source": "Ord-71-57-fr.pdf",
+            "article": "2",
+            "chunk_id": 3196
+          },
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "224",
+            "chunk_id": 2086
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.6882,
+        "keyword_hit": false,
+        "citations": [
+          {
+            "type": "law",
+            "source": "Ord-N°-21-13.pdf",
+            "reference": "n° 21-13",
+            "article": "2",
+            "section": "",
+            "chunk_id": 3201
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "508",
+            "section": "",
+            "chunk_id": 826
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "518",
+            "section": "",
+            "chunk_id": 836
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "528",
+            "section": "",
+            "chunk_id": 846
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "524",
+            "section": "",
+            "chunk_id": 842
+          }
+        ],
+        "context_chars": 309
+      }
+    },
+    {
+      "category": "travail",
+      "question": "هل يمكن لصاحب العمل أن يخفض راتبي بدون موافقتي؟",
+      "expected_keywords": [
+        "راتب",
+        "عمل",
+        "أجر"
+      ],
+      "diagnosis": "pipeline_returns_irrelevant_context",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.8955,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "587",
+            "chunk_id": 915
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "54",
+            "chunk_id": 1394
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "54",
+            "chunk_id": 61
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "486",
+            "chunk_id": 802
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "566",
+            "chunk_id": 884
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.6879,
+        "keyword_hit": false,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "631",
+            "section": "",
+            "chunk_id": 959
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "510",
+            "section": "",
+            "chunk_id": 828
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "536",
+            "section": "",
+            "chunk_id": 854
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "512",
+            "section": "",
+            "chunk_id": 830
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "628",
+            "section": "",
+            "chunk_id": 956
+          }
+        ],
+        "context_chars": 273
+      }
+    },
+    {
+      "category": "famille",
+      "question": "Je veux divorcer, comment je fais en Algerie ?",
+      "expected_keywords": [
+        "divorce",
+        "famille",
+        "tribunal"
+      ],
+      "diagnosis": "pipeline_regression",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9283,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "54",
+            "chunk_id": 1394
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "54",
+            "chunk_id": 61
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "48",
+            "chunk_id": 1387
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "9 bis",
+            "chunk_id": 1713
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "48",
+            "chunk_id": 54
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7414,
+        "keyword_hit": false,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "9 bis",
+            "section": "",
+            "chunk_id": 1713
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "13",
+            "section": "",
+            "chunk_id": 304
+          },
+          {
+            "type": "law",
+            "source": "code_nation_alger.pdf",
+            "reference": "n° 70-86",
+            "article": "9 bis",
+            "section": "",
+            "chunk_id": 250
+          },
+          {
+            "type": "law",
+            "source": "ord-N°75-58.pdf",
+            "reference": "n° 75-58",
+            "article": "8",
+            "section": "",
+            "chunk_id": 3301
+          },
+          {
+            "type": "law",
+            "source": "Ord-N°-70-20.pdf",
+            "reference": "n° 70-20",
+            "article": "97",
+            "section": "",
+            "chunk_id": 3278
+          }
+        ],
+        "context_chars": 3716
+      }
+    },
+    {
+      "category": "famille",
+      "question": "Comment se passe la garde des enfants apres un divorce ?",
+      "expected_keywords": [
+        "garde",
+        "enfant",
+        "divorce"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9218,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "87",
+            "chunk_id": 1428
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "65",
+            "chunk_id": 1406
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "64",
+            "chunk_id": 1405
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "65",
+            "chunk_id": 73
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "57",
+            "chunk_id": 1397
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.763,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "code_famille.pdf",
+            "reference": "n° 84-11",
+            "article": "57 bis",
+            "section": "",
+            "chunk_id": 65
+          },
+          {
+            "type": "law",
+            "source": "code_famille.pdf",
+            "reference": "n° 84-11",
+            "article": "57",
+            "section": "",
+            "chunk_id": 64
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "57",
+            "section": "",
+            "chunk_id": 1397
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "61",
+            "section": "",
+            "chunk_id": 1402
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "62",
+            "section": "",
+            "chunk_id": 1403
+          }
+        ],
+        "context_chars": 1631
+      }
+    },
+    {
+      "category": "famille",
+      "question": "كيف يتم تقسيم الميراث بين الأبناء في الجزائر؟",
+      "expected_keywords": [
+        "ميراث",
+        "وراثة",
+        "أبناء"
+      ],
+      "diagnosis": "pipeline_returns_irrelevant_context",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.8942,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "175",
+            "chunk_id": 1516
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "165",
+            "chunk_id": 1506
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "165",
+            "chunk_id": 173
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "176",
+            "chunk_id": 1517
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "175",
+            "chunk_id": 183
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7304,
+        "keyword_hit": false,
+        "citations": [
+          {
+            "type": "law",
+            "source": "code_famille.pdf",
+            "reference": "n° 84-11",
+            "article": "160",
+            "section": "",
+            "chunk_id": 168
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "160",
+            "section": "",
+            "chunk_id": 1501
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "167",
+            "section": "",
+            "chunk_id": 1508
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "176",
+            "section": "",
+            "chunk_id": 1517
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "175",
+            "section": "",
+            "chunk_id": 1516
+          }
+        ],
+        "context_chars": 3306
+      }
+    },
+    {
+      "category": "famille",
+      "question": "Mon ex-mari ne paie pas la pension alimentaire, que faire ?",
+      "expected_keywords": [
+        "pension",
+        "alimentaire",
+        "nafaqa"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9238,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "53",
+            "chunk_id": 1392
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "53",
+            "chunk_id": 59
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "61",
+            "chunk_id": 1402
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "61",
+            "chunk_id": 69
+          },
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "39",
+            "chunk_id": 3012
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.8158,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "61",
+            "section": "",
+            "chunk_id": 1402
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "53",
+            "section": "",
+            "chunk_id": 1392
+          },
+          {
+            "type": "law",
+            "source": "code_famille.pdf",
+            "reference": "n° 84-11",
+            "article": "53",
+            "section": "",
+            "chunk_id": 59
+          },
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "39",
+            "section": "",
+            "chunk_id": 3012
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "54",
+            "section": "",
+            "chunk_id": 1394
+          }
+        ],
+        "context_chars": 3087
+      }
+    },
+    {
+      "category": "logement",
+      "question": "Mon proprietaire veut m'expulser sans preavis, c'est legal ?",
+      "expected_keywords": [
+        "expulsion",
+        "loyer",
+        "bail",
+        "logement"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9222,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "923",
+            "chunk_id": 1254
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "480",
+            "chunk_id": 796
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "817",
+            "chunk_id": 1148
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "897",
+            "chunk_id": 1228
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "677",
+            "chunk_id": 1005
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7526,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "480",
+            "section": "",
+            "chunk_id": 796
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "469 bis 1",
+            "section": "",
+            "chunk_id": 782
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "499",
+            "section": "",
+            "chunk_id": 815
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "505",
+            "section": "",
+            "chunk_id": 821
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "484",
+            "section": "",
+            "chunk_id": 800
+          }
+        ],
+        "context_chars": 2346
+      }
+    },
+    {
+      "category": "logement",
+      "question": "Comment faire pour recuperer ma caution de location ?",
+      "expected_keywords": [
+        "caution",
+        "location",
+        "loyer"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9217,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "659",
+            "chunk_id": 987
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "480",
+            "chunk_id": 796
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "489",
+            "chunk_id": 805
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "500",
+            "chunk_id": 816
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "482",
+            "chunk_id": 798
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7874,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "504",
+            "section": "",
+            "chunk_id": 820
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "483",
+            "section": "",
+            "chunk_id": 799
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "670",
+            "section": "",
+            "chunk_id": 998
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "489",
+            "section": "",
+            "chunk_id": 805
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "475",
+            "section": "",
+            "chunk_id": 791
+          }
+        ],
+        "context_chars": 3515
+      }
+    },
+    {
+      "category": "logement",
+      "question": "Mon voisin a construit un mur sur mon terrain, quels sont mes recours ?",
+      "expected_keywords": [
+        "propriete",
+        "terrain",
+        "voisinage"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9304,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "708",
+            "chunk_id": 1036
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "704",
+            "chunk_id": 1032
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "703",
+            "chunk_id": 1031
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "693",
+            "chunk_id": 1021
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "691",
+            "chunk_id": 1019
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7824,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "708",
+            "section": "",
+            "chunk_id": 1036
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "691",
+            "section": "",
+            "chunk_id": 1019
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "788",
+            "section": "",
+            "chunk_id": 1119
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "703",
+            "section": "",
+            "chunk_id": 1031
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "704",
+            "section": "",
+            "chunk_id": 1032
+          }
+        ],
+        "context_chars": 1865
+      }
+    },
+    {
+      "category": "consommation",
+      "question": "J'ai achete un telephone defectueux, le vendeur refuse de me rembourser, c'est normal ?",
+      "expected_keywords": [
+        "remboursement",
+        "garantie",
+        "consommateur",
+        "vendeur"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9186,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "380",
+            "chunk_id": 690
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "399",
+            "chunk_id": 709
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "355",
+            "chunk_id": 665
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "379",
+            "chunk_id": 689
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "365",
+            "chunk_id": 675
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7593,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "378",
+            "section": "",
+            "chunk_id": 688
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "406",
+            "section": "",
+            "chunk_id": 716
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "355",
+            "section": "",
+            "chunk_id": 665
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "407",
+            "section": "",
+            "chunk_id": 717
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "379",
+            "section": "",
+            "chunk_id": 689
+          }
+        ],
+        "context_chars": 2502
+      }
+    },
+    {
+      "category": "commercial",
+      "question": "Comment je peux recuperer une dette d'un client qui ne paie pas sa facture ?",
+      "expected_keywords": [
+        "dette",
+        "creance",
+        "facture",
+        "client"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.923,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "277",
+            "chunk_id": 582
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "173",
+            "chunk_id": 477
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "973",
+            "chunk_id": 1304
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "258",
+            "chunk_id": 563
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "176",
+            "chunk_id": 480
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7871,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "277",
+            "section": "",
+            "chunk_id": 582
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "957",
+            "section": "",
+            "chunk_id": 1288
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "312",
+            "section": "",
+            "chunk_id": 617
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "284",
+            "section": "",
+            "chunk_id": 589
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "978",
+            "section": "",
+            "chunk_id": 1309
+          }
+        ],
+        "context_chars": 2652
+      }
+    },
+    {
+      "category": "commercial",
+      "question": "Quelles sont les etapes pour creer une SARL en Algerie ?",
+      "expected_keywords": [
+        "societe",
+        "sarl",
+        "registre de commerce"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9116,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "Ord-N°-21-13.pdf",
+            "article": "2",
+            "chunk_id": 3201
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "10",
+            "chunk_id": 301
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "50",
+            "chunk_id": 348
+          },
+          {
+            "source": "Loi-N°-12-07.pdf",
+            "article": "25",
+            "chunk_id": 2807
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "1",
+            "chunk_id": 1800
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7727,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "10",
+            "section": "",
+            "chunk_id": 301
+          },
+          {
+            "type": "law",
+            "source": "ord-N°75-58.pdf",
+            "reference": "n° 75-58",
+            "article": "8",
+            "section": "",
+            "chunk_id": 3301
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "746",
+            "section": "",
+            "chunk_id": 2509
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-12-07.pdf",
+            "reference": "n° 12-07",
+            "article": "148",
+            "section": "",
+            "chunk_id": 2894
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-12-07.pdf",
+            "reference": "n° 12-07",
+            "article": "25",
+            "section": "",
+            "chunk_id": 2807
+          }
+        ],
+        "context_chars": 3156
+      }
+    },
+    {
+      "category": "administratif",
+      "question": "Comment renouveler mon passeport algerien si j'habite a l'etranger ?",
+      "expected_keywords": [
+        "passeport",
+        "administration",
+        "consulat"
+      ],
+      "diagnosis": "pipeline_improved_chroma",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9224,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "91",
+            "chunk_id": 1664
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "10",
+            "chunk_id": 1714
+          },
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "10",
+            "chunk_id": 251
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "97",
+            "chunk_id": 1670
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "25",
+            "chunk_id": 1729
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.766,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "91",
+            "section": "",
+            "chunk_id": 1664
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "213",
+            "section": "",
+            "chunk_id": 2082
+          },
+          {
+            "type": "law",
+            "source": "Ord-N°-70-20.pdf",
+            "reference": "n° 70-20",
+            "article": "103",
+            "section": "",
+            "chunk_id": 3282
+          },
+          {
+            "type": "law",
+            "source": "Ord-N°-70-20.pdf",
+            "reference": "n° 70-20",
+            "article": "99",
+            "section": "",
+            "chunk_id": 3280
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "103",
+            "section": "",
+            "chunk_id": 1676
+          }
+        ],
+        "context_chars": 3682
+      }
+    },
+    {
+      "category": "administratif",
+      "question": "J'ai besoin d'un certificat de residence, ou je dois aller ?",
+      "expected_keywords": [
+        "certificat",
+        "commune",
+        "residence"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9159,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "75",
+            "chunk_id": 1648
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "71",
+            "chunk_id": 1644
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "2",
+            "chunk_id": 1567
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "6",
+            "chunk_id": 1571
+          },
+          {
+            "source": "Ord-N°-70-20.pdf",
+            "article": "71",
+            "chunk_id": 3265
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7719,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "6",
+            "section": "",
+            "chunk_id": 1752
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "75",
+            "section": "",
+            "chunk_id": 1648
+          },
+          {
+            "type": "law",
+            "source": "Ord-71-57-fr.pdf",
+            "reference": "n° 71-57",
+            "article": "6",
+            "section": "",
+            "chunk_id": 3173
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "87",
+            "section": "",
+            "chunk_id": 1982
+          },
+          {
+            "type": "law",
+            "source": "Ord-N°-21-13.pdf",
+            "reference": "n° 21-13",
+            "article": "2",
+            "section": "",
+            "chunk_id": 3201
+          }
+        ],
+        "context_chars": 2591
+      }
+    },
+    {
+      "category": "administratif",
+      "question": "Comment obtenir un permis de construire a la commune ?",
+      "expected_keywords": [
+        "permis",
+        "construire",
+        "commune"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9204,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "Loi-N°-11-10.pdf",
+            "article": "115",
+            "chunk_id": 2696
+          },
+          {
+            "source": "Loi-N°-11-10.pdf",
+            "article": "95",
+            "chunk_id": 2687
+          },
+          {
+            "source": "Ord-N°-21-13.pdf",
+            "article": "2",
+            "chunk_id": 3201
+          },
+          {
+            "source": "Loi-N°-11-10.pdf",
+            "article": "105",
+            "chunk_id": 2694
+          },
+          {
+            "source": "Loi-N°-11-10.pdf",
+            "article": "107",
+            "chunk_id": 2697
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7871,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "Loi-N°-11-10.pdf",
+            "reference": "n° 11-10",
+            "article": "95",
+            "section": "",
+            "chunk_id": 2687
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-11-10.pdf",
+            "reference": "n° 11-10",
+            "article": "105",
+            "section": "",
+            "chunk_id": 2694
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-11-10.pdf",
+            "reference": "n° 11-10",
+            "article": "108",
+            "section": "",
+            "chunk_id": 2698
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-11-10.pdf",
+            "reference": "n° 11-10",
+            "article": "115",
+            "section": "",
+            "chunk_id": 2696
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-11-10.pdf",
+            "reference": "n° 11-10",
+            "article": "106",
+            "section": "",
+            "chunk_id": 2695
+          }
+        ],
+        "context_chars": 2104
+      }
+    },
+    {
+      "category": "criminal",
+      "question": "J'ai recu une convocation de la police, je dois avoir peur ?",
+      "expected_keywords": [
+        "convocation",
+        "police",
+        "penal"
+      ],
+      "diagnosis": "pipeline_improved_chroma",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9139,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "481",
+            "chunk_id": 2295
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "519",
+            "chunk_id": 837
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "511",
+            "chunk_id": 829
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "520",
+            "chunk_id": 838
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "510",
+            "chunk_id": 828
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7581,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "99",
+            "section": "",
+            "chunk_id": 1994
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "331",
+            "section": "",
+            "chunk_id": 2176
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "480",
+            "section": "",
+            "chunk_id": 2294
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "324",
+            "section": "",
+            "chunk_id": 2174
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "192",
+            "section": "",
+            "chunk_id": 2061
+          }
+        ],
+        "context_chars": 3736
+      }
+    },
+    {
+      "category": "criminal",
+      "question": "Quelqu'un m'a agresse dans la rue, comment je porte plainte ?",
+      "expected_keywords": [
+        "plainte",
+        "agression",
+        "police",
+        "tribunal"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9242,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "475",
+            "chunk_id": 2292
+          },
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "481",
+            "chunk_id": 2295
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "39",
+            "chunk_id": 1743
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "372",
+            "chunk_id": 682
+          },
+          {
+            "source": "Ord-N°-70-20.pdf",
+            "article": "4",
+            "chunk_id": 3248
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7646,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "475",
+            "section": "",
+            "chunk_id": 2292
+          },
+          {
+            "type": "law",
+            "source": "ord-N°75-58.pdf",
+            "reference": "n° 75-58",
+            "article": "47",
+            "section": "",
+            "chunk_id": 3326
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "147",
+            "section": "",
+            "chunk_id": 2024
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "48",
+            "section": "",
+            "chunk_id": 346
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "481",
+            "section": "",
+            "chunk_id": 2295
+          }
+        ],
+        "context_chars": 2261
+      }
+    },
+    {
+      "category": "criminal",
+      "question": "ما هي العقوبة على السرقة في القانون الجزائري؟",
+      "expected_keywords": [
+        "سرقة",
+        "عقاب",
+        "جنائي"
+      ],
+      "diagnosis": "pipeline_returns_irrelevant_context",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.8924,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "Loi-N°-15-19.pdf",
+            "article": "8",
+            "chunk_id": 2946
+          },
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "326",
+            "chunk_id": 2177
+          },
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "133",
+            "chunk_id": 3079
+          },
+          {
+            "source": "Loi-23-04-fr.pdf",
+            "article": "48",
+            "chunk_id": 1893
+          },
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "154",
+            "chunk_id": 2032
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7551,
+        "keyword_hit": false,
+        "citations": [
+          {
+            "type": "law",
+            "source": "Ordonance-N°-20-01.pdf",
+            "reference": "n° 20-01",
+            "article": "2",
+            "section": "",
+            "chunk_id": 3345
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "326",
+            "section": "",
+            "chunk_id": 2177
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-15-19.pdf",
+            "reference": "n° 15-19",
+            "article": "8",
+            "section": "",
+            "chunk_id": 2946
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "530",
+            "section": "",
+            "chunk_id": 2335
+          },
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "133",
+            "section": "",
+            "chunk_id": 3079
+          }
+        ],
+        "context_chars": 4219
+      }
+    },
+    {
+      "category": "criminal",
+      "question": "Je suis victime d'arnaque en ligne, quels sont mes recours legaux ?",
+      "expected_keywords": [
+        "arnaque",
+        "escroquerie",
+        "plainte"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9167,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "Ord-N°-21-13.pdf",
+            "article": "2",
+            "chunk_id": 3201
+          },
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "475",
+            "chunk_id": 2292
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "39",
+            "chunk_id": 1377
+          },
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "56",
+            "chunk_id": 3025
+          },
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "145",
+            "chunk_id": 3084
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7443,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "475",
+            "section": "",
+            "chunk_id": 2292
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "341",
+            "section": "",
+            "chunk_id": 2189
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "333",
+            "section": "",
+            "chunk_id": 2181
+          },
+          {
+            "type": "law",
+            "source": "Ord-N°-21-13.pdf",
+            "reference": "n° 21-13",
+            "article": "2",
+            "section": "",
+            "chunk_id": 3201
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "508",
+            "section": "",
+            "chunk_id": 826
+          }
+        ],
+        "context_chars": 1952
+      }
+    },
+    {
+      "category": "vague",
+      "question": "J'ai un probleme avec mon employeur, vous pouvez m'aider ?",
+      "expected_keywords": [
+        "travail",
+        "employeur"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9116,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "553",
+            "chunk_id": 871
+          },
+          {
+            "source": "Ord-N°-21-13.pdf",
+            "article": "2",
+            "chunk_id": 3201
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "511",
+            "chunk_id": 829
+          },
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "542",
+            "chunk_id": 2337
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "521",
+            "chunk_id": 839
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.6837,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "553",
+            "section": "",
+            "chunk_id": 871
+          },
+          {
+            "type": "law",
+            "source": "Ord-N°-21-13.pdf",
+            "reference": "n° 21-13",
+            "article": "2",
+            "section": "",
+            "chunk_id": 3201
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "511",
+            "section": "",
+            "chunk_id": 829
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "542",
+            "section": "",
+            "chunk_id": 2337
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "521",
+            "section": "",
+            "chunk_id": 839
+          }
+        ],
+        "context_chars": 1121
+      }
+    },
+    {
+      "category": "vague",
+      "question": "Quels sont mes droits en general en tant que citoyen algerien ?",
+      "expected_keywords": [],
+      "diagnosis": "pipeline_returns_irrelevant_context",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9294,
+        "keyword_hit": null,
+        "error": null,
+        "citations": [
+          {
+            "source": "code_famille.pdf",
+            "article": "221",
+            "chunk_id": 229
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "221",
+            "chunk_id": 1562
+          },
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "15",
+            "chunk_id": 256
+          },
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "1",
+            "chunk_id": 241
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "1",
+            "chunk_id": 1704
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7578,
+        "keyword_hit": null,
+        "citations": [
+          {
+            "type": "law",
+            "source": "code_nation_alger.pdf",
+            "reference": "n° 70-86",
+            "article": "15",
+            "section": "",
+            "chunk_id": 256
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "15",
+            "section": "",
+            "chunk_id": 1719
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "50",
+            "section": "",
+            "chunk_id": 348
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "22",
+            "section": "",
+            "chunk_id": 1726
+          },
+          {
+            "type": "law",
+            "source": "code_nation_alger.pdf",
+            "reference": "n° 70-86",
+            "article": "1",
+            "section": "",
+            "chunk_id": 241
+          }
+        ],
+        "context_chars": 2106
+      }
+    },
+    {
+      "category": "vague",
+      "question": "Quelles sont les lois qui protegent les femmes en Algerie ?",
+      "expected_keywords": [
+        "femme",
+        "famille",
+        "protection"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9173,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "Loi-N°-15-19.pdf",
+            "article": "8",
+            "chunk_id": 2946
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "15",
+            "chunk_id": 308
+          },
+          {
+            "source": "Loi-09-02-fr.pdf",
+            "article": "5",
+            "chunk_id": 1850
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "30",
+            "chunk_id": 1368
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "13",
+            "chunk_id": 304
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7737,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "30",
+            "section": "",
+            "chunk_id": 1368
+          },
+          {
+            "type": "law",
+            "source": "code_famille.pdf",
+            "reference": "n° 84-11",
+            "article": "30",
+            "section": "",
+            "chunk_id": 35
+          },
+          {
+            "type": "law",
+            "source": "Loi-23-04-fr.pdf",
+            "reference": "n° 23-04",
+            "article": "51",
+            "section": "",
+            "chunk_id": 1888
+          },
+          {
+            "type": "law",
+            "source": "Loi-N°-15-19.pdf",
+            "reference": "n° 15-19",
+            "article": "8",
+            "section": "",
+            "chunk_id": 2946
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "129",
+            "section": "",
+            "chunk_id": 2015
+          }
+        ],
+        "context_chars": 3308
+      }
+    },
+    {
+      "category": "distractor",
+      "question": "Quelle est la meilleure recette de couscous algerien ?",
+      "expected_keywords": [],
+      "diagnosis": "pipeline_false_positive",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.8979,
+        "keyword_hit": null,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "12",
+            "chunk_id": 1817
+          },
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "42",
+            "chunk_id": 283
+          },
+          {
+            "source": "Ordonance-N°-20-01.pdf",
+            "article": "3",
+            "chunk_id": 3346
+          },
+          {
+            "source": "F2024G02.pdf",
+            "article": "1",
+            "chunk_id": 289
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "91",
+            "chunk_id": 1664
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.6734,
+        "keyword_hit": null,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "12",
+            "section": "",
+            "chunk_id": 1817
+          },
+          {
+            "type": "law",
+            "source": "code_nation_alger.pdf",
+            "reference": "n° 70-86",
+            "article": "42",
+            "section": "",
+            "chunk_id": 283
+          },
+          {
+            "type": "law",
+            "source": "Ordonance-N°-20-01.pdf",
+            "reference": "n° 20-01",
+            "article": "3",
+            "section": "",
+            "chunk_id": 3346
+          },
+          {
+            "type": "law",
+            "source": "F2024G02.pdf",
+            "reference": "n° 18-05",
+            "article": "1",
+            "section": "",
+            "chunk_id": 289
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "91",
+            "section": "",
+            "chunk_id": 1664
+          }
+        ],
+        "context_chars": 2943
+      }
+    },
+    {
+      "category": "distractor",
+      "question": "Quel temps va-t-il faire a Oran ce week-end ?",
+      "expected_keywords": [],
+      "diagnosis": "pipeline_false_positive",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.8919,
+        "keyword_hit": null,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "510",
+            "chunk_id": 828
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "520",
+            "chunk_id": 838
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "20",
+            "chunk_id": 1358
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "521",
+            "chunk_id": 839
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "511",
+            "chunk_id": 829
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.6689,
+        "keyword_hit": null,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "510",
+            "section": "",
+            "chunk_id": 828
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "520",
+            "section": "",
+            "chunk_id": 838
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "20",
+            "section": "",
+            "chunk_id": 1358
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "521",
+            "section": "",
+            "chunk_id": 839
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "511",
+            "section": "",
+            "chunk_id": 829
+          }
+        ],
+        "context_chars": 271
+      }
+    },
+    {
+      "category": "distractor",
+      "question": "Comment installer Python sur mon ordinateur Windows ?",
+      "expected_keywords": [],
+      "diagnosis": "pipeline_false_positive",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9011,
+        "keyword_hit": null,
+        "error": null,
+        "citations": [
+          {
+            "source": "Ord-N°-21-13.pdf",
+            "article": "2",
+            "chunk_id": 3201
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "766",
+            "chunk_id": 1100
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "510",
+            "chunk_id": 828
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "762",
+            "chunk_id": 1092
+          },
+          {
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "article": "224",
+            "chunk_id": 2086
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.6758,
+        "keyword_hit": null,
+        "citations": [
+          {
+            "type": "law",
+            "source": "Ord-N°-21-13.pdf",
+            "reference": "n° 21-13",
+            "article": "2",
+            "section": "",
+            "chunk_id": 3201
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "766",
+            "section": "",
+            "chunk_id": 1100
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "510",
+            "section": "",
+            "chunk_id": 828
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "762",
+            "section": "",
+            "chunk_id": 1092
+          },
+          {
+            "type": "law",
+            "source": "loi-25-14-code-proc-penale-fr.pdf",
+            "reference": "n° 25-14",
+            "article": "224",
+            "section": "",
+            "chunk_id": 2086
+          }
+        ],
+        "context_chars": 362
+      }
+    },
+    {
+      "category": "distractor",
+      "question": "Quel est le meilleur joueur de l'equipe nationale algerienne ?",
+      "expected_keywords": [],
+      "diagnosis": "pipeline_false_positive",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.8928,
+        "keyword_hit": null,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "18",
+            "chunk_id": 1722
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "22",
+            "chunk_id": 1726
+          },
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "15",
+            "chunk_id": 256
+          },
+          {
+            "source": "code_nation_alger.pdf",
+            "article": "19",
+            "chunk_id": 260
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "8",
+            "chunk_id": 1711
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7745,
+        "keyword_hit": null,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "7",
+            "section": "",
+            "chunk_id": 1710
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "18",
+            "section": "",
+            "chunk_id": 1722
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "22",
+            "section": "",
+            "chunk_id": 1726
+          },
+          {
+            "type": "law",
+            "source": "code_nation_alger.pdf",
+            "reference": "n° 70-86",
+            "article": "19",
+            "section": "",
+            "chunk_id": 260
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "8",
+            "section": "",
+            "chunk_id": 1711
+          }
+        ],
+        "context_chars": 3406
+      }
+    },
+    {
+      "category": "distractor",
+      "question": "Comment faire une omelette aux herbes ?",
+      "expected_keywords": [],
+      "diagnosis": "pipeline_false_positive",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.8972,
+        "keyword_hit": null,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "535",
+            "chunk_id": 853
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "508",
+            "chunk_id": 826
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "510",
+            "chunk_id": 828
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "512",
+            "chunk_id": 830
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "525",
+            "chunk_id": 843
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.6729,
+        "keyword_hit": null,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "535",
+            "section": "",
+            "chunk_id": 853
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "508",
+            "section": "",
+            "chunk_id": 826
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "510",
+            "section": "",
+            "chunk_id": 828
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "512",
+            "section": "",
+            "chunk_id": 830
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "525",
+            "section": "",
+            "chunk_id": 843
+          }
+        ],
+        "context_chars": 273
+      }
+    },
+    {
+      "category": "urgent",
+      "question": "Mon mari me frappe, j'ai peur, qu'est-ce que je peux faire la nuit meme ?",
+      "expected_keywords": [
+        "violence",
+        "police",
+        "protection"
+      ],
+      "diagnosis": "pipeline_improved_chroma",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9061,
+        "keyword_hit": false,
+        "error": null,
+        "citations": [
+          {
+            "source": "FCivil.pdf",
+            "article": "508",
+            "chunk_id": 826
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "512",
+            "chunk_id": 830
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "520",
+            "chunk_id": 838
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "525",
+            "chunk_id": 843
+          },
+          {
+            "source": "FCivil.pdf",
+            "article": "510",
+            "chunk_id": 828
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7204,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "88",
+            "section": "",
+            "chunk_id": 387
+          },
+          {
+            "type": "law",
+            "source": "loi_fr_06-02.pdf",
+            "reference": "n° 06-02",
+            "article": "17",
+            "section": "",
+            "chunk_id": 3125
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "508",
+            "section": "",
+            "chunk_id": 826
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "512",
+            "section": "",
+            "chunk_id": 830
+          },
+          {
+            "type": "law",
+            "source": "FCivil.pdf",
+            "reference": "n° 05-10",
+            "article": "520",
+            "section": "",
+            "chunk_id": 838
+          }
+        ],
+        "context_chars": 1166
+      }
+    },
+    {
+      "category": "urgent",
+      "question": "Mon fils mineur a ete arrete par la police, je fais quoi en urgence ?",
+      "expected_keywords": [
+        "mineur",
+        "arrestation",
+        "avocat"
+      ],
+      "diagnosis": "both_ok",
+      "chroma": {
+        "has_result": true,
+        "top1_score": 0.9257,
+        "keyword_hit": true,
+        "error": null,
+        "citations": [
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "72",
+            "chunk_id": 3029
+          },
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "50",
+            "chunk_id": 3015
+          },
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "19",
+            "chunk_id": 2995
+          },
+          {
+            "source": "loi_15-12_fr.pdf",
+            "article": "48",
+            "chunk_id": 3018
+          },
+          {
+            "source": "code_famille.pdf",
+            "article": "5",
+            "chunk_id": 237
+          }
+        ]
+      },
+      "pipeline": {
+        "has_result": true,
+        "top1_score": 0.7551,
+        "keyword_hit": true,
+        "citations": [
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "60",
+            "section": "",
+            "chunk_id": 3023
+          },
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "52",
+            "section": "",
+            "chunk_id": 3017
+          },
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "50",
+            "section": "",
+            "chunk_id": 3015
+          },
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "54",
+            "section": "",
+            "chunk_id": 3022
+          },
+          {
+            "type": "law",
+            "source": "loi_15-12_fr.pdf",
+            "reference": "n° 15-12",
+            "article": "47",
+            "section": "",
+            "chunk_id": 3016
+          }
+        ],
+        "context_chars": 3453
+      }
+    }
+  ]
+}

@@ -1,0 +1,677 @@
+{
+  "summary": {
+    "n_real_questions": 26,
+    "n_no_result": 15,
+    "keyword_pertinence_rate": 0.36,
+    "n_distractor": 5,
+    "distractor_false_positive_rate": 0.0,
+    "avg_latency_ms": 926.3208527718822
+  },
+  "rows": [
+    {
+      "category": "travail",
+      "question": "Mon patron veut me virer sans preavis, il a le droit ?",
+      "expected_keywords": [
+        "licenciement",
+        "preavis",
+        "travail",
+        "employeur"
+      ],
+      "top1_score": 0.7506,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "560",
+          "section": "",
+          "chunk_id": 878
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "68",
+          "section": "",
+          "chunk_id": 1409
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "123 ter",
+          "section": "",
+          "chunk_id": 424
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "travail",
+      "question": "Combien de jours de conge j'ai droit par an en Algerie ?",
+      "expected_keywords": [
+        "conge",
+        "travail",
+        "annuel"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "travail",
+      "question": "J'ai eu un accident au travail, qu'est-ce que je dois faire ?",
+      "expected_keywords": [
+        "accident",
+        "travail",
+        "cnss"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "travail",
+      "question": "هل يمكن لصاحب العمل أن يخفض راتبي بدون موافقتي؟",
+      "expected_keywords": [
+        "راتب",
+        "عمل",
+        "أجر"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "famille",
+      "question": "Je veux divorcer, comment je fais en Algerie ?",
+      "expected_keywords": [
+        "divorce",
+        "famille",
+        "tribunal"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "famille",
+      "question": "Comment se passe la garde des enfants apres un divorce ?",
+      "expected_keywords": [
+        "garde",
+        "enfant",
+        "divorce"
+      ],
+      "top1_score": 0.7985,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "87",
+          "section": "",
+          "chunk_id": 1428
+        },
+        {
+          "type": "law",
+          "source": "code_famille.pdf",
+          "reference": "n° 84-11",
+          "article": "87",
+          "section": "",
+          "chunk_id": 95
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "52",
+          "section": "",
+          "chunk_id": 1391
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "57",
+          "section": "",
+          "chunk_id": 1397
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "72",
+          "section": "",
+          "chunk_id": 1413
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "famille",
+      "question": "كيف يتم تقسيم الميراث بين الأبناء في الجزائر؟",
+      "expected_keywords": [
+        "ميراث",
+        "وراثة",
+        "أبناء"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "famille",
+      "question": "Mon ex-mari ne paie pas la pension alimentaire, que faire ?",
+      "expected_keywords": [
+        "pension",
+        "alimentaire",
+        "nafaqa"
+      ],
+      "top1_score": 0.8153,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "61",
+          "section": "",
+          "chunk_id": 1402
+        },
+        {
+          "type": "law",
+          "source": "code_famille.pdf",
+          "reference": "n° 84-11",
+          "article": "61",
+          "section": "",
+          "chunk_id": 69
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "53",
+          "section": "",
+          "chunk_id": 1392
+        },
+        {
+          "type": "law",
+          "source": "code_famille.pdf",
+          "reference": "n° 84-11",
+          "article": "53",
+          "section": "",
+          "chunk_id": 59
+        },
+        {
+          "type": "law",
+          "source": "loi_15-12_fr.pdf",
+          "reference": "n° 15-12",
+          "article": "39",
+          "section": "",
+          "chunk_id": 3012
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "logement",
+      "question": "Mon proprietaire veut m'expulser sans preavis, c'est legal ?",
+      "expected_keywords": [
+        "expulsion",
+        "loyer",
+        "bail",
+        "logement"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "logement",
+      "question": "Comment faire pour recuperer ma caution de location ?",
+      "expected_keywords": [
+        "caution",
+        "location",
+        "loyer"
+      ],
+      "top1_score": 0.7686,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "670",
+          "section": "",
+          "chunk_id": 998
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "483",
+          "section": "",
+          "chunk_id": 799
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "logement",
+      "question": "Mon voisin a construit un mur sur mon terrain, quels sont mes recours ?",
+      "expected_keywords": [
+        "propriete",
+        "terrain",
+        "voisinage"
+      ],
+      "top1_score": 0.7811,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "708",
+          "section": "",
+          "chunk_id": 1036
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "704",
+          "section": "",
+          "chunk_id": 1032
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "703",
+          "section": "",
+          "chunk_id": 1031
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "691",
+          "section": "",
+          "chunk_id": 1019
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "705",
+          "section": "",
+          "chunk_id": 1033
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "consommation",
+      "question": "J'ai achete un telephone defectueux, le vendeur refuse de me rembourser, c'est normal ?",
+      "expected_keywords": [
+        "remboursement",
+        "garantie",
+        "consommateur",
+        "vendeur"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "commercial",
+      "question": "Comment je peux recuperer une dette d'un client qui ne paie pas sa facture ?",
+      "expected_keywords": [
+        "dette",
+        "creance",
+        "facture",
+        "client"
+      ],
+      "top1_score": 0.7672,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "277",
+          "section": "",
+          "chunk_id": 582
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "commercial",
+      "question": "Quelles sont les etapes pour creer une SARL en Algerie ?",
+      "expected_keywords": [
+        "societe",
+        "sarl",
+        "registre de commerce"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "administratif",
+      "question": "Comment renouveler mon passeport algerien si j'habite a l'etranger ?",
+      "expected_keywords": [
+        "passeport",
+        "administration",
+        "consulat"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "administratif",
+      "question": "J'ai besoin d'un certificat de residence, ou je dois aller ?",
+      "expected_keywords": [
+        "certificat",
+        "commune",
+        "residence"
+      ],
+      "top1_score": 0.7668,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "6",
+          "section": "",
+          "chunk_id": 1571
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "6",
+          "section": "",
+          "chunk_id": 1752
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "administratif",
+      "question": "Comment obtenir un permis de construire a la commune ?",
+      "expected_keywords": [
+        "permis",
+        "construire",
+        "commune"
+      ],
+      "top1_score": 0.7874,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "Loi-N°-11-10.pdf",
+          "reference": "n° 11-10",
+          "article": "95",
+          "section": "",
+          "chunk_id": 2687
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "criminal",
+      "question": "J'ai recu une convocation de la police, je dois avoir peur ?",
+      "expected_keywords": [
+        "convocation",
+        "police",
+        "penal"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "criminal",
+      "question": "Quelqu'un m'a agresse dans la rue, comment je porte plainte ?",
+      "expected_keywords": [
+        "plainte",
+        "agression",
+        "police",
+        "tribunal"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "criminal",
+      "question": "ما هي العقوبة على السرقة في القانون الجزائري؟",
+      "expected_keywords": [
+        "سرقة",
+        "عقاب",
+        "جنائي"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "criminal",
+      "question": "Je suis victime d'arnaque en ligne, quels sont mes recours legaux ?",
+      "expected_keywords": [
+        "arnaque",
+        "escroquerie",
+        "plainte"
+      ],
+      "top1_score": 0.7602,
+      "has_result": true,
+      "keyword_hit": false,
+      "citations": [
+        {
+          "type": "law",
+          "source": "loi_15-12_fr.pdf",
+          "reference": "n° 15-12",
+          "article": "145",
+          "section": "",
+          "chunk_id": 3084
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "vague",
+      "question": "J'ai un probleme avec mon employeur, vous pouvez m'aider ?",
+      "expected_keywords": [
+        "travail",
+        "employeur"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "vague",
+      "question": "Quels sont mes droits en general en tant que citoyen algerien ?",
+      "expected_keywords": [],
+      "top1_score": 0.7554,
+      "has_result": true,
+      "keyword_hit": null,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "50",
+          "section": "",
+          "chunk_id": 348
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "vague",
+      "question": "Quelles sont les lois qui protegent les femmes en Algerie ?",
+      "expected_keywords": [
+        "femme",
+        "famille",
+        "protection"
+      ],
+      "top1_score": 0.7683,
+      "has_result": true,
+      "keyword_hit": true,
+      "citations": [
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "30",
+          "section": "",
+          "chunk_id": 1368
+        },
+        {
+          "type": "law",
+          "source": "FCivil.pdf",
+          "reference": "n° 05-10",
+          "article": "13",
+          "section": "",
+          "chunk_id": 304
+        },
+        {
+          "type": "law",
+          "source": "code_famille.pdf",
+          "reference": "n° 84-11",
+          "article": "30",
+          "section": "",
+          "chunk_id": 35
+        },
+        {
+          "type": "law",
+          "source": "Loi-23-04-fr.pdf",
+          "reference": "n° 23-04",
+          "article": "17",
+          "section": "",
+          "chunk_id": 1863
+        }
+      ],
+      "answer_preview": null
+    },
+    {
+      "category": "distractor",
+      "question": "Quelle est la meilleure recette de couscous algerien ?",
+      "expected_keywords": [],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": null,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "distractor",
+      "question": "Quel temps va-t-il faire a Oran ce week-end ?",
+      "expected_keywords": [],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": null,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "distractor",
+      "question": "Comment installer Python sur mon ordinateur Windows ?",
+      "expected_keywords": [],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": null,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "distractor",
+      "question": "Quel est le meilleur joueur de l'equipe nationale algerienne ?",
+      "expected_keywords": [],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": null,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "distractor",
+      "question": "Comment faire une omelette aux herbes ?",
+      "expected_keywords": [],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": null,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "urgent",
+      "question": "Mon mari me frappe, j'ai peur, qu'est-ce que je peux faire la nuit meme ?",
+      "expected_keywords": [
+        "violence",
+        "police",
+        "protection"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    },
+    {
+      "category": "urgent",
+      "question": "Mon fils mineur a ete arrete par la police, je fais quoi en urgence ?",
+      "expected_keywords": [
+        "mineur",
+        "arrestation",
+        "avocat"
+      ],
+      "top1_score": 0.0,
+      "has_result": false,
+      "keyword_hit": false,
+      "citations": [],
+      "answer_preview": null
+    }
+  ]
+}
