@@ -1,0 +1,374 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1782504805617,
+  "projectRoot": "C:\\Users\\ROCDZ\\Documents\\Projects\\Webdev\\JusticePath",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      },
+      {
+        "name": "Python",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "requirements.txt"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.2.7",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.7",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "8.1.0",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc -b && vite build",
+      "lint": "oxlint",
+      "preview": "vite preview"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "components",
+      "public",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "ai_assistant": {
+      "path": "ai_assistant",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1782504805404,
+      "keyFiles": [
+        "admin.py",
+        "apps.py",
+        "models.py",
+        "tests.py",
+        "views.py"
+      ]
+    },
+    "components": {
+      "path": "components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1782504805407,
+      "keyFiles": []
+    },
+    "config": {
+      "path": "config",
+      "purpose": "Configuration files",
+      "fileCount": 5,
+      "lastAccessed": 1782504805410,
+      "keyFiles": [
+        "asgi.py",
+        "settings.py",
+        "urls.py",
+        "wsgi.py",
+        "__init__.py"
+      ]
+    },
+    "directory_data": {
+      "path": "directory_data",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1782504805448,
+      "keyFiles": [
+        "admin.py",
+        "apps.py",
+        "models.py",
+        "serializers.py",
+        "tests.py"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 2,
+      "lastAccessed": 1782504805457,
+      "keyFiles": [
+        "favicon.svg",
+        "index.html"
+      ]
+    },
+    "legal_path": {
+      "path": "legal_path",
+      "purpose": null,
+      "fileCount": 9,
+      "lastAccessed": 1782504805466,
+      "keyFiles": [
+        "admin.py",
+        "apps.py",
+        "models.py",
+        "permissions.py",
+        "serializers.py"
+      ]
+    },
+    "legal_twin": {
+      "path": "legal_twin",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1782504805468,
+      "keyFiles": [
+        "admin.py",
+        "apps.py",
+        "models.py",
+        "serializers.py",
+        "tests.py"
+      ]
+    },
+    "legal_writer": {
+      "path": "legal_writer",
+      "purpose": null,
+      "fileCount": 9,
+      "lastAccessed": 1782504805469,
+      "keyFiles": [
+        "admin.py",
+        "apps.py",
+        "models.py",
+        "permissions.py",
+        "serializers.py"
+      ]
+    },
+    "media": {
+      "path": "media",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1782504805477,
+      "keyFiles": []
+    },
+    "NCS_HACK": {
+      "path": "NCS_HACK",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1782504805489,
+      "keyFiles": []
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1782504805490,
+      "keyFiles": [
+        "favicon.svg"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1782504805498,
+      "keyFiles": [
+        "App.tsx",
+        "index.css",
+        "main.tsx"
+      ]
+    },
+    "users": {
+      "path": "users",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1782504805511,
+      "keyFiles": [
+        "admin.py",
+        "apps.py",
+        "models.py",
+        "serializers.py",
+        "tests.py"
+      ]
+    },
+    "ai_assistant\\migrations": {
+      "path": "ai_assistant\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 1,
+      "lastAccessed": 1782504805514,
+      "keyFiles": [
+        "__init__.py"
+      ]
+    },
+    "directory_data\\migrations": {
+      "path": "directory_data\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 2,
+      "lastAccessed": 1782504805518,
+      "keyFiles": [
+        "0001_initial.py",
+        "__init__.py"
+      ]
+    },
+    "dist\\assets": {
+      "path": "dist\\assets",
+      "purpose": "Static assets",
+      "fileCount": 364,
+      "lastAccessed": 1782504805545,
+      "keyFiles": [
+        "abap-CLvhMVsD.js",
+        "actionscript-3--17pq3dv.js",
+        "ada-C5qYipkI.js"
+      ]
+    },
+    "legal_path\\migrations": {
+      "path": "legal_path\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 3,
+      "lastAccessed": 1782504805548,
+      "keyFiles": [
+        "0001_initial.py",
+        "0002_aianalysis_recommendation_requireddocument_and_more.py",
+        "__init__.py"
+      ]
+    },
+    "legal_path\\services": {
+      "path": "legal_path\\services",
+      "purpose": "Business logic services",
+      "fileCount": 5,
+      "lastAccessed": 1782504805549,
+      "keyFiles": [
+        "analysis_service.py",
+        "geocoding_service.py",
+        "lawyer_recommendation_service.py"
+      ]
+    },
+    "legal_twin\\migrations": {
+      "path": "legal_twin\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 3,
+      "lastAccessed": 1782504805551,
+      "keyFiles": [
+        "0001_initial.py",
+        "0002_rename_title_citizendocument_description_and_more.py",
+        "__init__.py"
+      ]
+    },
+    "legal_writer\\migrations": {
+      "path": "legal_writer\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 3,
+      "lastAccessed": 1782504805598,
+      "keyFiles": [
+        "0001_initial.py",
+        "0002_alter_documenttemplate_id_alter_documentversion_id_and_more.py",
+        "__init__.py"
+      ]
+    },
+    "legal_writer\\services": {
+      "path": "legal_writer\\services",
+      "purpose": "Business logic services",
+      "fileCount": 5,
+      "lastAccessed": 1782504805602,
+      "keyFiles": [
+        "export_service.py",
+        "prompt_builder.py",
+        "template_service.py"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1782504805607,
+      "keyFiles": []
+    },
+    "src\\data": {
+      "path": "src\\data",
+      "purpose": "Data files",
+      "fileCount": 2,
+      "lastAccessed": 1782504805609,
+      "keyFiles": [
+        "chat.ts",
+        "navigation.ts"
+      ]
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 5,
+      "lastAccessed": 1782504805611,
+      "keyFiles": [
+        "document-export.ts",
+        "document.ts",
+        "docx.ts"
+      ]
+    },
+    "src\\pages": {
+      "path": "src\\pages",
+      "purpose": "Page components",
+      "fileCount": 3,
+      "lastAccessed": 1782504805614,
+      "keyFiles": [
+        "assistant-page.tsx",
+        "landing-page.tsx",
+        "settings-page.tsx"
+      ]
+    },
+    "src\\types": {
+      "path": "src\\types",
+      "purpose": "Type definitions",
+      "fileCount": 2,
+      "lastAccessed": 1782504805615,
+      "keyFiles": [
+        "chat.ts",
+        "navigation.ts"
+      ]
+    },
+    "users\\migrations": {
+      "path": "users\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 2,
+      "lastAccessed": 1782504805617,
+      "keyFiles": [
+        "0001_initial.py",
+        "__init__.py"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}
