@@ -2,16 +2,21 @@ import { useEffect, useState } from "react"
 import { toast } from "@heroui/react"
 import { gsap } from "gsap"
 import Lenis from "lenis"
+import type { Transition, Variants } from "motion/react"
 
-import { ChatSidebar, folderTree } from "@/components/chat/full-chat-app"
+import { ChatSidebar, folderTree, type ResponseContext } from "@/components/chat/full-chat-app"
 import type { FileItem } from "@/components/chat/full-chat-app"
-import { WorkspaceModes } from "@/components/modes/workspace-modes"
 import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { createDocumentFromFile } from "@/lib/document"
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/core/dialog"
+import { WorkspaceSidebarShell } from "@/components/layout/workspace-sidebar-shell"
+import { WorkspaceModes } from "@/components/modes/workspace-modes"
+import { createDocumentFromFile, getDocumentOutline } from "@/lib/document"
 
 export type WorkspaceMode = "consultant" | "editor" | "professor"
 
@@ -25,6 +30,37 @@ export function AssistantPage() {
   const [activeFile, setActiveFile] = useState<FileItem | null>(null)
   const [documentValue, setDocumentValue] = useState(createDocumentFromFile(null))
   const [hasConversation, setHasConversation] = useState(false)
+  const [creationMode, setCreationMode] = useState<"folder" | "file" | null>(null)
+  const [creationValue, setCreationValue] = useState("")
+  const [creationFolderId, setCreationFolderId] = useState<string | null>(null)
+  const [renamingFileId, setRenamingFileId] = useState<string | null>(null)
+  const [renamingFileValue, setRenamingFileValue] = useState("")
+  const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
+  const [responseContext, setResponseContext] = useState<ResponseContext | null>(null)
+  const [activeCitationId, setActiveCitationId] = useState<string | null>(null)
+  const documentOutline = getDocumentOutline(activeFile, documentValue)
+  const dialogVariants: Variants = {
+    initial: {
+      opacity: 0,
+      scale: 0.95,
+      y: 40,
+    },
+    animate: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      y: 40,
+    },
+  }
+  const dialogTransition: Transition = {
+    type: "spring",
+    bounce: 0,
+    duration: 0.25,
+  }
 
   const toggleFolder = (id: string) => {
     setExpandedFolders((prev) => {
@@ -44,46 +80,10 @@ export function AssistantPage() {
     setDocumentValue(createDocumentFromFile(file))
   }
 
-  const createDocument = () => {
-    const newFile: FileItem = {
-      id: `custom-${Date.now()}`,
-      name: `New Document ${folders[0]?.files.length ? folders[0].files.length + 1 : 1}.md`,
-      ext: "md",
-    }
-
-    setFolders((prev) =>
-      prev.map((folder, index) =>
-        index === 0 ? { ...folder, files: [newFile, ...folder.files] } : folder
-      )
-    )
-    setExpandedFolders((prev) => new Set(prev).add(folderTree[0]?.id ?? "cases"))
-    selectFile(newFile)
-    setMode("editor")
-    toast("Document created")
-  }
-
-  const createFolder = () => {
-    const name = window.prompt("Folder name", "New Folder")?.trim()
-    if (!name) return
-    const id = `folder-${Date.now()}`
-
-    setFolders((prev) => [
-      ...prev,
-      {
-        id,
-        name,
-        files: [],
-      },
-    ])
-    setExpandedFolders((prev) => new Set(prev).add(id))
-    toast(`Folder created: ${name}`)
-  }
-
-  const renameFolder = (folderId: string) => {
+  const renameFolder = (folderId: string, name: string) => {
     const folder = folders.find((item) => item.id === folderId)
     if (!folder) return
 
-    const name = window.prompt("Rename folder", folder.name)?.trim()
     if (!name || name === folder.name) return
 
     setFolders((prev) =>
@@ -92,7 +92,132 @@ export function AssistantPage() {
     toast(`Folder renamed: ${name}`)
   }
 
-  const deleteFile = (fileId: string) => {
+  const deleteFolder = (folderId: string) => {
+    const folder = folders.find((item) => item.id === folderId)
+    if (!folder) return
+
+    const containsActiveFile = folder.files.some((file) => file.id === activeFileId)
+
+    setFolders((prev) => prev.filter((item) => item.id !== folderId))
+    setExpandedFolders((prev) => {
+      const next = new Set(prev)
+      next.delete(folderId)
+      return next
+    })
+
+    if (containsActiveFile) {
+      setActiveFileId(null)
+      setActiveFile(null)
+      setDocumentValue(createDocumentFromFile(null))
+    }
+
+    toast(`Folder removed: ${folder.name}`)
+  }
+
+  const createFolder = (name: string) => {
+    if (!name) return
+
+    const id = `folder-${Date.now()}`
+    setFolders((prev) => [...prev, { id, name, files: [] }])
+    setExpandedFolders((prev) => new Set(prev).add(id))
+    toast(`Folder created: ${name}`)
+  }
+
+  const addFileToFolder = (folderId: string, name: string) => {
+    if (!name) return
+
+    const ext = name.split(".").pop()?.toLowerCase() ?? "md"
+    const newFile: FileItem = {
+      id: `file-${Date.now()}`,
+      name,
+      ext,
+    }
+
+    setFolders((prev) =>
+      prev.map((folder) =>
+        folder.id === folderId ? { ...folder, files: [...folder.files, newFile] } : folder
+      )
+    )
+    setExpandedFolders((prev) => new Set(prev).add(folderId))
+    toast(`File added: ${name}`)
+  }
+
+  const openCreationDialog = (type: "folder" | "file", folderId?: string) => {
+    setCreationMode(type)
+    setCreationFolderId(folderId ?? null)
+    setCreationValue(type === "folder" ? "New Folder" : "Untitled Draft.md")
+  }
+
+  const closeCreationDialog = () => {
+    setCreationMode(null)
+    setCreationFolderId(null)
+    setCreationValue("")
+  }
+
+  const submitCreation = () => {
+    const name = creationValue.trim()
+    if (!name || !creationMode) return
+
+    if (creationMode === "folder") createFolder(name)
+    if (creationMode === "file" && creationFolderId) addFileToFolder(creationFolderId, name)
+
+    closeCreationDialog()
+  }
+
+  const openRenameFileDialog = (fileId: string) => {
+    const sourceFolder = folders.find((folder) => folder.files.some((file) => file.id === fileId))
+    const file = sourceFolder?.files.find((item) => item.id === fileId)
+    if (!sourceFolder || !file) return
+
+    setRenamingFileId(fileId)
+    setRenamingFileValue(file.name)
+  }
+
+  const closeRenameFileDialog = () => {
+    setRenamingFileId(null)
+    setRenamingFileValue("")
+  }
+
+  const submitRenameFile = () => {
+    const fileId = renamingFileId
+    const name = renamingFileValue.trim()
+    if (!fileId) return
+
+    const sourceFolder = folders.find((folder) => folder.files.some((file) => file.id === fileId))
+    const file = sourceFolder?.files.find((item) => item.id === fileId)
+    if (!sourceFolder || !file) return
+
+    if (!name || name === file.name) return
+
+    setFolders((prev) =>
+      prev.map((folder) =>
+        folder.id === sourceFolder.id
+          ? {
+              ...folder,
+              files: folder.files.map((item) =>
+                item.id === fileId ? { ...item, name } : item
+              ),
+            }
+          : folder
+      )
+    )
+
+    if (activeFileId === fileId) {
+      setActiveFile((prev) => (prev ? { ...prev, name } : prev))
+    }
+
+    toast("File renamed")
+    closeRenameFileDialog()
+  }
+
+  const requestDeleteFile = (fileId: string) => {
+    setDeletingFileId(fileId)
+  }
+
+  const confirmDeleteFile = () => {
+    const fileId = deletingFileId
+    if (!fileId) return
+
     setFolders((prev) =>
       prev
         .map((folder) => ({
@@ -109,9 +234,10 @@ export function AssistantPage() {
     }
 
     toast("File removed")
+    setDeletingFileId(null)
   }
 
-  const moveFile = (fileId: string, targetFolderId?: string) => {
+  const moveFile = (fileId: string, targetFolderId?: string, targetIndex?: number) => {
     const sourceFolder = folders.find((folder) => folder.files.some((file) => file.id === fileId))
     if (!sourceFolder) return
 
@@ -123,18 +249,24 @@ export function AssistantPage() {
       folders.find((folder) => folder.id !== sourceFolder.id)?.id ??
       sourceFolder.id
 
-    if (target === sourceFolder.id) return
+    setFolders((prev) =>
+      prev.map((folder) => {
+        const remainingFiles = folder.files.filter((item) => item.id !== fileId)
 
-    setFolders((prev) => {
-      const next = prev.map((folder) => ({
-        ...folder,
-        files: folder.files.filter((item) => item.id !== fileId),
-      }))
+        if (folder.id !== target) {
+          return { ...folder, files: remainingFiles }
+        }
 
-      return next.map((folder) =>
-        folder.id === target ? { ...folder, files: [...folder.files, file] } : folder
-      )
-    })
+        const nextFiles = [...remainingFiles]
+        const insertAt =
+          typeof targetIndex === "number"
+            ? Math.max(0, Math.min(targetIndex, nextFiles.length))
+            : nextFiles.length
+
+        nextFiles.splice(insertAt, 0, file)
+        return { ...folder, files: nextFiles }
+      })
+    )
 
     toast(`Moved: ${file.name}`)
   }
@@ -145,14 +277,16 @@ export function AssistantPage() {
     onToggleFolder: toggleFolder,
     activeFileId,
     onSelectFile: selectFile,
-    onCreateDocument: createDocument,
-    onCreateFolder: createFolder,
+    onCreateFolder: () => openCreationDialog("folder"),
+    onAddFile: (folderId: string) => openCreationDialog("file", folderId),
     onRenameFolder: renameFolder,
+    onDeleteFolder: deleteFolder,
+    onRenameFile: openRenameFileDialog,
     onOpenEditor: () => {
       setMode("editor")
       toast("Editor opened")
     },
-    onDeleteFile: deleteFile,
+    onDeleteFile: requestDeleteFile,
     onMoveFile: moveFile,
   }
 
@@ -199,23 +333,153 @@ export function AssistantPage() {
   }, [])
 
   return (
-    <SidebarProvider>
-      <div className="fixed left-3 top-3 z-40">
-        <div className="flex items-center">
-          <SidebarTrigger
+    <>
+      <Dialog
+        open={creationMode !== null}
+        onOpenChange={(open) => !open && closeCreationDialog()}
+        variants={dialogVariants}
+        transition={dialogTransition}
+      >
+        <DialogContent className="w-full max-w-md bg-white p-6">
+          <DialogHeader>
+            <DialogTitle className="text-zinc-900">
+              {creationMode === "folder" ? "Create folder" : "Create file"}
+            </DialogTitle>
+            <DialogDescription className="text-zinc-600">
+              {creationMode === "folder" ? "Enter folder name." : "Enter file name."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6 flex flex-col space-y-4">
+            <label htmlFor="creation-name" className="sr-only">
+              Name
+            </label>
+            <input
+              id="creation-name"
+              value={creationValue}
+              onChange={(event) => setCreationValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  submitCreation()
+                }
+              }}
+              className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-base text-zinc-900 outline-hidden focus:ring-2 focus:ring-black/5 sm:text-sm"
+              placeholder="Enter name"
+              autoFocus
+            />
+            <button
+              className="inline-flex items-center justify-center self-end rounded-lg bg-black px-4 py-2 text-sm font-medium text-zinc-50"
+              type="button"
+              onClick={submitCreation}
+            >
+              Create
+            </button>
+          </div>
+          <DialogClose />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={renamingFileId !== null}
+        onOpenChange={(open) => !open && closeRenameFileDialog()}
+        variants={dialogVariants}
+        transition={dialogTransition}
+      >
+        <DialogContent className="w-full max-w-md bg-white p-6">
+          <DialogHeader>
+            <DialogTitle className="text-zinc-900">Rename file</DialogTitle>
+            <DialogDescription className="text-zinc-600">
+              Update the file name shown in the workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6 flex flex-col space-y-4">
+            <label htmlFor="rename-file-name" className="sr-only">
+              Name
+            </label>
+            <input
+              id="rename-file-name"
+              value={renamingFileValue}
+              onChange={(event) => setRenamingFileValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  submitRenameFile()
+                }
+              }}
+              className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-base text-zinc-900 outline-hidden focus:ring-2 focus:ring-black/5 sm:text-sm"
+              placeholder="Enter file name"
+              autoFocus
+            />
+            <button
+              className="inline-flex items-center justify-center self-end rounded-lg bg-black px-4 py-2 text-sm font-medium text-zinc-50"
+              type="button"
+              onClick={submitRenameFile}
+            >
+              Rename
+            </button>
+          </div>
+          <DialogClose />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deletingFileId !== null}
+        onOpenChange={(open) => !open && setDeletingFileId(null)}
+        variants={dialogVariants}
+        transition={dialogTransition}
+      >
+        <DialogContent className="w-full max-w-md bg-white p-6">
+          <DialogHeader>
+            <DialogTitle className="text-zinc-900">Delete file?</DialogTitle>
+            <DialogDescription className="text-zinc-600">
+              This removes the file from the workspace sidebar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700"
+              type="button"
+              onClick={() => setDeletingFileId(null)}
+            >
+              Cancel
+            </button>
+            <button
+              className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-medium text-zinc-50"
+              type="button"
+              onClick={confirmDeleteFile}
+            >
+              Delete
+            </button>
+          </div>
+          <DialogClose />
+        </DialogContent>
+      </Dialog>
+
+      <WorkspaceSidebarShell
+        leftSidebar={
+          <ChatSidebar
             side="left"
-            className="rounded-full bg-white/95 text-[#6b533e] shadow-[0_8px_20px_rgba(80,58,38,0.08)]"
+            mode={mode}
+            activeFile={activeFile}
+            documentOutline={documentOutline}
+            {...sharedSidebarProps}
           />
-        </div>
-      </div>
-      <div className="fixed right-3 top-3 z-40">
-        <SidebarTrigger
-          side="right"
-          className="rounded-full bg-white/95 text-[#6b533e] shadow-[0_8px_20px_rgba(80,58,38,0.08)]"
-        />
-      </div>
-      <ChatSidebar side="left" {...sharedSidebarProps} />
-      <SidebarInset>
+        }
+        rightSidebar={
+          <ChatSidebar
+            side="right"
+            mode={mode}
+            activeFile={activeFile}
+            documentOutline={documentOutline}
+            hasConversation={hasConversation}
+            isThinking={mode === "consultant" && hasConversation}
+            responseContext={responseContext}
+            activeCitationId={activeCitationId}
+            onCitationSelect={setActiveCitationId}
+            {...sharedSidebarProps}
+          />
+        }
+      >
         <WorkspaceModes
           mode={mode}
           onModeChange={setMode}
@@ -223,14 +487,11 @@ export function AssistantPage() {
           documentValue={documentValue}
           onDocumentChange={setDocumentValue}
           onConversationStateChange={setHasConversation}
+          onResponseContextChange={setResponseContext}
+          activeCitationId={activeCitationId}
+          onActiveCitationChange={setActiveCitationId}
         />
-      </SidebarInset>
-      <ChatSidebar
-        side="right"
-        hasConversation={hasConversation}
-        isThinking={mode === "consultant" && hasConversation}
-        {...sharedSidebarProps}
-      />
-    </SidebarProvider>
+      </WorkspaceSidebarShell>
+    </>
   )
 }

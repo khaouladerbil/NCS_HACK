@@ -65,6 +65,7 @@ function useSidebar() {
 
 function SidebarProvider({
   defaultOpen = true,
+  defaultOpenRight,
   open: openProp,
   onOpenChange: setOpenProp,
   className,
@@ -73,6 +74,7 @@ function SidebarProvider({
   ...props
 }: React.ComponentProps<"div"> & {
   defaultOpen?: boolean
+  defaultOpenRight?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
@@ -97,7 +99,7 @@ function SidebarProvider({
   )
 
   // Right sidebar state
-  const [openRight, setOpenRight] = React.useState(defaultOpen)
+  const [openRight, setOpenRight] = React.useState(defaultOpenRight ?? defaultOpen)
 
   // Helper toggles
   const toggleSidebar = React.useCallback(() => {

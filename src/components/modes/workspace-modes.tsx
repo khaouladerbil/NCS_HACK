@@ -1,28 +1,26 @@
-import { BookOpen, FilePenLine, FileText, MessagesSquare } from "lucide-react"
+import { useEffect, useState, type ReactNode } from "react"
+import { BookOpen, Eye, FilePenLine, FileText, MessagesSquare, Minus, PencilLine, Plus } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
 
-import { ChatContent } from "@/components/chat/full-chat-app"
+import { ChatContent, type ResponseContext } from "@/components/chat/full-chat-app"
 import { AnimatedBackground } from "@/components/core/animated-background"
-import { MarkdownEditorMode } from "@/components/modes/markdown-editor-mode"
+import {
+  MarkdownEditorMode,
+  type EditorToolbarAction,
+  type EditorToolbarButton,
+  type EditorToolbarState,
+} from "@/components/modes/markdown-editor-mode"
+import { ProfessorMode } from "@/components/modes/professor-mode"
 import { cn } from "@/lib/utils"
 
 import type { FileItem } from "@/components/chat/full-chat-app"
 import type { WorkspaceMode } from "@/pages/assistant-page"
 
-const MODES: { id: WorkspaceMode; label: string; icon: React.ReactNode }[] = [
+const MODES: { id: WorkspaceMode; label: string; icon: ReactNode }[] = [
   { id: "consultant", label: "Consultant", icon: <MessagesSquare className="size-4" /> },
   { id: "editor", label: "Editor", icon: <FilePenLine className="size-4" /> },
   { id: "professor", label: "Professor", icon: <BookOpen className="size-4" /> },
 ]
-
-function EmptyMode({ label }: { label: string }) {
-  return (
-    <div className="flex flex-1 items-center justify-center px-6 py-10">
-      <div className="text-center">
-        <p className="text-sm font-medium text-foreground">{label}</p>
-      </div>
-    </div>
-  )
-}
 
 type WorkspaceModesProps = {
   mode: WorkspaceMode
@@ -31,6 +29,9 @@ type WorkspaceModesProps = {
   documentValue: string
   onDocumentChange: (value: string) => void
   onConversationStateChange?: (hasConversation: boolean) => void
+  onResponseContextChange?: (context: ResponseContext | null) => void
+  activeCitationId?: string | null
+  onActiveCitationChange?: (citationId: string | null) => void
 }
 
 export function WorkspaceModes({
@@ -40,27 +41,76 @@ export function WorkspaceModes({
   documentValue,
   onDocumentChange,
   onConversationStateChange,
+  onResponseContextChange,
+  activeCitationId,
+  onActiveCitationChange,
 }: WorkspaceModesProps) {
+  const [toolbarState, setToolbarState] = useState<EditorToolbarState | null>(null)
+
+  useEffect(() => {
+    if (mode !== "editor") setToolbarState(null)
+  }, [mode])
+
+  function triggerEditorAction(action: EditorToolbarAction) {
+    window.dispatchEvent(new CustomEvent("editor:toolbar-action", { detail: { action } }))
+  }
+
   return (
-    <div className="flex min-h-dvh flex-col bg-[#fcf7ee]">
-      <header className="sticky top-0 z-30 bg-[#fcf7ee]/94 backdrop-blur">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-1.5">
-          <div className="min-w-0">
-            <p className="text-[0.64rem] font-semibold tracking-[0.16em] text-[#9b866f] uppercase">
-              {MODES.find((item) => item.id === mode)?.label}
-            </p>
-            <div className="mt-1 flex items-center gap-1.5 text-[0.76rem] text-[#6b533e]">
-              <FileText className="size-3.5" />
-              <span className="truncate">
-                {activeFile ? activeFile.name : "No file selected"}
-              </span>
-            </div>
+    <div className="flex min-h-dvh flex-col bg-[#f4f5f7]">
+      <header className="sticky top-0 z-30 bg-[#f4f5f7]/96 backdrop-blur">
+        <div className="relative min-h-[4.75rem] px-10 py-4">
+          <div className="absolute right-[calc(50%+4.5rem)] top-1/2 hidden -translate-y-1/2 items-center gap-4 lg:flex">
+            <AnimatePresence mode="popLayout">
+              {mode === "editor" && toolbarState ? (
+                <motion.div
+                  key="left-toolbar"
+                  initial={{ opacity: 0, x: 10, scale: 0.98 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 10, scale: 0.98 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="flex items-center gap-4"
+                >
+                  <ToolbarGroup>
+                    <ToolbarIconButton
+                      label="Zoom out"
+                      icon={Minus}
+                      onClick={() => triggerEditorAction("zoom-out")}
+                    />
+                    <span className="min-w-12 px-1 text-center text-[0.68rem] font-medium tracking-[0.14em] text-[#111827] uppercase">
+                      {toolbarState.zoom}%
+                    </span>
+                    <ToolbarIconButton
+                      label="Zoom in"
+                      icon={Plus}
+                      onClick={() => triggerEditorAction("zoom-in")}
+                    />
+                  </ToolbarGroup>
+                  <ToolbarGroup>
+                    {toolbarState.leftButtons.map((item) => (
+                      <ToolbarIconButton
+                        key={item.id}
+                        label={item.label}
+                        icon={item.icon}
+                        active={item.active}
+                        onClick={() => triggerEditorAction(item.id)}
+                      />
+                    ))}
+                  </ToolbarGroup>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
-          <div className="rounded-[18px] border border-[#e6dbc9] bg-white/85 p-1.5 shadow-[0_8px_24px_rgba(112,90,68,0.08)]">
+
+          <motion.div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#d6dce5] bg-white/85 px-3 py-2.5 shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
             <AnimatedBackground
               defaultValue={mode}
               onValueChange={(next) => onModeChange(next as WorkspaceMode)}
-              className="rounded-[12px] bg-[#f1e6d4]"
+              className="rounded-full bg-[#eef2f7]"
             >
               {MODES.map((modeItem) => (
                 <button
@@ -70,28 +120,70 @@ export function WorkspaceModes({
                   aria-label={modeItem.label}
                   title={modeItem.label}
                   className={cn(
-                    "inline-flex size-8 items-center justify-center rounded-[10px] text-[#8f7b68] transition-colors duration-100 focus-visible:outline-2",
-                    mode === modeItem.id && "text-[#4c3a2c]"
+                    "inline-flex size-8 items-center justify-center rounded-full text-[#667085] transition-colors duration-100 focus-visible:outline-2",
+                    mode === modeItem.id && "text-[#111827]"
                   )}
                 >
                   {modeItem.icon}
                 </button>
               ))}
             </AnimatedBackground>
-          </div>
-          <div className="min-w-0 text-right">
-            <p className="text-[0.62rem] font-semibold tracking-[0.16em] text-[#9b866f] uppercase">
-              Current State
-            </p>
-            <p className="mt-1 truncate text-[0.74rem] text-[#6b533e]">
-              {mode === "consultant"
-                ? "Ready for prompt"
-                : mode === "editor"
-                  ? activeFile
-                    ? "Editing current document"
-                    : "Draft ready"
-                  : "Waiting"}
-            </p>
+          </motion.div>
+
+          <div className="absolute left-[calc(50%+4.5rem)] top-1/2 hidden -translate-y-1/2 items-center gap-4 lg:flex">
+            <AnimatePresence mode="popLayout">
+              {mode === "editor" && toolbarState ? (
+                <motion.div
+                  key="right-toolbar"
+                  initial={{ opacity: 0, x: -10, scale: 0.98 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -10, scale: 0.98 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="flex items-center gap-4"
+                >
+                  <ToolbarGroup>
+                    {toolbarState.rightButtons.map((item) => (
+                      <ToolbarIconButton
+                        key={item.id}
+                        label={item.label}
+                        icon={item.icon}
+                        active={item.active}
+                        onClick={() => triggerEditorAction(item.id)}
+                      />
+                    ))}
+                  </ToolbarGroup>
+                  {toolbarState.isViewerFile ? (
+                    <ToolbarGroup>
+                      <ToolbarIconButton
+                        label="View"
+                        icon={Eye}
+                        active={toolbarState.surfaceMode === "view"}
+                        onClick={() => triggerEditorAction("view")}
+                      />
+                      {toolbarState.canEdit ? (
+                        <ToolbarIconButton
+                          label="Edit"
+                          icon={PencilLine}
+                          active={toolbarState.surfaceMode === "edit"}
+                          onClick={() => triggerEditorAction("edit")}
+                        />
+                      ) : null}
+                    </ToolbarGroup>
+                  ) : null}
+                  {toolbarState.sourceUrl ? (
+                    <a
+                      href={toolbarState.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#d6dce5] bg-white/85 px-3 text-[0.68rem] font-medium text-[#111827] shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
+                    >
+                      <FileText className="size-3.5" />
+                      Source file
+                    </a>
+                  ) : null}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
       </header>
@@ -102,16 +194,55 @@ export function WorkspaceModes({
           onOpenEditor={() => onModeChange("editor")}
           onDocumentChange={onDocumentChange}
           onConversationStateChange={onConversationStateChange}
+          onResponseContextChange={onResponseContextChange}
+          activeCitationId={activeCitationId}
+          onActiveCitationChange={onActiveCitationChange}
         />
       ) : mode === "editor" ? (
         <MarkdownEditorMode
           activeFile={activeFile}
           value={documentValue}
           onChange={onDocumentChange}
+          onToolbarStateChange={setToolbarState}
         />
       ) : (
-        <EmptyMode label="Professor" />
+        <ProfessorMode />
       )}
     </div>
+  )
+}
+
+function ToolbarGroup({ children }: { children: ReactNode }) {
+  return (
+    <div className="inline-flex items-center rounded-full border border-[#d6dce5] bg-white/85 px-2 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
+      {children}
+    </div>
+  )
+}
+
+function ToolbarIconButton({
+  label,
+  icon: Icon,
+  active = false,
+  onClick,
+}: {
+  label: string
+  icon: EditorToolbarButton["icon"]
+  active?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={cn(
+        "inline-flex size-8 items-center justify-center rounded-full text-[#667085] transition-colors duration-100 focus-visible:outline-2 lg:size-9",
+        active && "bg-[#eef2f7] text-[#111827]"
+      )}
+    >
+      <Icon className="size-4" />
+    </button>
   )
 }

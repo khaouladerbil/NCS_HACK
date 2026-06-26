@@ -39,8 +39,26 @@ Last updated: 2026-06-26
 - Editor suggestions now appear inline near the caret, and the editor can switch into viewer mode for `pdf` and `docx` files.
 - Left folders now open with animated accordion motion, and the right rail stays empty until a matter begins.
 - Editor now paginates long documents, supports page navigation + zoom, and keeps editing constrained to a stable page-sized writing surface.
-- Left rail now exposes visible text-led actions for new document, new folder, and settings; footer settings row is clickable as a whole.
+- Left rail now keeps settings at the bottom, with add-folder beside folder count and add-file beside each folder name.
 - Chat content now sits higher above the sticky composer, message editing stays in place without layout jumps, and action toasts cover more workspace actions.
+- Workspace palette now uses higher-contrast neutral surfaces instead of the earlier cream-heavy treatment.
+- Prompt suggestion chips now live inside the composer shell as a horizontal scroller and auto-hide once drafting begins.
+- Editor right rail now swaps away from matter-tracking into document utilities, and the formatting dock now lives on the paper canvas instead of the viewport bottom.
+- Editor autocomplete now renders as inline ghost text rather than a black suggestion pill.
+- User-prompt editing now reloads the prompt back into the sticky composer instead of opening a brittle inline edit state.
+- Left rail file actions now live in compact three-dot menus, folder chevrons follow standard collapsed/expanded direction, and long file names prefer readable wrapping over eager truncation.
+- Settings now uses a compact card layout with a single-column profile form and left-aligned save flow.
+- Consultant header now hides empty file subtitle, prompt streaming can be stopped mid-generation, and sidebar toggle pills now peek out while closed.
+- Left rail now supports double-click folder rename, add-file buttons next to folder names, slightly larger folder labels, smaller file labels, and drag-handle file moves/reordering.
+- Editor now uses stacked page canvases with zoom scaling the page itself, a pill-style top toolbar, clickable TOC wiring through the right rail, and real sample PDF/DOCX assets in `public/test-docs/`.
+- Professor mode now shows study modules as expandable visual cards instead of an empty placeholder.
+- Folder and file creation now use a local centered dialog component instead of `window.prompt`.
+- Consultant top-left header metadata now hides entirely when no file is active.
+- Folder rename now works directly in place on double-click, while editor TOC clicks jump and autoscroll for markdown, PDF, and DOCX-backed views.
+- Closed-folder headers now act as file drop targets, so dragged files can move into collapsed folders.
+- Sidebar folder count keeps a compact add-folder icon beside it; folder labels are larger and file labels are smaller.
+- Settings page now reuses the same sidebar chrome/components as the assistant workspace.
+- Editor formatting controls now flank the always-centered mode tabs, sharing the same pill/tab button styling.
 
 ## Notes
 

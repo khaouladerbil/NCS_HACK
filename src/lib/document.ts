@@ -1,3 +1,17 @@
+type OutlineItem = {
+  id: string
+  label: string
+  page: number
+}
+
+type DocumentAsset = {
+  sourceUrl?: string
+  editable: boolean
+  pages?: string[]
+  draft?: string
+  outline?: OutlineItem[]
+}
+
 const DEFAULT_DOCUMENT = ""
 
 const LEGAL_AUTOCOMPLETE = [
@@ -15,65 +29,216 @@ const LEGAL_AUTOCOMPLETE = [
   "without prejudice",
 ]
 
+const TEST_DOCUMENTS: Record<string, DocumentAsset> = {
+  "Smith v Jones.pdf": {
+    sourceUrl: "/test-docs/smith-v-jones.pdf",
+    editable: false,
+    pages: [
+      `# Smith v Jones
+
+## Case Summary
+
+This sample PDF records dispute background, notice timing, and requested relief.
+
+## Parties
+
+- Plaintiff: John Smith
+- Defendant: Amelia Jones
+- Venue: Superior Court
+`,
+      `## Procedural History
+
+1. Complaint filed.
+2. Notice served.
+3. Response deadline calculated.
+
+## Relief Requested
+
+Plaintiff seeks declaratory relief, costs, and compliance with notice requirements.
+`,
+      `## Review Notes
+
+> Confirm dates, service method, and operative clause before drafting response.
+
+## Citations
+
+- State Code 104.B
+- Lease Section 8.1
+- Service Clause 12
+`,
+    ],
+    outline: [
+      { id: "case-summary", label: "Case Summary", page: 0 },
+      { id: "procedural-history", label: "Procedural History", page: 1 },
+      { id: "review-notes", label: "Review Notes", page: 2 },
+    ],
+  },
+  "Plaintiff Brief.docx": {
+    sourceUrl: "/test-docs/plaintiff-brief.docx",
+    editable: true,
+    draft: `# Plaintiff Brief
+
+## Introduction
+
+Plaintiff submits this brief in support of the motion for declaratory relief.
+
+## Facts
+
+1. Written notice was issued on May 4.
+2. Cure period expired on June 3.
+3. Defendant did not provide conforming response.
+
+## Analysis
+
+The controlling clause requires written notice, a defined cure period, and an effective date tied to delivery.
+
+## Requested Relief
+
+Plaintiff requests confirmation of breach, enforcement of obligations, and costs.`,
+  },
+  "NDA Template.docx": {
+    sourceUrl: "/test-docs/nda-template.docx",
+    editable: true,
+    draft: `# Mutual Non-Disclosure Agreement
+
+## Parties
+
+This agreement is entered by and between Discloser and Recipient.
+
+## Confidential Information
+
+Confidential information includes materials marked confidential or reasonably understood to be confidential.
+
+## Term
+
+Obligations survive for three years from disclosure.
+
+## Governing Law
+
+This agreement is governed by the laws stated in the final signature block.`,
+  },
+  "Service Agreement.pdf": {
+    sourceUrl: "/test-docs/service-agreement.pdf",
+    editable: false,
+    pages: [
+      `# Service Agreement
+
+## Scope
+
+Vendor provides drafting, review, and filing support.
+`,
+      `## Fees
+
+Fees accrue monthly and become due within fifteen days of invoice.
+`,
+      `## Termination
+
+Termination requires written notice and a documented effective date.
+`,
+    ],
+    outline: [
+      { id: "scope", label: "Scope", page: 0 },
+      { id: "fees", label: "Fees", page: 1 },
+      { id: "termination", label: "Termination", page: 2 },
+    ],
+  },
+}
+
 export function createDocumentFromFile(file: { name: string } | null) {
   if (!file) return DEFAULT_DOCUMENT
 
-  return `${file.name.replace(/\.[^.]+$/, "")}
+  const asset = TEST_DOCUMENTS[file.name]
+  if (asset?.draft) return asset.draft
 
-Matter
-Working legal draft
+  return `# ${file.name.replace(/\.[^.]+$/, "")}
 
-Facts
-1. Review the selected source file.
-2. Extract the controlling facts.
-3. Record the dates, parties, and deadlines.
+## Matter
 
-Analysis
-Summarize the operative legal effect of the selected document and identify any ambiguity that requires follow-up review.
+Working legal draft.
 
-Next Step
-Draft the next filing, notice, or client-facing explanation.
+## Facts
+
+1. Review selected source file.
+2. Extract controlling facts.
+3. Record dates, parties, and deadlines.
+
+## Analysis
+
+Summarize operative legal effect and note any ambiguity requiring follow-up.
+
+## Next Step
+
+Draft next filing, notice, or client-facing explanation.
 `
 }
 
+export function getDocumentAsset(file: { name: string } | null) {
+  if (!file) return null
+  return TEST_DOCUMENTS[file.name] ?? null
+}
+
 export function createViewerDocument(file: { name: string; ext?: string } | null) {
-  if (!file) return ""
+  if (!file) return []
 
-  const kind = file.ext?.toLowerCase()
+  const asset = getDocumentAsset(file)
+  if (asset?.pages?.length) return asset.pages
+  if (asset?.draft) return paginateDocument(asset.draft)
 
-  if (kind === "pdf") {
-    return `Filed Document
+  return paginateDocument(createDocumentFromFile(file))
+}
 
-Document
-${file.name}
+export function paginateDocument(value: string, pageSize = 2200) {
+  if (!value.trim()) return [""]
 
-Summary
-This PDF is loaded in review mode. The current workspace is set up to inspect the document structure, key sections, and draft related output without altering the source file.
+  const chunks: string[] = []
+  let rest = value
 
-Review Notes
-1. Confirm title page and clause numbering.
-2. Check notice language, dates, and service method.
-3. Draft follow-up text in a separate working document when needed.
-`
+  while (rest.length > pageSize) {
+    const splitAt = rest.lastIndexOf("\n\n", pageSize)
+    const index = splitAt > pageSize * 0.45 ? splitAt : pageSize
+    chunks.push(rest.slice(0, index).trim())
+    rest = rest.slice(index).trimStart()
   }
 
-  if (kind === "docx") {
-    return `Word Document
+  chunks.push(rest)
+  return chunks
+}
 
-Document
-${file.name}
+export function replaceDocumentPage(pages: string[], pageIndex: number, nextPageValue: string) {
+  return pages
+    .map((page, index) => (index === pageIndex ? nextPageValue : page))
+    .join("\n\n")
+}
 
-Summary
-This Word-style document is shown in viewer mode first, with editing available in the working draft surface.
+export function getDocumentOutline(
+  file: { name: string; ext?: string } | null,
+  value: string
+) {
+  const asset = getDocumentAsset(file)
+  if (asset?.outline?.length) return asset.outline
 
-Review Notes
-1. Inspect headings and paragraph flow.
-2. Extract operative facts and deadlines.
-3. Move into edit mode when you want to rewrite or extend the draft.
-`
-  }
+  const pages = paginateDocument(value)
+  const outline: OutlineItem[] = []
 
-  return createDocumentFromFile(file)
+  pages.forEach((page, pageIndex) => {
+    page.split("\n").forEach((line, lineIndex) => {
+      const match = line.match(/^#{1,3}\s+(.+)/)
+      if (!match) return
+      outline.push({
+        id: `heading-${pageIndex}-${lineIndex}`,
+        label: match[1].trim(),
+        page: pageIndex,
+      })
+    })
+  })
+
+  if (outline.length) return outline
+
+  return pages.map((_, page) => ({
+    id: `page-${page}`,
+    label: `Page ${page + 1}`,
+    page,
+  }))
 }
 
 export function getAutocompleteSuggestions(value: string) {
@@ -98,11 +263,11 @@ export function getAiSuggestions(value: string) {
   }
 
   if (!normalized.includes("effective date")) {
-    suggestions.push("State the effective date in one direct sentence.")
+    suggestions.push("State effective date in one direct sentence.")
   }
 
   if (!normalized.includes("notice")) {
-    suggestions.push("Clarify the notice method and deadline.")
+    suggestions.push("Clarify notice method and deadline.")
   }
 
   if (!normalized.includes("remedy")) {
@@ -110,8 +275,10 @@ export function getAiSuggestions(value: string) {
   }
 
   if (suggestions.length < 3) {
-    suggestions.push("Tighten the operative clause into shorter sentences.")
+    suggestions.push("Tighten operative clause into shorter sentences.")
   }
 
   return suggestions.slice(0, 3)
 }
+
+export type { OutlineItem }
