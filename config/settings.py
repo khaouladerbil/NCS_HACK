@@ -144,7 +144,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "NCS Hack API",
+    "TITLE": "Legal Path API",
     "VERSION": "1.0.0",
 }
 

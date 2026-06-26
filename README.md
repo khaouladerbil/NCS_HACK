@@ -1,4 +1,4 @@
-# NCS HACK - Legal Tech Platform
+# Legal Path
 
 Backend API for an Algerian legal tech platform with AI-assisted case management, lawyer directory, and document drafting.
 

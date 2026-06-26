@@ -9,7 +9,7 @@ def geocode(query: str) -> tuple[float, float] | None:
         f"https://nominatim.openstreetmap.org/search"
         f"?q={quote(query)}&format=json&limit=1&countrycodes=dz"
     )
-    req = Request(url, headers={"User-Agent": "NCS_Hack/1.0"})
+    req = Request(url, headers={"User-Agent": "LegalPath/1.0"})
     try:
         with urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read())
