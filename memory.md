@@ -9,6 +9,8 @@ Last updated: 2026-06-26
 - shadcn/ui and Prompt Kit components installed.
 - HeroUI installed for top mode buttons.
 - Active routes:
+  - `/`
+  - `/auth`
   - `/assistant`
   - `/settings`
 
@@ -18,6 +20,8 @@ Last updated: 2026-06-26
 - Chat feature in `src/components/chat/**`.
 - Top mode switch in `src/components/modes/workspace-modes.tsx`.
 - Assistant page is primary implemented route.
+- Landing page now owns `/`, using a warm serif-forward legal brand presentation and routing CTAs into `/assistant`.
+- Auth flow now lives at `/auth`, with login/signup mode switch, Google option, and a front-end onboarding step before entering `/assistant`.
 - Settings page is routed and profile-led.
 - Main content is full-screen.
 - Left navigation overlays above content instead of affecting width.
@@ -59,10 +63,13 @@ Last updated: 2026-06-26
 - Sidebar folder count keeps a compact add-folder icon beside it; folder labels are larger and file labels are smaller.
 - Settings page now reuses the same sidebar chrome/components as the assistant workspace.
 - Editor formatting controls now flank the always-centered mode tabs, sharing the same pill/tab button styling.
+- Editor now uses a more premium docs-style paper system with typography-scaled zoom, inline ghost autocomplete at the caret, completion chips, and Pretext-backed text measurement.
+- Consultant now uses the shared refined beige/gold system with stronger typography and Pretext-backed reserved heights for streamed legal answer paragraphs.
 
 ## Notes
 
 - Prompt Kit components in active use: `prompt-input`, `message`, `markdown`, `chat-container`, `scroll-button`, `source`, `text-shimmer`.
+- `@chenglou/pretext` is installed and wrapped by `src/lib/pretext.ts`; shared width observation lives in `src/hooks/use-element-width.ts`.
 - Lightweight local motion text components added in `src/components/core/text-effect.tsx` and `src/components/core/text-shimmer-wave.tsx`.
 - `motion-primitives` morphing dialog was installed, then ported into `src/components/core/morphing-dialog.tsx`.
 - Browser runtime verified clean after fixing nested-button and tooltip wrapper issues from generated components.

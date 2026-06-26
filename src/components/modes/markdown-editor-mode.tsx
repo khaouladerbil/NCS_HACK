@@ -20,6 +20,7 @@ import {
   List,
   ListOrdered,
   MessageSquareQuote,
+  Sparkles,
   Strikethrough,
   Underline,
 } from "lucide-react"
@@ -42,6 +43,11 @@ import {
   paginateDocument,
   replaceDocumentPage,
 } from "@/lib/document"
+import {
+  layoutPretextLines,
+  measurePretextBlock,
+  measurePretextNaturalWidth,
+} from "@/lib/pretext"
 
 import type { FileItem } from "@/components/chat/full-chat-app"
 
@@ -90,6 +96,46 @@ export type EditorToolbarState = {
 
 const PAGE_HEIGHT = 1020
 const PAGE_WIDTH = 760
+const PAGE_PADDING_X = 58
+const PAGE_HEADER_BAND = 78
+const PAGE_FOOTER_BAND = 54
+const PAGE_TEXT_GAP = 16
+const BASE_FONT_SIZE = 16
+const BASE_LINE_HEIGHT = 28
+const EDITOR_FONT_STACK =
+  '"Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif'
+
+function getEditorCanvasFont(fontSize: number) {
+  return `400 ${fontSize}px ${EDITOR_FONT_STACK}`
+}
+
+function getEditorMetrics(scale: number) {
+  const pageWidth = Math.round(PAGE_WIDTH * scale)
+  const pageHeight = Math.round(PAGE_HEIGHT * scale)
+  const paddingX = PAGE_PADDING_X * scale
+  const headerBand = PAGE_HEADER_BAND * scale
+  const footerBand = PAGE_FOOTER_BAND * scale
+  const fontSize = BASE_FONT_SIZE * scale
+  const lineHeight = BASE_LINE_HEIGHT * scale
+  const textTop = headerBand + PAGE_TEXT_GAP * scale
+  const textBottom = footerBand + PAGE_TEXT_GAP * scale
+  const textHeight = pageHeight - textTop - textBottom
+  const textWidth = pageWidth - paddingX * 2
+
+  return {
+    pageWidth,
+    pageHeight,
+    paddingX,
+    headerBand,
+    footerBand,
+    textTop,
+    textBottom,
+    textHeight,
+    textWidth,
+    fontSize,
+    lineHeight,
+  }
+}
 
 function mergeDocxStyles(...styles: DocxStyleProperties[]) {
   return styles.reduce<DocxStyleProperties>(
@@ -148,6 +194,10 @@ function getGhostSuggestion(value: string, suggestion: string | undefined) {
   return suggestion
 }
 
+function getPageWordCount(value: string) {
+  return value.trim() ? value.trim().split(/\s+/).length : 0
+}
+
 export function MarkdownEditorMode({
   activeFile,
   value,
@@ -158,7 +208,7 @@ export function MarkdownEditorMode({
   const pageRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const [activePage, setActivePage] = useState(0)
   const [selection, setSelection] = useState({ start: 0, end: 0 })
-  const [focused, setFocused] = useState(false)
+  const [focusedPage, setFocusedPage] = useState<number | null>(null)
   const [surfaceMode, setSurfaceMode] = useState<"view" | "edit">("edit")
   const [zoom, setZoom] = useState(100)
   const [autocompletePulse, setAutocompletePulse] = useState(false)
@@ -186,13 +236,29 @@ export function MarkdownEditorMode({
     [activePageValue]
   )
   const aiSuggestions = useMemo(() => getAiSuggestions(activePageValue), [activePageValue])
-  const activeSuggestion = autocomplete[0] ?? aiSuggestions[0]
+  const suggestionOptions = useMemo(
+    () => Array.from(new Set([...autocomplete, ...aiSuggestions])).slice(0, 4),
+    [aiSuggestions, autocomplete]
+  )
+  const activeSuggestion = suggestionOptions[0]
   const ghostSuggestion = getGhostSuggestion(activePageValue, activeSuggestion)
   const selectionState = useMemo(
     () => getSelectionState(activePageValue, selection.start, selection.end),
     [activePageValue, selection.end, selection.start]
   )
   const scale = zoom / 100
+  const metrics = useMemo(() => getEditorMetrics(scale), [scale])
+  const wordCount = useMemo(() => getPageWordCount(activePageValue), [activePageValue])
+  const pageTextMeasurement = useMemo(
+    () =>
+      measurePretextBlock(
+        activePageValue,
+        getEditorCanvasFont(metrics.fontSize),
+        metrics.textWidth,
+        metrics.lineHeight
+      ),
+    [activePageValue, metrics.fontSize, metrics.lineHeight, metrics.textWidth]
+  )
   const docxPages = useMemo(() => {
     const groups = new Map<number, DocxParagraphContent[]>()
     docxContent.forEach((paragraph) => {
@@ -207,10 +273,47 @@ export function MarkdownEditorMode({
   }, [docxContent])
   const visibleDocxPages = docxPages.length ? docxPages : [{ page: 1, paragraphs: [] }]
 
+  const caretMetrics = useMemo(() => {
+    if (!editable || !ghostSuggestion) return null
+
+    const caret = Math.max(selection.start, selection.end)
+    const prefix = activePageValue.slice(0, caret)
+    const trailingNewline = prefix.endsWith("\n")
+    const layoutResult = layoutPretextLines(
+      prefix,
+      getEditorCanvasFont(metrics.fontSize),
+      metrics.textWidth,
+      metrics.lineHeight
+    )
+    const lineCount = trailingNewline
+      ? layoutResult.lineCount + 1
+      : Math.max(1, layoutResult.lineCount)
+    const lastLineText = trailingNewline ? "" : layoutResult.lines.at(-1)?.text ?? ""
+    const x = lastLineText
+      ? measurePretextNaturalWidth(lastLineText, getEditorCanvasFont(metrics.fontSize))
+      : 0
+    const maxX = Math.max(0, metrics.textWidth - metrics.fontSize * 5)
+
+    return {
+      left: Math.min(x, maxX),
+      top: (lineCount - 1) * metrics.lineHeight,
+    }
+  }, [
+    activePageValue,
+    editable,
+    ghostSuggestion,
+    metrics.fontSize,
+    metrics.lineHeight,
+    metrics.textWidth,
+    selection.end,
+    selection.start,
+  ])
+
   useEffect(() => {
     setSurfaceMode(isPdf ? "view" : "edit")
     setActivePage(0)
     setSelection({ start: 0, end: 0 })
+    setFocusedPage(null)
   }, [activeFile?.id, isPdf])
 
   useEffect(() => {
@@ -409,25 +512,30 @@ export function MarkdownEditorMode({
     })
   }
 
-  function applyAutocomplete() {
+  function applyAutocomplete(suggestion = activeSuggestion) {
     const textarea = textareaRefs.current[safePage]
-    if (!textarea || !activeSuggestion) return
+    if (!textarea || !suggestion) return
 
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
-    const insertion =
-      autocomplete[0] === activeSuggestion
-        ? activeSuggestion
-        : `${activePageValue.trim() ? " " : ""}${activeSuggestion}`
-
+    const prefix = activePageValue.slice(0, start)
+    const trailingMatch = prefix.match(/([A-Za-z]+)$/)
+    const fromAutocomplete = autocomplete.includes(suggestion)
+    const replaceFrom = fromAutocomplete && trailingMatch ? start - trailingMatch[1].length : start
+    const needsLeadingGap =
+      !fromAutocomplete &&
+      replaceFrom > 0 &&
+      !/\s$/.test(activePageValue.slice(0, replaceFrom))
+    const insertion = `${needsLeadingGap ? " " : ""}${suggestion}`
     const nextValue =
-      activePageValue.slice(0, start) + insertion + activePageValue.slice(end)
+      activePageValue.slice(0, replaceFrom) + insertion + activePageValue.slice(end)
 
     updatePage(safePage, nextValue)
+    setAutocompletePulse(true)
 
     requestAnimationFrame(() => {
       textarea.focus()
-      const nextCaret = start + insertion.length
+      const nextCaret = replaceFrom + insertion.length
       textarea.setSelectionRange(nextCaret, nextCaret)
       syncSelection(safePage)
     })
@@ -445,7 +553,15 @@ export function MarkdownEditorMode({
             { id: "italic", label: "Italic", icon: Italic, active: selectionState.italic },
             { id: "underline", label: "Underline", icon: Underline, active: selectionState.underline },
           ],
-    [isDocx, selectionState.bold, selectionState.h1, selectionState.h2, selectionState.h3, selectionState.italic, selectionState.underline]
+    [
+      isDocx,
+      selectionState.bold,
+      selectionState.h1,
+      selectionState.h2,
+      selectionState.h3,
+      selectionState.italic,
+      selectionState.underline,
+    ]
   )
 
   const rightButtons: EditorToolbarButton[] = useMemo(
@@ -561,11 +677,11 @@ export function MarkdownEditorMode({
         className="min-h-[1.5em] rounded px-1 py-0.5 transition-colors hover:bg-black/[0.025]"
         style={{
           marginTop: paragraphStyle.spacing?.before
-            ? `${paragraphStyle.spacing.before / 20}pt`
+            ? `${(paragraphStyle.spacing.before / 20) * scale}pt`
             : undefined,
           marginBottom: paragraphStyle.spacing?.after
-            ? `${paragraphStyle.spacing.after / 20}pt`
-            : "0.42rem",
+            ? `${(paragraphStyle.spacing.after / 20) * scale}pt`
+            : `${0.42 * scale}rem`,
           lineHeight: paragraphStyle.spacing?.line
             ? `${paragraphStyle.spacing.line / 240}`
             : undefined,
@@ -596,12 +712,12 @@ export function MarkdownEditorMode({
                 editable && "focus:bg-[#eef2f7] focus-visible:bg-[#eef2f7]"
               )}
               style={{
-                fontFamily: segmentStyle.fontFamily ?? "Times New Roman",
-                fontSize: segmentStyle.fontSize ? `${segmentStyle.fontSize}pt` : "12pt",
-                fontWeight:
-                  segment.bold || segmentStyle.bold ? "700" : "400",
-                fontStyle:
-                  segment.italic || segmentStyle.italic ? "italic" : "normal",
+                fontFamily: segmentStyle.fontFamily ?? EDITOR_FONT_STACK,
+                fontSize: segmentStyle.fontSize
+                  ? `${segmentStyle.fontSize * scale}pt`
+                  : `${12 * scale}pt`,
+                fontWeight: segment.bold || segmentStyle.bold ? "700" : "400",
+                fontStyle: segment.italic || segmentStyle.italic ? "italic" : "normal",
                 textDecoration:
                   [
                     segment.underline || segmentStyle.underline ? "underline" : "",
@@ -622,35 +738,83 @@ export function MarkdownEditorMode({
 
   const markdownComponents = {
     h1: ({ children }: { children?: ReactNode }) => (
-      <h1 className="mb-7 text-center text-[1.8rem] font-semibold text-black">{children}</h1>
+      <h1
+        className="mb-7 text-center font-semibold text-[#1f140d]"
+        style={{
+          fontFamily: EDITOR_FONT_STACK,
+          fontSize: `${metrics.fontSize * 1.88}px`,
+          lineHeight: `${metrics.lineHeight * 1.18}px`,
+        }}
+      >
+        {children}
+      </h1>
     ),
     h2: ({ children }: { children?: ReactNode }) => (
-      <h2 className="mb-3 mt-7 text-[1.12rem] font-semibold text-black">{children}</h2>
+      <h2
+        className="mb-3 mt-7 font-semibold text-[#24170f]"
+        style={{
+          fontFamily: EDITOR_FONT_STACK,
+          fontSize: `${metrics.fontSize * 1.2}px`,
+          lineHeight: `${metrics.lineHeight * 1.1}px`,
+        }}
+      >
+        {children}
+      </h2>
     ),
     p: ({ children }: { children?: ReactNode }) => (
-      <p className="mb-3 text-[1rem] leading-7 text-black">{children}</p>
+      <p
+        className="mb-3 text-[#221912]"
+        style={{
+          fontFamily: EDITOR_FONT_STACK,
+          fontSize: `${metrics.fontSize}px`,
+          lineHeight: `${metrics.lineHeight}px`,
+        }}
+      >
+        {children}
+      </p>
     ),
     ol: ({ children }: { children?: ReactNode }) => (
-      <ol className="mb-3 ml-6 list-decimal space-y-1 text-[1rem] leading-7 text-black">
+      <ol
+        className="mb-3 ml-6 list-decimal space-y-1 text-[#221912]"
+        style={{
+          fontFamily: EDITOR_FONT_STACK,
+          fontSize: `${metrics.fontSize}px`,
+          lineHeight: `${metrics.lineHeight}px`,
+        }}
+      >
         {children}
       </ol>
     ),
     ul: ({ children }: { children?: ReactNode }) => (
-      <ul className="mb-3 ml-6 list-disc space-y-1 text-[1rem] leading-7 text-black">
+      <ul
+        className="mb-3 ml-6 list-disc space-y-1 text-[#221912]"
+        style={{
+          fontFamily: EDITOR_FONT_STACK,
+          fontSize: `${metrics.fontSize}px`,
+          lineHeight: `${metrics.lineHeight}px`,
+        }}
+      >
         {children}
       </ul>
     ),
     blockquote: ({ children }: { children?: ReactNode }) => (
-      <blockquote className="my-5 border-l-2 border-black/20 pl-4 italic text-black/78">
+      <blockquote
+        className="my-5 border-l-2 border-[#d9c6b2] pl-4 italic text-[#5e4a3a]"
+        style={{
+          fontFamily: EDITOR_FONT_STACK,
+          fontSize: `${metrics.fontSize * 0.98}px`,
+          lineHeight: `${metrics.lineHeight}px`,
+        }}
+      >
         {children}
       </blockquote>
     ),
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col bg-[#f4f5f7]">
-      <div className="flex flex-1 justify-center overflow-y-auto px-4 pb-32 pt-6 md:px-6">
-        <div className="flex w-full max-w-[1120px] flex-col items-center space-y-6">
+    <section className="flex min-h-0 flex-1 flex-col bg-[radial-gradient(circle_at_top,_rgba(160,128,92,0.14),transparent_25%),linear-gradient(180deg,#f7f2e8_0%,#efe8da_100%)]">
+      <div className="flex flex-1 justify-center overflow-y-auto px-4 pb-32 pt-8 md:px-6">
+        <div className="flex w-full max-w-[1240px] flex-col items-center gap-8">
           {isDocx
             ? visibleDocxPages.map(({ page, paragraphs }, pageIndex) => (
                 <div
@@ -660,42 +824,76 @@ export function MarkdownEditorMode({
                   }}
                   className="relative mx-auto flex w-full justify-center"
                   style={{
-                    width: `${PAGE_WIDTH * scale}px`,
-                    height: `${PAGE_HEIGHT * scale}px`,
+                    width: `${metrics.pageWidth}px`,
+                    minHeight: `${metrics.pageHeight}px`,
                   }}
                 >
                   <article
-                    className="absolute left-1/2 top-0 overflow-hidden rounded-[18px] bg-white shadow-[0_20px_56px_rgba(15,23,42,0.08)]"
+                    className="legal-paper legal-grain relative w-full overflow-hidden rounded-[30px] border border-[#e5d9c9] shadow-[0_26px_80px_rgba(71,46,22,0.12)]"
                     style={{
-                      width: `${PAGE_WIDTH * scale}px`,
-                      minHeight: `${PAGE_HEIGHT * scale}px`,
-                      transform: "translateX(-50%)",
-                      transformOrigin: "top center",
+                      width: `${metrics.pageWidth}px`,
+                      minHeight: `${metrics.pageHeight}px`,
                     }}
                     onClick={() => setActivePage(pageIndex)}
                   >
                     <div
-                      className="origin-top h-full w-full px-[3.2rem] py-[2.8rem] font-['Times_New_Roman',serif]"
+                      className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#eadfce] bg-white/72 text-[#7c634f]"
                       style={{
-                        transform: `scale(${scale})`,
-                        width: `${PAGE_WIDTH}px`,
-                        minHeight: `${PAGE_HEIGHT}px`,
+                        height: `${metrics.headerBand}px`,
+                        paddingInline: `${metrics.paddingX}px`,
                       }}
                     >
-                      <div className="mb-5 flex items-center justify-between text-[0.68rem] tracking-[0.16em] text-black/38 uppercase">
-                        <span>{activeFile?.name?.replace(/\.[^.]+$/, "") ?? "Untitled Draft"}</span>
-                        <span>Page {page}</span>
+                      <div>
+                        <p
+                          className="font-medium uppercase tracking-[0.22em]"
+                          style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.64)}px` }}
+                        >
+                          JusticePath Draftroom
+                        </p>
+                        <p
+                          className="mt-1 text-[#2c2018]"
+                          style={{
+                            fontFamily: EDITOR_FONT_STACK,
+                            fontSize: `${metrics.fontSize * 1.08}px`,
+                          }}
+                        >
+                          {activeFile?.name?.replace(/\.[^.]+$/, "") ?? "Untitled Draft"}
+                        </p>
                       </div>
+                      <div
+                        className="rounded-full border border-[#e2d4c2] bg-[#f7f1e7] px-3 py-1 font-medium text-[#765741]"
+                        style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.7)}px` }}
+                      >
+                        Page {page}
+                      </div>
+                    </div>
+
+                    <div
+                      className="absolute inset-x-0"
+                      style={{
+                        top: `${metrics.textTop}px`,
+                        paddingInline: `${metrics.paddingX}px`,
+                      }}
+                    >
                       {docxLoading ? (
-                        <div className="pt-8 text-center text-[0.92rem] text-black/55">
+                        <div
+                          className="pt-8 text-center text-[#6e5a49]"
+                          style={{ fontSize: `${metrics.fontSize * 0.92}px` }}
+                        >
                           Loading DOCX...
                         </div>
                       ) : docxError ? (
-                        <div className="pt-8 text-center text-[0.92rem] text-[#9f2d20]">
+                        <div
+                          className="pt-8 text-center text-[#9f2d20]"
+                          style={{ fontSize: `${metrics.fontSize * 0.92}px` }}
+                        >
                           {docxError}
                         </div>
                       ) : (
-                        <div className="min-h-[820px] space-y-0.5">
+                        <div
+                          className="space-y-0.5"
+                          style={{ minHeight: `${metrics.textHeight}px` }}
+                        >
                           {paragraphs.map((paragraph) => renderDocxParagraph(paragraph))}
                         </div>
                       )}
@@ -711,17 +909,15 @@ export function MarkdownEditorMode({
                   }}
                   className="relative mx-auto flex w-full justify-center"
                   style={{
-                    width: `${PAGE_WIDTH * scale}px`,
-                    height: `${PAGE_HEIGHT * scale}px`,
+                    width: `${metrics.pageWidth}px`,
+                    minHeight: `${metrics.pageHeight}px`,
                   }}
                 >
                   <article
-                    className="absolute left-1/2 top-0 overflow-hidden rounded-[18px] bg-white shadow-[0_20px_56px_rgba(15,23,42,0.08)]"
+                    className="legal-paper legal-grain relative w-full overflow-hidden rounded-[30px] border border-[#e5d9c9] shadow-[0_26px_80px_rgba(71,46,22,0.12)]"
                     style={{
-                      width: `${PAGE_WIDTH * scale}px`,
-                      minHeight: `${PAGE_HEIGHT * scale}px`,
-                      transform: "translateX(-50%)",
-                      transformOrigin: "top center",
+                      width: `${metrics.pageWidth}px`,
+                      minHeight: `${metrics.pageHeight}px`,
                     }}
                     onClick={() => {
                       setActivePage(pageIndex)
@@ -729,89 +925,202 @@ export function MarkdownEditorMode({
                     }}
                   >
                     <div
-                      className="origin-top h-full w-full px-[3.2rem] py-[2.8rem]"
+                      className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#eadfce] bg-white/72 text-[#7c634f]"
                       style={{
-                        transform: `scale(${scale})`,
-                        width: `${PAGE_WIDTH}px`,
-                        minHeight: `${PAGE_HEIGHT}px`,
+                        height: `${metrics.headerBand}px`,
+                        paddingInline: `${metrics.paddingX}px`,
                       }}
                     >
-                      <div className="mb-5 flex items-center justify-between text-[0.68rem] tracking-[0.16em] text-black/38 uppercase">
-                        <span>{activeFile?.name?.replace(/\.[^.]+$/, "") ?? "Untitled Draft"}</span>
-                        <span>Page {pageIndex + 1}</span>
-                      </div>
-
-                      {editable ? (
-                        <div
-                          className={cn(
-                            "relative rounded-lg font-['Times_New_Roman',serif] transition-shadow duration-200",
-                            autocompletePulse && "shadow-[0_0_0_3px_rgba(15,118,110,0.16)]"
-                          )}
+                      <div>
+                        <p
+                          className="font-medium uppercase tracking-[0.22em]"
+                          style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.64)}px` }}
                         >
-                          <textarea
-                            ref={(node) => {
-                              textareaRefs.current[pageIndex] = node
-                            }}
-                            value={page}
-                            onChange={(event) => {
-                              setIsTyping(true)
-                              setAutocompletePulse(true)
-                              updatePage(pageIndex, event.target.value)
-                            }}
-                            onFocus={() => {
-                              setFocused(true)
-                              setActivePage(pageIndex)
-                            }}
-                            onBlur={() => setFocused(false)}
-                            onClick={() => syncSelection(pageIndex)}
-                            onKeyUp={() => syncSelection(pageIndex)}
-                            onSelect={() => syncSelection(pageIndex)}
-                            onKeyDown={(event) => {
-                              setActivePage(pageIndex)
-                              if (
-                                (event.key === "Tab" || event.key === "ArrowRight") &&
-                                activeSuggestion
-                              ) {
-                                event.preventDefault()
-                                applyAutocomplete()
-                              }
-                            }}
-                            spellCheck
-                            style={{
-                              minHeight: `${PAGE_HEIGHT - 160}px`,
-                              height: `${PAGE_HEIGHT - 160}px`,
-                            }}
-                            className="relative z-10 w-full resize-none overflow-y-auto border-0 bg-transparent font-['Times_New_Roman',serif] text-[1rem] leading-7 text-black outline-none selection:bg-black/10"
-                            placeholder="Begin drafting..."
-                          />
-
-                          <AnimatePresence>
-                            {focused && activePage === pageIndex && ghostSuggestion && !isTyping ? (
-                              <motion.div
-                                key={`${pageIndex}-${ghostSuggestion}`}
-                                className="pointer-events-none absolute bottom-3 right-3 z-20"
-                                initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                                transition={{ duration: 0.16, ease: "easeOut" }}
-                              >
-                                <div className="rounded-full border border-[#cfe4dd] bg-white/96 px-3 py-1 text-[0.68rem] font-medium tracking-[0.02em] text-[#0f766e] shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
-                                  {ghostSuggestion}
-                                </div>
-                              </motion.div>
-                            ) : null}
-                          </AnimatePresence>
+                          JusticePath Draftroom
+                        </p>
+                        <p
+                          className="mt-1 text-[#2c2018]"
+                          style={{
+                            fontFamily: EDITOR_FONT_STACK,
+                            fontSize: `${metrics.fontSize * 1.08}px`,
+                          }}
+                        >
+                          {activeFile?.name?.replace(/\.[^.]+$/, "") ?? "Untitled Draft"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="rounded-full border border-[#e2d4c2] bg-[#f7f1e7] px-3 py-1 font-medium text-[#765741]"
+                          style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.7)}px` }}
+                        >
+                          Page {pageIndex + 1}
                         </div>
-                      ) : (
-                        <div className="font-['Times_New_Roman',serif]">
+                        <div
+                          className="rounded-full border border-[#d5ddcf] bg-[#edf5ea] px-3 py-1 font-medium text-[#36584a]"
+                          style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.7)}px` }}
+                        >
+                          {editable ? "Editing" : "Preview"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {editable ? (
+                      <div
+                        className={cn(
+                          "absolute inset-x-0 overflow-hidden",
+                          autocompletePulse && "shadow-[inset_0_0_0_3px_rgba(15,118,110,0.08)]"
+                        )}
+                        style={{
+                          top: `${metrics.textTop}px`,
+                          paddingInline: `${metrics.paddingX}px`,
+                        }}
+                      >
+                        <textarea
+                          ref={(node) => {
+                            textareaRefs.current[pageIndex] = node
+                          }}
+                          value={page}
+                          onChange={(event) => {
+                            setIsTyping(true)
+                            setAutocompletePulse(true)
+                            updatePage(pageIndex, event.target.value)
+                          }}
+                          onFocus={() => {
+                            setFocusedPage(pageIndex)
+                            setActivePage(pageIndex)
+                          }}
+                          onBlur={() => setFocusedPage(null)}
+                          onClick={() => syncSelection(pageIndex)}
+                          onKeyUp={() => syncSelection(pageIndex)}
+                          onSelect={() => syncSelection(pageIndex)}
+                          onKeyDown={(event) => {
+                            setActivePage(pageIndex)
+                            if (
+                              (event.key === "Tab" || event.key === "ArrowRight") &&
+                              activeSuggestion
+                            ) {
+                              event.preventDefault()
+                              applyAutocomplete()
+                            }
+                          }}
+                          spellCheck
+                          style={{
+                            minHeight: `${metrics.textHeight}px`,
+                            height: `${metrics.textHeight}px`,
+                            fontFamily: EDITOR_FONT_STACK,
+                            fontSize: `${metrics.fontSize}px`,
+                            lineHeight: `${metrics.lineHeight}px`,
+                          }}
+                          className="relative z-10 w-full resize-none overflow-hidden border-0 bg-transparent text-[#1f160f] outline-none selection:bg-[#d9c7b2]/60"
+                          placeholder="Begin drafting..."
+                        />
+
+                        <AnimatePresence>
+                          {focusedPage === pageIndex &&
+                          activePage === pageIndex &&
+                          ghostSuggestion &&
+                          !isTyping &&
+                          caretMetrics ? (
+                            <motion.div
+                              key={`${pageIndex}-${ghostSuggestion}`}
+                              className="pointer-events-none absolute z-20 text-[#b69a7a]"
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 3 }}
+                              transition={{ duration: 0.16, ease: "easeOut" }}
+                              style={{
+                                left: `${metrics.paddingX + caretMetrics.left}px`,
+                                top: `${caretMetrics.top}px`,
+                                fontFamily: EDITOR_FONT_STACK,
+                                fontSize: `${metrics.fontSize}px`,
+                                lineHeight: `${metrics.lineHeight}px`,
+                              }}
+                            >
+                              {ghostSuggestion}
+                            </motion.div>
+                          ) : null}
+                        </AnimatePresence>
+
+                        {focusedPage === pageIndex && suggestionOptions.length ? (
+                          <div
+                            className="absolute right-0 top-0 z-20 max-w-[34%] rounded-[20px] border border-[#e4d8c7] bg-white/96 p-2 shadow-[0_16px_38px_rgba(60,37,17,0.12)]"
+                            style={{ marginRight: `${metrics.paddingX}px` }}
+                          >
+                            <div className="mb-2 flex items-center gap-1.5 text-[#6b5543]">
+                              <Sparkles className="size-3.5" />
+                              <span
+                                className="font-medium uppercase tracking-[0.18em]"
+                                style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.62)}px` }}
+                              >
+                                Completions
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {suggestionOptions.map((suggestion) => (
+                                <button
+                                  key={suggestion}
+                                  type="button"
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onClick={() => applyAutocomplete(suggestion)}
+                                  className={cn(
+                                    "rounded-full border px-2.5 py-1 text-left transition",
+                                    suggestion === activeSuggestion
+                                      ? "border-[#b9d0c7] bg-[#eef7f3] text-[#264b3d]"
+                                      : "border-[#eadfce] bg-[#faf6ef] text-[#6e5a49] hover:border-[#d6c3ad] hover:bg-[#f7f0e4]"
+                                  )}
+                                  style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.68)}px` }}
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div
+                        className="absolute inset-x-0"
+                        style={{
+                          top: `${metrics.textTop}px`,
+                          paddingInline: `${metrics.paddingX}px`,
+                        }}
+                      >
+                        <div className="font-editor" style={{ minHeight: `${metrics.textHeight}px` }}>
                           <Markdown
                             components={markdownComponents}
-                            className="min-h-[820px] text-black [&_strong]:font-semibold"
+                            className="text-[#1f160f] [&_strong]:font-semibold"
                           >
                             {page || "No document loaded."}
                           </Markdown>
                         </div>
-                      )}
+                      </div>
+                    )}
+
+                    <div
+                      className="absolute inset-x-0 bottom-0 flex items-center justify-between border-t border-[#eadfce] bg-white/74 text-[#6f5845]"
+                      style={{
+                        height: `${metrics.footerBand}px`,
+                        paddingInline: `${metrics.paddingX}px`,
+                      }}
+                    >
+                      <div
+                        className="font-medium uppercase tracking-[0.16em]"
+                        style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.62)}px` }}
+                      >
+                        {wordCount} words
+                      </div>
+                      <div
+                        className="flex items-center gap-3"
+                        style={{ fontSize: `${Math.max(10, metrics.fontSize * 0.68)}px` }}
+                      >
+                        <span>{pageTextMeasurement.lineCount} lines</span>
+                        <span>Zoom {zoom}%</span>
+                        {editable && activeSuggestion ? (
+                          <span className="rounded-full border border-[#e4d8c7] bg-[#faf6ef] px-2 py-1">
+                            Tab accepts
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </article>
                 </div>

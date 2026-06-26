@@ -44,6 +44,10 @@
 - Closed folder headers should still accept dragged files for move operations.
 - Editor formatting controls should share the same topbar pill-button language as mode tabs and stay visually attached to the centered mode tabs.
 - Consultant surface currently follows a warm beige legal-review visual language.
+- Editor should now read as a premium alt-Google-Docs surface: editorial serif paper, inline autocomplete at caret, and zoom that scales real layout instead of distorting input chrome.
+- Pretext-backed text measurement should be part of the workspace text stack, especially in consultant streaming and editor text layout behavior.
+- `/` is now a marketing landing page; `/assistant` remains the main product workspace route.
+- `/auth` now handles login, signup, and signup onboarding using the same assistant-adjacent shell styling.
 - Copy should stay terse.
 
 ## Workflow

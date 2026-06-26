@@ -56,8 +56,8 @@ export function WorkspaceModes({
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[#f4f5f7]">
-      <header className="sticky top-0 z-30 bg-[#f4f5f7]/96 backdrop-blur">
+    <div className="flex min-h-dvh flex-col bg-[radial-gradient(circle_at_top,_rgba(188,162,121,0.14),transparent_24%),linear-gradient(180deg,#f8f2e7_0%,#efe7d7_100%)]">
+      <header className="sticky top-0 z-30 bg-[#f8f2e7]/88 backdrop-blur">
         <div className="relative min-h-[4.75rem] px-10 py-4">
           <div className="absolute right-[calc(50%+4.5rem)] top-1/2 hidden -translate-y-1/2 items-center gap-4 lg:flex">
             <AnimatePresence mode="popLayout">
@@ -102,7 +102,7 @@ export function WorkspaceModes({
           </div>
 
           <motion.div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#d6dce5] bg-white/85 px-3 py-2.5 shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#dcccb7] bg-white/88 px-3 py-2.5 shadow-[0_12px_28px_rgba(71,46,22,0.1)]"
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
@@ -110,7 +110,7 @@ export function WorkspaceModes({
             <AnimatedBackground
               defaultValue={mode}
               onValueChange={(next) => onModeChange(next as WorkspaceMode)}
-              className="rounded-full bg-[#eef2f7]"
+              className="rounded-full bg-[#f4ecdf]"
             >
               {MODES.map((modeItem) => (
                 <button
@@ -120,8 +120,8 @@ export function WorkspaceModes({
                   aria-label={modeItem.label}
                   title={modeItem.label}
                   className={cn(
-                    "inline-flex size-8 items-center justify-center rounded-full text-[#667085] transition-colors duration-100 focus-visible:outline-2",
-                    mode === modeItem.id && "text-[#111827]"
+                    "inline-flex size-8 items-center justify-center rounded-full text-[#7a6655] transition-colors duration-100 focus-visible:outline-2",
+                    mode === modeItem.id && "text-[#24170d]"
                   )}
                 >
                   {modeItem.icon}
@@ -214,7 +214,7 @@ export function WorkspaceModes({
 
 function ToolbarGroup({ children }: { children: ReactNode }) {
   return (
-    <div className="inline-flex items-center rounded-full border border-[#d6dce5] bg-white/85 px-2 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
+      <div className="inline-flex items-center rounded-full border border-[#dcccb7] bg-white/88 px-2 py-2 shadow-[0_12px_28px_rgba(71,46,22,0.1)]">
       {children}
     </div>
   )
@@ -238,8 +238,8 @@ function ToolbarIconButton({
       title={label}
       onClick={onClick}
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-full text-[#667085] transition-colors duration-100 focus-visible:outline-2 lg:size-9",
-        active && "bg-[#eef2f7] text-[#111827]"
+        "inline-flex size-8 items-center justify-center rounded-full text-[#7a6655] transition-colors duration-100 focus-visible:outline-2 lg:size-9",
+        active && "bg-[#f4ecdf] text-[#24170d]"
       )}
     >
       <Icon className="size-4" />

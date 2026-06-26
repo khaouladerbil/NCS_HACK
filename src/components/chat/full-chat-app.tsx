@@ -24,6 +24,7 @@ import {
 import { toast } from "@heroui/react"
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -105,6 +106,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useElementWidth } from "@/hooks/use-element-width"
+import { measurePretextBlock } from "@/lib/pretext"
 import { cn } from "@/lib/utils"
 import type { OutlineItem } from "@/lib/document"
 import type { WorkspaceMode } from "@/pages/assistant-page"
@@ -327,10 +330,14 @@ const LAWYER_QUERY_RE =
 const initialMessages: ChatMessage[] = []
 
 const QUICK_PROMPTS = [
-  "Review my termination clause.",
-  "Draft a notice to vacate.",
-  "Summarize this filing.",
+  "Tighten this clause.",
+  "Draft formal notice.",
+  "Summarize exposure.",
 ]
+
+const CONSULTANT_LINE_HEIGHT = 30
+const CONSULTANT_BODY_FONT =
+  '500 15px "Geist Variable", "Geist", "Inter", sans-serif'
 
 function buildResponseContext(prompt: string, activeFile?: FileItem | null): ResponseContext {
   const fileLabel = activeFile?.name?.replace(/\.[^.]+$/, "") ?? "selected record"
@@ -879,6 +886,69 @@ function AnimatedText({ children, className, per = "word" }: AnimatedTextProps) 
     </TextEffect>
   ) : (
     <span className={className}>{children}</span>
+  )
+}
+
+function MeasuredResponseParagraph({
+  fullText,
+  visibleText,
+  citationIds,
+  activeCitationId,
+  responseContext,
+  onCitationSelect,
+}: {
+  fullText: string
+  visibleText: string
+  citationIds: string[]
+  activeCitationId?: string | null
+  responseContext?: ResponseContext
+  onCitationSelect: (citationId: string) => void
+}) {
+  const ref = useRef<HTMLParagraphElement | null>(null)
+  const width = useElementWidth(ref)
+  const reserved = useMemo(
+    () =>
+      width
+        ? measurePretextBlock(
+            fullText,
+            CONSULTANT_BODY_FONT,
+            width,
+            CONSULTANT_LINE_HEIGHT,
+            { whiteSpace: "normal" }
+          )
+        : null,
+    [fullText, width]
+  )
+
+  return (
+    <p
+      ref={ref}
+      className="text-[0.96rem] leading-[1.92rem] tracking-[-0.012em] text-[#241910]"
+      style={reserved ? { minHeight: `${reserved.height}px` } : undefined}
+    >
+      <AnimatedText>{visibleText}</AnimatedText>
+      {visibleText === fullText
+        ? citationIds.map((citationId) => {
+            const citation = responseContext?.citations.find((item) => item.id === citationId)
+            if (!citation) return null
+
+            return (
+              <button
+                key={citation.id}
+                type="button"
+                onClick={() => onCitationSelect(citation.id)}
+                className={cn(
+                  "ml-1 inline-flex min-w-4 -translate-y-1 items-center justify-center rounded-full border border-[#d7cab8] bg-white px-1 py-0.5 align-super text-[0.56rem] font-semibold leading-none text-[#5b4331] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:border-[#9fbeb0] hover:bg-[#edf6f1] hover:text-[#264b3d]",
+                  activeCitationId === citation.id &&
+                    "border-[#264b3d] bg-[#264b3d] text-white shadow-[0_0_0_2px_rgba(38,75,61,0.12)]"
+                )}
+              >
+                {citation.label}
+              </button>
+            )
+          })
+        : null}
+    </p>
   )
 }
 
@@ -1591,18 +1661,18 @@ export function ChatContent({
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f4f5f7]">
+    <main className="font-consultant flex min-h-0 flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(190,164,124,0.16),transparent_22%),linear-gradient(180deg,#f8f2e7_0%,#efe7d7_100%)]">
       <div ref={chatContainerRef} className="relative flex-1 overflow-y-auto">
         <ChatContainerRoot className="h-full">
           <ChatContainerContent className="space-y-0 px-4 pb-64 pt-4 md:pb-72 md:pt-5">
             {chatMessages.length === 0 ? (
               <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl items-center justify-center px-4 text-center">
                 <div>
-                  <h1 className="text-[clamp(1.4rem,2.2vw,2.05rem)] font-normal tracking-[-0.03em] text-[#111827]">
+                  <h1 className="font-editor text-[clamp(1.75rem,2.8vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#24170d]">
                     Start a legal task.
                   </h1>
-                  <p className="mt-3 text-[0.86rem] text-[#4b5563]">
-                    Ask for review, drafting, citation, or strategy.
+                  <p className="mt-3 text-[0.88rem] text-[#5f5245]">
+                    Review, draft, cite, strategize.
                   </p>
                 </div>
               </div>
@@ -1628,59 +1698,39 @@ export function ChatContent({
                 >
                   {isAssistant ? (
                     <div className="group flex w-full items-start gap-4">
-                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dbe5f0] text-[#111827]">
+                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9cab7] bg-white/88 text-[#2e2118] shadow-[0_8px_20px_rgba(71,46,22,0.08)]">
                         <Scale className="size-4" />
                       </div>
 
-                      <div className="w-full max-w-[54rem] pt-1 text-[#1f2937]">
+                      <div className="w-full max-w-[54rem] pt-1 text-[#241910]">
                         {message.content ? (
                           message.responseContext ? (
                             <div className="space-y-3">
                               {streamedParagraphs
                                 .filter((paragraph) => paragraph.visibleText)
                                 .map((paragraph) => (
-                                  <p
+                                  <MeasuredResponseParagraph
                                     key={paragraph.id}
-                                    className="text-[0.88rem] leading-6.5 text-[#1f2937]"
-                                  >
-                                    <AnimatedText>{paragraph.visibleText}</AnimatedText>
-                                    {paragraph.isComplete
-                                      ? paragraph.citationIds.map((citationId) => {
-                                          const citation = message.responseContext?.citations.find(
-                                            (item) => item.id === citationId
-                                          )
-                                          if (!citation) return null
-
-                                          return (
-                                            <button
-                                              key={citation.id}
-                                              type="button"
-                                              onClick={() => focusCitation(citation.id)}
-                                              className={cn(
-                                                "ml-1 inline-flex min-w-4 -translate-y-1 items-center justify-center rounded-full border border-[#d6dce5] bg-white px-1 py-0.5 align-super text-[0.56rem] font-semibold leading-none text-[#374151] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:border-[#6ee7d5] hover:bg-[#dff7f2] hover:text-[#0f766e]",
-                                                activeCitationId === citation.id &&
-                                                  "border-[#0f766e] bg-[#0f766e] text-white shadow-[0_0_0_2px_rgba(15,118,110,0.12)]"
-                                              )}
-                                            >
-                                              {citation.label}
-                                            </button>
-                                          )
-                                        })
-                                      : null}
-                                  </p>
+                                    fullText={paragraph.text}
+                                    visibleText={paragraph.visibleText}
+                                    citationIds={paragraph.citationIds}
+                                    activeCitationId={activeCitationId}
+                                    responseContext={message.responseContext}
+                                    onCitationSelect={focusCitation}
+                                  />
                                 ))}
                             </div>
                           ) : (
                             <Markdown
                               components={animatedMarkdownComponents}
-                              className="text-[0.88rem] leading-6.5 [&_ol]:ml-5 [&_ol]:space-y-2 [&_ul]:ml-5 [&_ul]:space-y-2 [&_strong]:font-semibold [&_strong]:text-[#463528]"
+                              className="text-[0.95rem] leading-[1.92rem] tracking-[-0.012em] [&_ol]:ml-5 [&_ol]:space-y-2 [&_ul]:ml-5 [&_ul]:space-y-2 [&_strong]:font-semibold [&_strong]:text-[#463528]"
                             >
                               {message.content}
                             </Markdown>
                           )
                         ) : (
-                          <div className="px-0.5 py-1 text-[#4b5563]">
-                            <TextShimmerWave className="font-mono text-[0.78rem]" duration={1}>
+                          <div className="px-0.5 py-1 text-[#5f5245]">
+                            <TextShimmerWave className="text-[0.8rem] uppercase tracking-[0.14em]" duration={1}>
                               Generating legal analysis...
                             </TextShimmerWave>
                           </div>
@@ -1709,7 +1759,7 @@ export function ChatContent({
                     </div>
                   ) : (
                     <div className="group flex w-full max-w-[48rem] flex-col items-end gap-1">
-                      <div className="px-1 py-1 text-[0.88rem] leading-6 text-[#111827]">
+                      <div className="px-1 py-1 text-[0.94rem] leading-[1.9rem] tracking-[-0.01em] text-[#20160f]">
                         {message.attachments?.length ? (
                           <div className="mb-3 flex flex-wrap gap-2">
                             {message.attachments.map((attachment) => (
@@ -1764,14 +1814,14 @@ export function ChatContent({
         </ChatContainerRoot>
       </div>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center bg-gradient-to-t from-[#f4f5f7] via-[#f4f5f7]/98 to-transparent px-4 pb-4 pt-6">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center bg-gradient-to-t from-[#efe7d7] via-[#efe7d7]/96 to-transparent px-4 pb-4 pt-6">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-3">
           <PromptInput
             isLoading={isLoading}
             value={prompt}
             onValueChange={setPrompt}
             onSubmit={handleSubmit}
-            className="pointer-events-auto relative z-10 w-[min(100vw-2rem,52rem)] rounded-[1.25rem] border border-[#d6dce5] bg-white p-0 shadow-[0_18px_50px_rgba(15,23,42,0.12)]"
+            className="pointer-events-auto relative z-10 w-[min(100vw-2rem,52rem)] rounded-[1.55rem] border border-[#d9cab7] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,244,236,0.98))] p-0 shadow-[0_24px_60px_rgba(71,46,22,0.14)]"
           >
             {!prompt.trim() && attachments.length === 0 ? (
               <div className="overflow-x-auto px-4 pt-3">
@@ -1784,7 +1834,7 @@ export function ChatContent({
                         setPrompt(suggestion)
                         toast(`Suggestion loaded: ${suggestion}`)
                       }}
-                      className="shrink-0 rounded-full bg-[#eef2f7] px-3 py-1.5 text-[0.72rem] text-[#374151] transition hover:bg-[#e5ebf3] hover:text-[#111827]"
+                      className="shrink-0 rounded-full border border-[#eadfce] bg-[#faf6ef] px-3 py-1.5 text-[0.72rem] text-[#5b4331] transition hover:border-[#d9cab7] hover:bg-[#f4ecdf] hover:text-[#22170f]"
                     >
                       {suggestion}
                     </button>
@@ -1831,8 +1881,8 @@ export function ChatContent({
               </div>
             ) : null}
             <PromptInputTextarea
-              placeholder="Type your response or instructions here..."
-              className="min-h-[74px] px-5 pt-4 pb-2 text-[0.92rem] leading-6 text-[#111827] placeholder:text-[#6b7280]"
+              placeholder="Issue, objective, output."
+              className="min-h-[74px] px-5 pt-4 pb-2 text-[0.96rem] leading-7 text-[#20160f] placeholder:text-[#7f6f61]"
             />
             <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-0">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
@@ -1840,7 +1890,7 @@ export function ChatContent({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 rounded-full border border-[#d6dce5] px-3 text-[0.78rem] text-[#374151] hover:bg-[#eef2f7]"
+                    className="h-8 rounded-full border border-[#d9cab7] px-3 text-[0.78rem] text-[#5b4331] hover:bg-[#f4ecdf]"
                     onClick={openFilePicker}
                   >
                     <Plus className="size-3.5" />
@@ -1855,8 +1905,8 @@ export function ChatContent({
                   aria-pressed={listening}
                   onClick={toggleVoice}
                   className={cn(
-                    "size-9 rounded-full text-[#374151] hover:bg-transparent hover:text-[#111827]",
-                    listening && "bg-[#eef2f7] text-[#111827]"
+                    "size-9 rounded-full text-[#5b4331] hover:bg-transparent hover:text-[#22170f]",
+                    listening && "bg-[#f4ecdf] text-[#22170f]"
                   )}
                 >
                   {listening ? (
@@ -1873,7 +1923,7 @@ export function ChatContent({
                 size="icon"
                 disabled={!isLoading && !prompt.trim() && attachments.length === 0}
                 onClick={isLoading ? stopResponse : handleSubmit}
-                className="size-10 rounded-[0.95rem] bg-[#111827] text-white shadow-none hover:bg-[#0f172a]"
+                className="size-10 rounded-[1rem] bg-[#2f2218] text-white shadow-none hover:bg-[#24180f]"
               >
                 {isLoading ? (
                   <Square className="size-4 fill-current" />
