@@ -9,6 +9,8 @@ urlpatterns = [
     path("api/auth/", include("users.urls")),
     path("api/legal/", include("legal_twin.urls")),
     path("api/legal-path/", include("legal_path.urls")),
+    path("api/directory/", include("directory_data.urls")),
+    path("api/writer/", include("legal_writer.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
 ]

@@ -1,5 +1,12 @@
-from rest_framework import viewsets
+import json
+from django.shortcuts import render
+
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from directory_data.serializers import LawyerMapSerializer
 
 from .models import (
     LegalRequest,
@@ -18,6 +25,8 @@ from .serializers import (
     TimelineEventSerializer,
 )
 from .permissions import IsOwner
+from .services.lawyer_recommendation_service import LawyerRecommendationService
+from .services.geocoding_service import geocode
 
 
 class LegalRequestViewSet(viewsets.ModelViewSet):
@@ -29,6 +38,38 @@ class LegalRequestViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(detail=True, methods=["get"])
+    def recommended_lawyers(self, request, pk=None):
+        legal_request = self.get_object()
+        wilaya = request.query_params.get("wilaya")
+        q = request.query_params.get("q")
+        lat = request.query_params.get("lat")
+        lng = request.query_params.get("lng")
+
+        if not lat and not lng and q:
+            coords = geocode(q)
+            if coords:
+                lat, lng = str(coords[0]), str(coords[1])
+
+        results = LawyerRecommendationService.recommend(
+            user=request.user,
+            category=legal_request.category,
+            user_wilaya=wilaya,
+            lat=lat,
+            lng=lng,
+        )
+        serializer = LawyerMapSerializer(
+            [r["lawyer"] for r in results], many=True, context={"request": request}
+        )
+        enriched = []
+        for data, result in zip(serializer.data, results):
+            data["match_reason"] = result["match_reason"]
+            data["is_same_wilaya"] = result["is_same_wilaya"]
+            data["distance_km"] = result["distance_km"]
+            data["specializations"] = result["specializations"]
+            enriched.append(data)
+        return Response(enriched)
 
 
 class NestedViewSet(viewsets.ModelViewSet):
@@ -75,3 +116,25 @@ class RecommendationViewSet(NestedViewSet):
 class TimelineEventViewSet(NestedViewSet):
     serializer_class = TimelineEventSerializer
     queryset = TimelineEvent.objects.all()
+
+
+def lawyer_map_view(request, request_id):
+    from .services.lawyer_recommendation_service import WILAYA_COORDS
+    from legal_twin.models import CitizenProfile
+
+    user_wilaya = ""
+    coords = None
+    try:
+        profile = request.user.citizen_profile
+        user_wilaya = profile.wilaya
+        c = WILAYA_COORDS.get(profile.wilaya)
+        if c:
+            coords = list(c)
+    except CitizenProfile.DoesNotExist:
+        pass
+
+    return render(request, "legal_path/lawyer_map.html", {
+        "request_id": request_id,
+        "user_wilaya": user_wilaya,
+        "user_coords": json.dumps(coords),
+    })
