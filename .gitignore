@@ -3,6 +3,9 @@ db.sqlite3
 media/
 __pycache__/
 *.pyc
+*.pyo
+chroma_data/
+directory_data/
 .venv/
 venv/
 *.egg-info/
