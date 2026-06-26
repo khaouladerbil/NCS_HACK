@@ -16,12 +16,14 @@
 - Main content is chat only.
 - Top mode switch uses HeroUI buttons.
 - Modes: consultant, editor, professor.
-- Consultant shows chat; editor/professor stay empty until later.
+- Consultant shows chat; editor is a plain in-place markdown editor for now; professor stays empty until later.
 - Prompt input stays sticky at bottom.
 - Input actions: upload + voice.
 - Left navigation overlays content and must collapse/expand correctly.
 - Settings uses full page route, not sheet.
 - Brand as legal assistance app powered by proprietary models.
+- Lawyer suggestions should appear inline as part of assistant answers.
+- Right sidebar currently serves the legal workflow timeline.
 - Copy should stay terse.
 
 ## Workflow

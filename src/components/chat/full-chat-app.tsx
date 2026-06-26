@@ -73,15 +73,20 @@ export type FolderItem = {
   files: FileItem[]
 }
 
+type ChatMessage = {
+  id: number
+  role: "user" | "assistant"
+  content: string
+  suggestLawyers?: boolean
+}
+
 type Lawyer = {
   name: string
   firm: string
   practice: string
   jurisdiction: string
-  rating: string
-  bio: string
-  details: string[]
   image: string
+  body: string[]
 }
 
 type TimelineStep = {
@@ -156,12 +161,10 @@ const LAWYERS: Lawyer[] = [
     firm: "Patel Legal",
     practice: "Commercial disputes",
     jurisdiction: "London, UK",
-    rating: "4.9",
-    bio: "Counsel for contract breakdown, urgent injunctions, and negotiation pressure points.",
-    details: [
-      "Fast commercial dispute triage.",
-      "Interim relief and escalation planning.",
-      "High-volume contract breach work.",
+    body: [
+      "Commercial disputes and urgent injunction work.",
+      "Pre-action pressure, settlement framing, and contract breach escalation.",
+      "Jurisdiction: London, UK.",
     ],
     image:
       "data:image/svg+xml;charset=utf-8," +
@@ -174,12 +177,10 @@ const LAWYERS: Lawyer[] = [
     firm: "Okafor & Co",
     practice: "Employment law",
     jurisdiction: "New York, US",
-    rating: "4.8",
-    bio: "Counsel for wrongful termination, workplace policy review, and internal investigations.",
-    details: [
-      "Pre-litigation employer pressure response.",
-      "Investigation strategy and narrative framing.",
-      "Employment document review.",
+    body: [
+      "Wrongful termination, policy review, and workplace investigations.",
+      "Useful where employer records, notices, or internal findings matter.",
+      "Jurisdiction: New York, US.",
     ],
     image:
       "data:image/svg+xml;charset=utf-8," +
@@ -192,12 +193,10 @@ const LAWYERS: Lawyer[] = [
     firm: "Torres Counsel",
     practice: "Family and civil matters",
     jurisdiction: "California, US",
-    rating: "5.0",
-    bio: "Counsel for family disputes, protective orders, and settlement-first civil handling.",
-    details: [
-      "Protective-order strategy.",
-      "Sensitive negotiation handling.",
-      "Civil and family procedural guidance.",
+    body: [
+      "Family disputes, protective orders, and settlement-first civil handling.",
+      "Useful where sensitive personal facts and court pacing both matter.",
+      "Jurisdiction: California, US.",
     ],
     image:
       "data:image/svg+xml;charset=utf-8," +
@@ -210,7 +209,7 @@ const LAWYERS: Lawyer[] = [
 const LAWYER_QUERY_RE =
   /\b(lawyer|lawyers|attorney|attorneys|counsel|solicitor|advocate|representation|represent me|hire counsel|need counsel)\b/i
 
-const initialMessages = [
+const initialMessages: ChatMessage[] = [
   {
     id: 1,
     role: "user",
@@ -223,6 +222,10 @@ const initialMessages = [
       "Ready. Upload a filing, contract, or research note and I will break down risk, obligations, and next legal action.",
   },
 ]
+
+function TextEffectPerChar({ children }: { children: string }) {
+  return <TextEffect per="char" preset="fade">{children}</TextEffect>
+}
 
 function SidebarHoverCloseButton({ side }: { side: "left" | "right" }) {
   const { toggleSidebar, toggleSidebarRight } = useSidebar()
@@ -256,12 +259,10 @@ function WorkflowTimeline() {
             <div
               className={cn(
                 "absolute left-0 top-1 size-3 rounded-full border",
-                step.state === "done" &&
-                  "border-[#2b2117] bg-[#2b2117]",
+                step.state === "done" && "border-[#2b2117] bg-[#2b2117]",
                 step.state === "active" &&
                   "border-[#4c86de] bg-white ring-2 ring-[#4c86de]/40",
-                step.state === "upcoming" &&
-                  "border-[#e6ddd1] bg-[#f3ede4]"
+                step.state === "upcoming" && "border-[#e6ddd1] bg-[#f3ede4]"
               )}
             />
             <p
@@ -282,7 +283,7 @@ function WorkflowTimeline() {
   )
 }
 
-function LawyerSuggestionCard({ lawyer }: { lawyer: Lawyer }) {
+function MorphingDialogBasicTwo({ lawyer }: { lawyer: Lawyer }) {
   return (
     <MorphingDialog
       transition={{
@@ -332,7 +333,7 @@ function LawyerSuggestionCard({ lawyer }: { lawyer: Lawyer }) {
                   className="h-auto w-[200px]"
                 />
               </div>
-              <div>
+              <div className="">
                 <MorphingDialogTitle className="text-black">
                   {lawyer.name}
                 </MorphingDialogTitle>
@@ -340,13 +341,9 @@ function LawyerSuggestionCard({ lawyer }: { lawyer: Lawyer }) {
                   {lawyer.firm}
                 </MorphingDialogSubtitle>
                 <div className="mt-4 text-sm text-gray-700">
-                  <p>{lawyer.bio}</p>
-                  {lawyer.details.map((detail) => (
-                    <p key={detail}>{detail}</p>
+                  {lawyer.body.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
                   ))}
-                  <p>
-                    Jurisdiction: {lawyer.jurisdiction}. Rating: {lawyer.rating}/5.
-                  </p>
                 </div>
               </div>
             </div>
@@ -358,15 +355,13 @@ function LawyerSuggestionCard({ lawyer }: { lawyer: Lawyer }) {
   )
 }
 
-function SuggestedLawyers() {
+function InlineLawyerSuggestions() {
   return (
-    <section className="mx-auto mb-8 w-full max-w-3xl px-4">
-      <div className="grid gap-3 md:grid-cols-3">
-        {LAWYERS.map((lawyer) => (
-          <LawyerSuggestionCard key={lawyer.name} lawyer={lawyer} />
-        ))}
-      </div>
-    </section>
+    <div className="mt-4 grid gap-3 md:grid-cols-3">
+      {LAWYERS.map((lawyer) => (
+        <MorphingDialogBasicTwo key={lawyer.name} lawyer={lawyer} />
+      ))}
+    </div>
   )
 }
 
@@ -421,7 +416,7 @@ export function ChatSidebar({
                   <span className="truncate">{folder.name}</span>
                 </button>
 
-                {isOpen && (
+                {isOpen ? (
                   <SidebarMenu className="mt-0.5 ml-4 gap-0">
                     {folder.files.map((file) => (
                       <SidebarMenuItem key={file.id}>
@@ -436,7 +431,7 @@ export function ChatSidebar({
                       </SidebarMenuItem>
                     ))}
                   </SidebarMenu>
-                )}
+                ) : null}
               </div>
             )
           })
@@ -468,8 +463,7 @@ type ChatContentProps = {
 export function ChatContent({ activeFile }: ChatContentProps) {
   const [prompt, setPrompt] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [showLawyers, setShowLawyers] = useState(false)
-  const [chatMessages, setChatMessages] = useState(initialMessages)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages)
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   const handleSubmit = () => {
@@ -478,9 +472,9 @@ export function ChatContent({ activeFile }: ChatContentProps) {
     const submittedPrompt = prompt.trim()
     const shouldSuggestLawyers = LAWYER_QUERY_RE.test(submittedPrompt)
 
-    const userMsg = {
+    const userMsg: ChatMessage = {
       id: chatMessages.length + 1,
-      role: "user" as const,
+      role: "user",
       content: submittedPrompt,
     }
 
@@ -490,17 +484,17 @@ export function ChatContent({ activeFile }: ChatContentProps) {
 
     setTimeout(() => {
       const context = activeFile ? `Based on ${activeFile.name}: ` : ""
-      const assistantMsg = {
+      const assistantMsg: ChatMessage = {
         id: chatMessages.length + 2,
-        role: "assistant" as const,
+        role: "assistant",
         content: `${context}${
           submittedPrompt.endsWith("?")
             ? "Here is a structured legal analysis from the available facts and cited context."
             : "Understood. Here is the risk summary, key obligations, and practical next move."
         }`,
+        suggestLawyers: shouldSuggestLawyers,
       }
       setChatMessages((prev) => [...prev, assistantMsg])
-      setShowLawyers(shouldSuggestLawyers)
       setIsLoading(false)
     }, 1200)
   }
@@ -510,7 +504,6 @@ export function ChatContent({ activeFile }: ChatContentProps) {
       <div ref={chatContainerRef} className="relative flex-1 overflow-y-auto">
         <ChatContainerRoot className="h-full">
           <ChatContainerContent className="space-y-0 px-5 py-6 md:py-8">
-            {showLawyers ? <SuggestedLawyers /> : null}
             {chatMessages.map((message, index) => {
               const isAssistant = message.role === "assistant"
               const isLastMessage = index === chatMessages.length - 1
@@ -526,9 +519,8 @@ export function ChatContent({ activeFile }: ChatContentProps) {
                   {isAssistant ? (
                     <div className="group flex w-full flex-col gap-0">
                       <div className="flex-1 rounded-lg bg-transparent p-0 text-foreground">
-                        <TextEffect per="char" preset="fade">
-                          {message.content}
-                        </TextEffect>
+                        <TextEffectPerChar>{message.content}</TextEffectPerChar>
+                        {message.suggestLawyers ? <InlineLawyerSuggestions /> : null}
                       </div>
                       <MessageActions
                         className={cn(

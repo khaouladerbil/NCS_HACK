@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { ChatContent } from "@/components/chat/full-chat-app"
+import { MarkdownEditorMode } from "@/components/modes/markdown-editor-mode"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -57,7 +58,7 @@ export function WorkspaceModes({ activeFile }: WorkspaceModesProps) {
       {mode === "consultant" ? (
         <ChatContent activeFile={activeFile} />
       ) : mode === "editor" ? (
-        <EmptyMode label="Editor" />
+        <MarkdownEditorMode activeFile={activeFile} />
       ) : (
         <EmptyMode label="Professor" />
       )}

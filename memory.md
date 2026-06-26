@@ -25,11 +25,15 @@ Last updated: 2026-06-26
 - Top workspace bar stays sticky.
 - Composer stays sticky at viewport bottom.
 - Composer has upload and voice actions; reset removed.
+- Lawyer recommendations render inline inside assistant answers, not as a separate panel.
+- Right rail shows the legal workflow timeline.
+- Editor mode is now a plain in-place markdown editor.
 
 ## Notes
 
 - Prompt Kit components in active use: `prompt-input`, `message`, `markdown`, `chat-container`, `scroll-button`, `source`, `text-shimmer`.
 - Lightweight local motion text components added in `src/components/core/text-effect.tsx` and `src/components/core/text-shimmer-wave.tsx`.
+- `motion-primitives` morphing dialog was installed, then ported into `src/components/core/morphing-dialog.tsx`.
 - Browser runtime verified clean after fixing nested-button and tooltip wrapper issues from generated components.
 - `npm run build` passes.
 - `npm run lint` passes with existing shadcn fast-refresh warnings in generated primitives.
