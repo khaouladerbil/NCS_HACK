@@ -17,6 +17,7 @@ import {
 import { WorkspaceSidebarShell } from "@/components/layout/workspace-sidebar-shell"
 import { WorkspaceModes } from "@/components/modes/workspace-modes"
 import { createDocumentFromFile, getDocumentOutline } from "@/lib/document"
+import type { ResponseProgress } from "@/components/chat/full-chat-app"
 
 export type WorkspaceMode = "consultant" | "editor" | "professor"
 
@@ -42,6 +43,7 @@ export function AssistantPage() {
     type: "file" | "folder"
   } | null>(null)
   const [responseContext, setResponseContext] = useState<ResponseContext | null>(null)
+  const [responseProgress, setResponseProgress] = useState<ResponseProgress | null>(null)
   const [activeCitationId, setActiveCitationId] = useState<string | null>(null)
   const documentOutline = getDocumentOutline(activeFile, documentValue)
   const dialogVariants: Variants = {
@@ -507,6 +509,7 @@ export function AssistantPage() {
             hasConversation={hasConversation}
             isThinking={mode === "consultant" && isThinking}
             responseContext={responseContext}
+            responseProgress={responseProgress}
             activeCitationId={activeCitationId}
             onCitationSelect={setActiveCitationId}
             {...sharedSidebarProps}
@@ -522,6 +525,7 @@ export function AssistantPage() {
           onConversationStateChange={setHasConversation}
           onThinkingStateChange={setIsThinking}
           onResponseContextChange={setResponseContext}
+          onResponseProgressChange={setResponseProgress}
           activeCitationId={activeCitationId}
           onActiveCitationChange={setActiveCitationId}
         />

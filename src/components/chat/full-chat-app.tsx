@@ -193,6 +193,12 @@ export type ResponseContext = {
   answerParagraphs: ResponseParagraph[]
 }
 
+export type ResponseProgress = {
+  completedParagraphs: number
+  visibleCitationIds: string[]
+  visibleSourceIds: string[]
+}
+
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
 
 type SpeechRecognitionLike = {
@@ -475,16 +481,26 @@ function WorkflowTimeline({
   hasConversation,
   isThinking,
   responseContext,
+  responseProgress,
   activeCitationId,
   onCitationSelect,
 }: {
   hasConversation: boolean
   isThinking: boolean
   responseContext?: ResponseContext | null
+  responseProgress?: ResponseProgress | null
   activeCitationId?: string | null
   onCitationSelect?: (citationId: string) => void
 }) {
   const sectionRef = useRef<HTMLDivElement | null>(null)
+  const visibleCitationIds = responseProgress?.visibleCitationIds ?? []
+  const visibleSourceIds = responseProgress?.visibleSourceIds ?? []
+  const visibleCitations = (responseContext?.citations ?? []).filter((citation) =>
+    visibleCitationIds.includes(citation.id)
+  )
+  const visibleSources = (responseContext?.sources ?? []).filter((source) =>
+    visibleSourceIds.includes(source.id)
+  )
   const activeCitation =
     responseContext?.citations.find((citation) => citation.id === activeCitationId) ?? null
   const activeSourceId = activeCitation?.sourceId ?? null
@@ -524,8 +540,11 @@ function WorkflowTimeline({
   }
 
   return (
-    <div ref={sectionRef} className="space-y-3 px-3 py-1">
-      <div data-flow-step>
+    <div ref={sectionRef} className="space-y-3 px-3 py-2">
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#e5ddcf] bg-white/72 px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
         <p className="text-[0.62rem] font-semibold tracking-[0.18em] text-[#5b6472] uppercase">
           Matter Board
         </p>
@@ -568,7 +587,10 @@ function WorkflowTimeline({
         </ChainOfThought>
       </div>
 
-      <div data-flow-step>
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#eadfce] bg-[linear-gradient(180deg,#faf5ed_0%,#f6efe3_100%)] px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
         <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
           <Sparkles className="size-4" />
           Thinking
@@ -586,39 +608,49 @@ function WorkflowTimeline({
         </div>
       </div>
 
-      <div data-flow-step>
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#e5ddcf] bg-white/72 px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
         <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
           <Quote className="size-4" />
           Quotes
         </div>
         <div className="mt-1.5 space-y-1">
-          {(responseContext?.citations ?? []).map((citation) => (
+          {visibleCitations.length ? visibleCitations.map((citation) => (
             <button
               key={citation.id}
               type="button"
               onClick={() => onCitationSelect?.(citation.id)}
               className={cn(
-                "block w-full rounded-md border border-transparent px-1.5 py-1 text-left text-[0.61rem] leading-4 text-[#4b5563] transition hover:border-[#d6dce5] hover:bg-[#f8fafc]",
+                "block w-full rounded-lg border border-transparent px-1.5 py-1 text-left text-[0.58rem] leading-3.5 text-[#667085] transition hover:border-[#d6dce5] hover:bg-[#f8fafc]",
                 activeCitationId === citation.id &&
                   "border-[#6ee7d5] bg-[#dff7f2] text-[#0f766e] shadow-[inset_3px_0_0_0_#0f766e]"
               )}
             >
-              <span className="mr-1 rounded-full bg-white/80 px-1 py-0.5 font-semibold text-[#374151]">
+              <span className="mr-1 rounded-full bg-white/80 px-1 py-0.5 text-[0.52rem] font-semibold text-[#374151]">
                 {citation.label}
               </span>
               <AnimatedText>{citation.quote}</AnimatedText>
             </button>
-          ))}
+          )) : (
+            <p className="text-[0.58rem] leading-3.5 text-[#8a7a69]">
+              Footnotes appear with completed answer lines.
+            </p>
+          )}
         </div>
       </div>
 
-      <div data-flow-step>
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#e5ddcf] bg-white/72 px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
         <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
           <ExternalLink className="size-4" />
           Sources
         </div>
         <div className="mt-1.5 flex flex-wrap gap-1">
-          {(responseContext?.sources ?? []).map((source) => (
+          {visibleSources.length ? visibleSources.map((source) => (
             <Source key={source.href} href={source.href}>
               <SourceTrigger
                 label={source.label}
@@ -634,16 +666,20 @@ function WorkflowTimeline({
                 description={source.description}
               />
             </Source>
-          ))}
+          )) : (
+            <p className="text-[0.58rem] leading-3.5 text-[#8a7a69]">
+              Sources unlock as linked support shows.
+            </p>
+          )}
         </div>
 
-        <div className="mt-2 px-0 py-0.5">
+        <div className="mt-3 border-t border-[#eee4d8] px-0 pt-2">
           <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
             <Sparkles className="size-4" />
             Citations
           </div>
-          <ul className="mt-1.5 space-y-0.5 text-[0.58rem] leading-3.5 text-[#4b5563]">
-            {(responseContext?.citations ?? []).map((citation) => (
+          <ul className="mt-1.5 space-y-0.5 text-[0.56rem] leading-3 text-[#6b7280]">
+            {visibleCitations.map((citation) => (
               <li key={citation.id}>
                 <button
                   type="button"
@@ -835,6 +871,7 @@ type ChatSidebarProps = {
   hasConversation?: boolean
   isThinking?: boolean
   responseContext?: ResponseContext | null
+  responseProgress?: ResponseProgress | null
   activeCitationId?: string | null
   onCitationSelect?: (citationId: string) => void
 }
@@ -890,6 +927,8 @@ function TruncatingFileLabel({
     return () => window.removeEventListener("resize", measure)
   }, [label])
 
+  const visibleLabel = label.replace(/\.[^.]+$/, "")
+
   const content = (
     <button
       type="button"
@@ -925,7 +964,7 @@ function TruncatingFileLabel({
             WebkitBoxOrient: "vertical",
           }}
         >
-          {label}
+          {visibleLabel}
         </span>
       </span>
     </button>
@@ -1535,6 +1574,7 @@ type ChatContentProps = {
   onConversationStateChange?: (hasConversation: boolean) => void
   onThinkingStateChange?: (isThinking: boolean) => void
   onResponseContextChange?: (context: ResponseContext | null) => void
+  onResponseProgressChange?: (progress: ResponseProgress | null) => void
   activeCitationId?: string | null
   onActiveCitationChange?: (citationId: string | null) => void
 }
@@ -1546,6 +1586,7 @@ export function ChatContent({
   onConversationStateChange,
   onThinkingStateChange,
   onResponseContextChange,
+  onResponseProgressChange,
   activeCitationId,
   onActiveCitationChange,
 }: ChatContentProps) {
@@ -1604,6 +1645,40 @@ export function ChatContent({
   useEffect(() => {
     onConversationStateChange?.(chatMessages.length > 0)
   }, [chatMessages.length, onConversationStateChange])
+
+  useEffect(() => {
+    const lastAssistant = [...chatMessages].reverse().find((message) => message.role === "assistant")
+    if (!lastAssistant?.responseContext) {
+      onResponseProgressChange?.(null)
+      return
+    }
+
+    const streamedParagraphs = getStreamedParagraphs(
+      lastAssistant.responseContext.answerParagraphs,
+      lastAssistant.content
+    )
+    const completedParagraphs = streamedParagraphs.filter((item) => item.isComplete).length
+    const visibleCitationIds = Array.from(
+      new Set(
+        streamedParagraphs
+          .filter((item) => item.isComplete)
+          .flatMap((item) => item.citationIds)
+      )
+    )
+    const visibleSourceIds = Array.from(
+      new Set(
+        lastAssistant.responseContext.citations
+          .filter((citation) => visibleCitationIds.includes(citation.id))
+          .map((citation) => citation.sourceId)
+      )
+    )
+
+    onResponseProgressChange?.({
+      completedParagraphs,
+      visibleCitationIds,
+      visibleSourceIds,
+    })
+  }, [chatMessages, onResponseProgressChange])
 
   function toggleVoice() {
     const speechApi = (

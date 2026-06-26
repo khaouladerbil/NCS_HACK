@@ -12,6 +12,7 @@ import {
 import { AnimatePresence, motion } from "motion/react"
 
 import { ChatContent, type ResponseContext } from "@/components/chat/full-chat-app"
+import type { ResponseProgress } from "@/components/chat/full-chat-app"
 import { AnimatedBackground } from "@/components/core/animated-background"
 import {
   MarkdownEditorMode,
@@ -40,6 +41,7 @@ type WorkspaceModesProps = {
   onConversationStateChange?: (hasConversation: boolean) => void
   onThinkingStateChange?: (isThinking: boolean) => void
   onResponseContextChange?: (context: ResponseContext | null) => void
+  onResponseProgressChange?: (progress: ResponseProgress | null) => void
   activeCitationId?: string | null
   onActiveCitationChange?: (citationId: string | null) => void
 }
@@ -53,6 +55,7 @@ export function WorkspaceModes({
   onConversationStateChange,
   onThinkingStateChange,
   onResponseContextChange,
+  onResponseProgressChange,
   activeCitationId,
   onActiveCitationChange,
 }: WorkspaceModesProps) {
@@ -221,6 +224,7 @@ export function WorkspaceModes({
           onConversationStateChange={onConversationStateChange}
           onThinkingStateChange={onThinkingStateChange}
           onResponseContextChange={onResponseContextChange}
+          onResponseProgressChange={onResponseProgressChange}
           activeCitationId={activeCitationId}
           onActiveCitationChange={onActiveCitationChange}
         />
