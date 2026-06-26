@@ -145,7 +145,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Legal Path API",
+    "TITLE": "Justice Path API",
     "VERSION": "1.0.0",
 }
 

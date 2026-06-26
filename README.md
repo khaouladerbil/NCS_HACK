@@ -1,4 +1,4 @@
-# Legal Path
+# Justice Path
 
 Backend API for an Algerian legal tech platform with AI-assisted case management, lawyer directory, and document drafting.
 
@@ -45,7 +45,7 @@ python manage.py runserver
 - `GET/POST /cases/`
 - `GET/POST /deadlines/`
 
-### Legal Path (`/api/legal-path/`)
+### Justice Path (`/api/legal-path/`)
 - `GET/POST /requests/` — `GET/PUT/DELETE /requests/<id>/`
 - `GET /requests/<id>/recommended_lawyers/?wilaya=&lat=&lng=`
 - `GET/POST /requests/<id>/analysis/`, `roadmap-steps/`, `documents/`, `recommendations/`, `timeline/`
