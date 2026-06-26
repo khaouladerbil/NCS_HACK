@@ -26,7 +26,7 @@ class LegalDocument(models.Model):
     ]
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="writer_documents"
+        User, on_delete=models.CASCADE, related_name="legal_documents"
     )
     template = models.ForeignKey(
         DocumentTemplate, on_delete=models.SET_NULL, null=True, blank=True,

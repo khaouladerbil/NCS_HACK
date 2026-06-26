@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('template', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='documents', to='legal_writer.documenttemplate')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='writer_documents', to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='legal_documents', to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'ordering': ['-updated_at'],
