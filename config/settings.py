@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'ai_assistant',
     'directory_data',
     'legal_writer',
+    'legal_quiz',
 ]
 
 MIDDLEWARE = [
