@@ -24,6 +24,8 @@
 - Brand as legal assistance app powered by proprietary models.
 - Lawyer suggestions should appear inline as part of assistant answers.
 - Right sidebar currently serves the legal workflow timeline.
+- Editor mode should feel like reviewing a printed legal document on A4 paper.
+- Consultant surface currently follows a warm beige legal-review visual language.
 - Copy should stay terse.
 
 ## Workflow

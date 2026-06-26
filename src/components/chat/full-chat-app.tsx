@@ -1,17 +1,16 @@
 "use client"
 
 import {
-  ArrowUp,
   ChevronRight,
   Copy,
   File,
   Folder,
   FolderOpen,
   Mic,
-  MoreHorizontal,
   Pencil,
-  Plus,
+  Scale,
   Settings2,
+  SendHorizontal,
   X,
 } from "lucide-react"
 import { useRef, useState } from "react"
@@ -40,10 +39,10 @@ import {
   MessageAction,
   MessageActions,
 } from "@/components/ui/message"
+import { Markdown } from "@/components/ui/markdown"
 import {
   PromptInput,
   PromptInputAction,
-  PromptInputActions,
   PromptInputTextarea,
 } from "@/components/ui/prompt-input"
 import { ScrollButton } from "@/components/ui/scroll-button"
@@ -213,18 +212,36 @@ const initialMessages: ChatMessage[] = [
   {
     id: 1,
     role: "user",
-    content: "Hello! Can you help me analyse a contract?",
+    content:
+      "Can you review the termination clause in the Rental Agreement.pdf I just uploaded? Specifically looking for notice periods.",
   },
   {
     id: 2,
     role: "assistant",
-    content:
-      "Ready. Upload a filing, contract, or research note and I will break down risk, obligations, and next legal action.",
+    content: `I have reviewed the termination clause (Section 8) in the **Rental Agreement.pdf**.
+
+> "8.1 Either party may terminate this agreement by providing written notice no less than thirty (30) days prior to the intended date of termination..."
+
+## Key Takeaways
+
+You must provide at least 30 days written notice.
+
+The notice must be in writing (email is usually acceptable unless specified otherwise in Section 12).
+
+This applies to both you (tenant) and the landlord.`,
   },
 ]
 
 function TextEffectPerChar({ children }: { children: string }) {
   return <TextEffect per="char" preset="fade">{children}</TextEffect>
+}
+
+function splitLeadParagraph(content: string) {
+  const [lead, ...rest] = content.split("\n\n")
+  return {
+    lead: lead ?? content,
+    rest: rest.join("\n\n").trim(),
+  }
 }
 
 function SidebarHoverCloseButton({ side }: { side: "left" | "right" }) {
@@ -489,9 +506,19 @@ export function ChatContent({ activeFile }: ChatContentProps) {
         role: "assistant",
         content: `${context}${
           submittedPrompt.endsWith("?")
-            ? "Here is a structured legal analysis from the available facts and cited context."
-            : "Understood. Here is the risk summary, key obligations, and practical next move."
-        }`,
+            ? "I reviewed the relevant clause and prepared a focused legal summary."
+            : "I prepared the legal summary, immediate risk points, and the next recommended action."
+        }
+
+> "Confirm the operative clause language, the required notice method, and the effective date before sending."
+
+## Key Takeaways
+
+State the controlling provision clearly.
+
+List the notice deadline and delivery method.
+
+Prepare the next draft or filing based on the selected record.`,
         suggestLawyers: shouldSuggestLawyers,
       }
       setChatMessages((prev) => [...prev, assistantMsg])
@@ -500,31 +527,72 @@ export function ChatContent({ activeFile }: ChatContentProps) {
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fcf7ee]">
       <div ref={chatContainerRef} className="relative flex-1 overflow-y-auto">
         <ChatContainerRoot className="h-full">
-          <ChatContainerContent className="space-y-0 px-5 py-6 md:py-8">
+          <ChatContainerContent className="space-y-0 px-5 py-8 md:py-10">
+            <div className="mx-auto mb-12 max-w-4xl px-4 pt-6 text-center">
+              <h1 className="text-[clamp(2rem,3vw,3.2rem)] font-normal tracking-[-0.04em] text-[#7a6755]">
+                How can I assist with your legal document today?
+              </h1>
+            </div>
+
             {chatMessages.map((message, index) => {
               const isAssistant = message.role === "assistant"
               const isLastMessage = index === chatMessages.length - 1
+              const assistantCopy = isAssistant
+                ? splitLeadParagraph(message.content)
+                : null
 
               return (
                 <Message
                   key={message.id}
                   className={cn(
-                    "mx-auto flex w-full max-w-3xl flex-col gap-1 px-4",
+                    "mx-auto mb-8 flex w-full max-w-6xl flex-col gap-1 px-4",
                     isAssistant ? "items-start" : "items-end"
                   )}
                 >
                   {isAssistant ? (
-                    <div className="group flex w-full flex-col gap-0">
-                      <div className="flex-1 rounded-lg bg-transparent p-0 text-foreground">
-                        <TextEffectPerChar>{message.content}</TextEffectPerChar>
-                        {message.suggestLawyers ? <InlineLawyerSuggestions /> : null}
+                    <div className="group flex w-full items-start gap-5">
+                      <div className="mt-1 flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-[18px] border border-[#ead5aa] bg-[#f8edd6] text-[#36271a] shadow-[0_1px_4px_rgba(90,62,38,0.06)]">
+                        <Scale className="size-7" />
                       </div>
+
+                      <div className="w-full max-w-[68rem] rounded-[2rem] border border-[#e6dbc9] bg-[#f5efe4] px-8 py-8 text-[#5b4838] shadow-[0_2px_8px_rgba(95,71,47,0.06)]">
+                        <div className="mb-6 text-[1.12rem] leading-8">
+                          <TextEffectPerChar>
+                            {assistantCopy?.lead ?? message.content}
+                          </TextEffectPerChar>
+                        </div>
+                        {assistantCopy?.rest ? (
+                          <Markdown
+                            className="text-[1.02rem] leading-8 [&_h2]:mt-7 [&_h2]:mb-4 [&_h2]:text-[1.15rem] [&_h2]:font-semibold [&_h2]:text-[#4d392b] [&_p]:mb-4 [&_strong]:font-semibold [&_strong]:text-[#463528] [&_blockquote]:my-6 [&_blockquote]:rounded-[18px] [&_blockquote]:border [&_blockquote]:border-[#ecd9b9] [&_blockquote]:bg-white [&_blockquote]:px-8 [&_blockquote]:py-7 [&_blockquote]:text-[#75604b] [&_blockquote]:shadow-[inset_4px_0_0_#e8c58b]"
+                          >
+                            {assistantCopy.rest}
+                          </Markdown>
+                        ) : null}
+
+                        {message.suggestLawyers ? <InlineLawyerSuggestions /> : null}
+
+                        <div className="mt-8 flex flex-wrap gap-3">
+                          <Button
+                            variant="outline"
+                            className="h-12 rounded-full border-[#e3d7c3] bg-white px-7 text-[1.05rem] font-semibold text-[#6b533e] shadow-none hover:bg-white"
+                          >
+                            Draft Notice
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-12 rounded-full border-[#e3d7c3] bg-white px-7 text-[1.05rem] font-semibold text-[#6b533e] shadow-none hover:bg-white"
+                          >
+                            Check Section 12
+                          </Button>
+                        </div>
+                      </div>
+
                       <MessageActions
                         className={cn(
-                          "-ml-2 flex gap-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100",
+                          "-ml-2 mt-2 flex gap-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100",
                           isLastMessage && "opacity-100"
                         )}
                       >
@@ -536,8 +604,8 @@ export function ChatContent({ activeFile }: ChatContentProps) {
                       </MessageActions>
                     </div>
                   ) : (
-                    <div className="group flex max-w-[80%] flex-col items-end gap-1">
-                      <div className="rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground shadow-sm">
+                    <div className="group flex w-full max-w-[58rem] flex-col items-end gap-1">
+                      <div className="rounded-[2rem] border border-[#e8dfd3] bg-white px-7 py-6 text-[1.2rem] leading-[1.55] text-[#624f3d] shadow-[0_2px_10px_rgba(92,70,46,0.06)]">
                         {message.content}
                       </div>
                       <MessageActions className="flex gap-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
@@ -560,7 +628,7 @@ export function ChatContent({ activeFile }: ChatContentProps) {
 
             {isLoading ? (
               <Message className="mx-auto flex w-full max-w-3xl flex-col items-start gap-1 px-4">
-                <div className="px-1 py-2">
+                <div className="px-1 py-2 text-[#6d5a48]">
                   <TextShimmerWave className="font-mono text-sm" duration={1}>
                     Generating legal analysis...
                   </TextShimmerWave>
@@ -575,58 +643,42 @@ export function ChatContent({ activeFile }: ChatContentProps) {
         </ChatContainerRoot>
       </div>
 
-      <div className="sticky bottom-0 z-20 shrink-0 border-t border-border/60 bg-background px-4 pb-4 pt-3">
-        <div className="mx-auto max-w-3xl">
+      <div className="sticky bottom-0 z-20 shrink-0 bg-transparent px-6 pb-6 pt-4">
+        <div className="mx-auto max-w-6xl">
           <PromptInput
             isLoading={isLoading}
             value={prompt}
             onValueChange={setPrompt}
             onSubmit={handleSubmit}
-            className="relative z-10 w-full rounded-[28px] border border-input/80 bg-popover/96 p-0 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur"
+            className="relative z-10 w-full rounded-[2rem] border border-[#eadfcd] bg-white p-0 shadow-[0_18px_50px_rgba(204,173,125,0.34)]"
           >
             <PromptInputTextarea
-              placeholder={
-                activeFile
-                  ? `Ask about ${activeFile.name}...`
-                  : "Ask about risk, clauses, filings, or strategy..."
-              }
-              className="min-h-[44px] px-4 pt-3.5 pb-2 text-sm leading-snug"
+              placeholder="Type your response or instructions here..."
+              className="min-h-[116px] px-8 pt-7 pb-4 text-[1.12rem] leading-snug text-[#5d4937] placeholder:text-[#b39d88]"
             />
-
-            <PromptInputActions className="flex w-full items-center justify-between gap-2 px-3 pb-3 pt-0">
-              <div className="flex items-center gap-1.5">
-                <PromptInputAction tooltip="Attach file">
-                  <Button variant="ghost" size="icon" className="size-8 rounded-full text-muted-foreground">
-                    <Plus className="size-4" />
-                  </Button>
-                </PromptInputAction>
-                <PromptInputAction tooltip="More">
-                  <Button variant="ghost" size="icon" className="size-8 rounded-full text-muted-foreground">
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </PromptInputAction>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <PromptInputAction tooltip="Voice input">
-                  <Button variant="ghost" size="icon" className="size-8 rounded-full text-muted-foreground">
-                    <Mic className="size-4" />
-                  </Button>
-                </PromptInputAction>
+            <div className="flex items-center justify-end gap-3 px-6 pb-5 pt-0">
+              <PromptInputAction tooltip="Voice input">
                 <Button
+                  variant="ghost"
                   size="icon"
-                  disabled={!prompt.trim() || isLoading}
-                  onClick={handleSubmit}
-                  className="size-8 rounded-full shadow-sm"
+                  className="size-11 rounded-full text-[#70553d] hover:bg-transparent hover:text-[#5c422b]"
                 >
-                  {isLoading ? (
-                    <span className="size-3 rounded-sm bg-white" />
-                  ) : (
-                    <ArrowUp className="size-4" />
-                  )}
+                  <Mic className="size-6" />
                 </Button>
-              </div>
-            </PromptInputActions>
+              </PromptInputAction>
+              <Button
+                size="icon"
+                disabled={!prompt.trim() || isLoading}
+                onClick={handleSubmit}
+                className="size-14 rounded-[1.15rem] bg-[#6a4f34] text-white shadow-none hover:bg-[#5c442e]"
+              >
+                {isLoading ? (
+                  <span className="size-4 rounded-sm bg-white" />
+                ) : (
+                  <SendHorizontal className="size-6" />
+                )}
+              </Button>
+            </div>
           </PromptInput>
         </div>
       </div>

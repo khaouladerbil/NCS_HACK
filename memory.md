@@ -27,7 +27,8 @@ Last updated: 2026-06-26
 - Composer has upload and voice actions; reset removed.
 - Lawyer recommendations render inline inside assistant answers, not as a separate panel.
 - Right rail shows the legal workflow timeline.
-- Editor mode is now a plain in-place markdown editor.
+- Editor mode now renders markdown as legal-document A4 paper with a live source editor.
+- Assistant shell uses the beige legal-review styling from the latest reference image.
 
 ## Notes
 

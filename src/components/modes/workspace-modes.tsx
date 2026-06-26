@@ -33,9 +33,10 @@ export function WorkspaceModes({ activeFile }: WorkspaceModesProps) {
   const [mode, setMode] = useState<WorkspaceMode>("consultant")
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background">
-        <div className="flex items-center justify-center">
+    <div className="flex min-h-dvh flex-col bg-[#fcf7ee]">
+      <header className="sticky top-0 z-30 border-b border-[#e8decf] bg-[#fcf7ee]/95 backdrop-blur">
+        <div className="flex items-center justify-center px-4 py-5">
+          <div className="inline-flex rounded-[30px] border border-[#eadfcd] bg-[#ebe1cf] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
           {MODES.map((modeItem) => (
             <Button
               key={modeItem.id}
@@ -43,15 +44,16 @@ export function WorkspaceModes({ activeFile }: WorkspaceModesProps) {
               size="sm"
               onClick={() => setMode(modeItem.id)}
               className={cn(
-                "h-11 rounded-none px-6 text-xs font-medium",
+                "h-14 min-w-[11rem] rounded-[24px] px-8 text-[1.05rem] font-medium shadow-none transition-all",
                 mode === modeItem.id
-                  ? "border-b border-foreground text-foreground"
-                  : "text-muted-foreground"
+                  ? "bg-white text-[#5d4937] shadow-[0_2px_6px_rgba(92,70,46,0.14)]"
+                  : "text-[#7b6754] hover:bg-transparent hover:text-[#5d4937]"
               )}
             >
               {modeItem.label}
             </Button>
           ))}
+          </div>
         </div>
       </header>
 
