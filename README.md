@@ -1,4 +1,8 @@
+
 # JusticePath
+=======
+# Justice Path
+
 
 Full-stack legal workspace combining:
 
@@ -47,7 +51,13 @@ python manage.py runserver
 - `directory_data` lawyer directory import and APIs
 - `legal_writer` template-driven drafting and versioning
 
+
 ## Notes
+=======
+### Justice Path (`/api/legal-path/`)
+- `GET/POST /requests/` — `GET/PUT/DELETE /requests/<id>/`
+- `GET /requests/<id>/recommended_lawyers/?wilaya=&lat=&lng=`
+- `GET/POST /requests/<id>/analysis/`, `roadmap-steps/`, `documents/`, `recommendations/`, `timeline/`
 
 - Frontend conventions live in `AGENTS.md` and `memory.md`
 - Sample review docs live in `public/test-docs/`

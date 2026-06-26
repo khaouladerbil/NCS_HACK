@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'ai_assistant',
     'directory_data',
     'legal_writer',
+    'legal_quiz',
 ]
 
 MIDDLEWARE = [
@@ -153,7 +154,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Legal Path API",
+    "TITLE": "Justice Path API",
     "VERSION": "1.0.0",
 }
 
