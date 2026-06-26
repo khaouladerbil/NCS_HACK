@@ -17,9 +17,11 @@
 - Top mode switch uses HeroUI buttons.
 - Modes: consultant, editor, professor.
 - Consultant shows chat; editor/professor stay empty until later.
-- Prompt input floats at bottom.
+- Prompt input stays sticky at bottom.
 - Input actions: upload + voice.
 - Left navigation overlays content and must collapse/expand correctly.
+- Settings uses full page route, not sheet.
+- Brand as legal assistance app powered by proprietary models.
 - Copy should stay terse.
 
 ## Workflow

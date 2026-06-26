@@ -103,3 +103,39 @@ body {
     @apply font-sans;
   }
 }
+
+@keyframes text-effect-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    filter: blur(6px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes text-shimmer-wave {
+  0% {
+    background-position: 200% 50%;
+  }
+
+  100% {
+    background-position: -20% 50%;
+  }
+}
+
+@keyframes dialog-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

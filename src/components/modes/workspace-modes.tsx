@@ -1,8 +1,9 @@
 import { useState } from "react"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+
+import { ChatContent } from "@/components/chat/full-chat-app"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { ChatContent } from "@/components/chat/full-chat-app"
+
 import type { FileItem } from "@/components/chat/full-chat-app"
 
 type WorkspaceMode = "consultant" | "editor" | "professor"
@@ -15,9 +16,9 @@ const MODES: { id: WorkspaceMode; label: string }[] = [
 
 function EmptyMode({ label }: { label: string }) {
   return (
-    <div className="flex flex-1 items-center justify-center px-6">
-      <div className="rounded-2xl border border-border/80 bg-card/90 px-8 py-10 text-center text-sm text-muted-foreground shadow-sm backdrop-blur">
-        {label} — coming soon.
+    <div className="flex flex-1 items-center justify-center px-6 py-10">
+      <div className="text-center">
+        <p className="text-sm font-medium text-foreground">{label}</p>
       </div>
     </div>
   )
@@ -31,46 +32,28 @@ export function WorkspaceModes({ activeFile }: WorkspaceModesProps) {
   const [mode, setMode] = useState<WorkspaceMode>("consultant")
 
   return (
-    <div className="flex flex-col min-h-dvh">
-      {/* ── Unified top bar ── */}
-      <header className="bg-background/90 backdrop-blur border-b border-border/60 z-20 flex h-12 items-center px-2 gap-2 shrink-0">
-        {/* Left sidebar trigger */}
-        <SidebarTrigger side="left" className="shrink-0" />
-
-        {/* Mode tabs — centred */}
-        <div className="flex flex-1 items-center justify-center">
-          <div className="flex items-center rounded-full border border-border/70 bg-muted/50 p-0.5 gap-0">
-            {MODES.map((m, i) => (
-              <div key={m.id} className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMode(m.id)}
-                  className={cn(
-                    "h-7 rounded-full px-4 text-xs font-medium transition-all",
-                    mode === m.id
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {m.label}
-                </Button>
-                {i < MODES.length - 1 && (
-                  <div className="h-3.5 w-px bg-border/60" />
-                )}
-              </div>
-            ))}
-          </div>
+    <div className="flex min-h-dvh flex-col">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background">
+        <div className="flex items-center justify-center">
+          {MODES.map((modeItem) => (
+            <Button
+              key={modeItem.id}
+              variant="ghost"
+              size="sm"
+              onClick={() => setMode(modeItem.id)}
+              className={cn(
+                "h-11 rounded-none px-6 text-xs font-medium",
+                mode === modeItem.id
+                  ? "border-b border-foreground text-foreground"
+                  : "text-muted-foreground"
+              )}
+            >
+              {modeItem.label}
+            </Button>
+          ))}
         </div>
-
-        {/* Right sidebar trigger — mirrored icon */}
-        <SidebarTrigger
-          side="right"
-          className="shrink-0 scale-x-[-1]"
-        />
       </header>
 
-      {/* ── Mode content ── */}
       {mode === "consultant" ? (
         <ChatContent activeFile={activeFile} />
       ) : mode === "editor" ? (
