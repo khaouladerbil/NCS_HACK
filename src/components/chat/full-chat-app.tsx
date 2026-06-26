@@ -1,21 +1,41 @@
 "use client"
 
 import {
-  ChevronRight,
+  ArrowRightLeft,
+  BookOpen,
+  Check,
+  ChevronUp,
   Copy,
-  File,
+  ExternalLink,
+  FileText,
   Folder,
+  FolderPen,
+  FolderPlus,
   FolderOpen,
   Mic,
   Pencil,
+  Plus,
+  Quote,
   Scale,
+  Sparkles,
   Settings2,
+  ShieldCheck,
+  Square,
+  Trash2,
   SendHorizontal,
   X,
 } from "lucide-react"
-import { useRef, useState } from "react"
+import { toast } from "@heroui/react"
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react"
 import { NavLink } from "react-router-dom"
+import { gsap } from "gsap"
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/core/accordion"
 import {
   MorphingDialog,
   MorphingDialogClose,
@@ -33,19 +53,37 @@ import { Button } from "@/components/ui/button"
 import {
   ChatContainerContent,
   ChatContainerRoot,
+  ChatContainerScrollAnchor,
 } from "@/components/ui/chat-container"
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtItem,
+  ChainOfThoughtStep,
+  ChainOfThoughtTrigger,
+} from "@/components/ui/chain-of-thought"
+import { Markdown } from "@/components/ui/markdown"
 import {
   Message,
   MessageAction,
   MessageActions,
 } from "@/components/ui/message"
-import { Markdown } from "@/components/ui/markdown"
 import {
   PromptInput,
   PromptInputAction,
   PromptInputTextarea,
 } from "@/components/ui/prompt-input"
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ui/reasoning"
 import { ScrollButton } from "@/components/ui/scroll-button"
+import {
+  Source,
+  SourceContent,
+  SourceTrigger,
+} from "@/components/ui/source"
 import {
   Sidebar,
   SidebarContent,
@@ -53,12 +91,17 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import logoMark from "../../../Logo.svg"
 
 export type FileItem = {
   id: string
@@ -76,7 +119,9 @@ type ChatMessage = {
   id: number
   role: "user" | "assistant"
   content: string
+  attachments?: AttachmentItem[]
   suggestLawyers?: boolean
+  revealLawyers?: boolean
 }
 
 type Lawyer = {
@@ -92,6 +137,33 @@ type TimelineStep = {
   title: string
   description: string
   state: "done" | "active" | "upcoming"
+}
+
+type AttachmentItem = {
+  id: string
+  name: string
+  type: string
+  previewUrl?: string
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
+
+type SpeechRecognitionLike = {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null
+  onend: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
+type SpeechRecognitionEventLike = {
+  results: ArrayLike<{
+    0: {
+      transcript: string
+    }
+  }>
 }
 
 export const folderTree: FolderItem[] = [
@@ -154,6 +226,26 @@ const TIMELINE: TimelineStep[] = [
   },
 ]
 
+const WORKFLOW_SOURCES = [
+  {
+    href: "https://www.law.cornell.edu/wex/notice",
+    title: "Notice requirement overview",
+    description: "Background on formal notice obligations and delivery mechanics.",
+    label: "Notice",
+  },
+  {
+    href: "https://www.law.cornell.edu/ucc/2/2-309",
+    title: "Termination and reasonable notice",
+    description: "Reference for termination timing and notice concepts.",
+    label: "UCC 2-309",
+  },
+]
+
+const WORKFLOW_QUOTES = [
+  '"Written notice must be delivered no later than thirty (30) days before the intended effective date."',
+  '"Service by email is effective only when the agreement expressly permits electronic notice."',
+]
+
 const LAWYERS: Lawyer[] = [
   {
     name: "Nora Patel",
@@ -208,41 +300,13 @@ const LAWYERS: Lawyer[] = [
 const LAWYER_QUERY_RE =
   /\b(lawyer|lawyers|attorney|attorneys|counsel|solicitor|advocate|representation|represent me|hire counsel|need counsel)\b/i
 
-const initialMessages: ChatMessage[] = [
-  {
-    id: 1,
-    role: "user",
-    content:
-      "Can you review the termination clause in the Rental Agreement.pdf I just uploaded? Specifically looking for notice periods.",
-  },
-  {
-    id: 2,
-    role: "assistant",
-    content: `I have reviewed the termination clause (Section 8) in the **Rental Agreement.pdf**.
+const initialMessages: ChatMessage[] = []
 
-> "8.1 Either party may terminate this agreement by providing written notice no less than thirty (30) days prior to the intended date of termination..."
-
-## Key Takeaways
-
-You must provide at least 30 days written notice.
-
-The notice must be in writing (email is usually acceptable unless specified otherwise in Section 12).
-
-This applies to both you (tenant) and the landlord.`,
-  },
+const QUICK_PROMPTS = [
+  "Review my termination clause.",
+  "Draft a notice to vacate.",
+  "Summarize this filing.",
 ]
-
-function TextEffectPerChar({ children }: { children: string }) {
-  return <TextEffect per="char" preset="fade">{children}</TextEffect>
-}
-
-function splitLeadParagraph(content: string) {
-  const [lead, ...rest] = content.split("\n\n")
-  return {
-    lead: lead ?? content,
-    rest: rest.join("\n\n").trim(),
-  }
-}
 
 function SidebarHoverCloseButton({ side }: { side: "left" | "right" }) {
   const { toggleSidebar, toggleSidebarRight } = useSidebar()
@@ -266,35 +330,159 @@ function SidebarHoverCloseButton({ side }: { side: "left" | "right" }) {
   )
 }
 
-function WorkflowTimeline() {
+function WorkflowTimeline({
+  hasConversation,
+  isThinking,
+}: {
+  hasConversation: boolean
+  isThinking: boolean
+}) {
+  const sectionRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!hasConversation || !sectionRef.current) return
+
+    gsap.fromTo(
+      sectionRef.current.querySelectorAll("[data-flow-step]"),
+      {
+        opacity: 0,
+        y: 12,
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.28,
+        stagger: 0.08,
+        ease: "power2.out",
+      }
+    )
+  }, [hasConversation, isThinking])
+
+  if (!hasConversation) {
+    return (
+      <div className="flex min-h-full items-center px-4 py-6">
+        <div className="mx-auto max-w-[12rem] text-center">
+          <p className="text-[0.64rem] font-semibold tracking-[0.18em] text-[#a7927c] uppercase">
+            Matter Board
+          </p>
+          <p className="mt-3 text-[0.74rem] leading-5 text-[#8a7764]">
+            Empty until a prompt starts the matter.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="relative px-5 py-6">
-      <div className="absolute bottom-10 left-[12px] top-7 w-px bg-[#2b2117]" />
-      <div className="space-y-6">
-        {TIMELINE.map((step) => (
-          <div key={step.title} className="relative pl-5">
+    <div ref={sectionRef} className="space-y-4 px-3.5 py-1.5">
+      <div data-flow-step>
+        <p className="text-[0.62rem] font-semibold tracking-[0.18em] text-[#a7927c] uppercase">
+          Matter Board
+        </p>
+        <ChainOfThought className="mt-2.5">
+          {TIMELINE.map((step, index) => (
+            <ChainOfThoughtStep key={step.title} defaultOpen={index === 1}>
+              <ChainOfThoughtTrigger
+                className={cn(
+                  "text-[0.78rem] text-[#4f3c2d]",
+                  step.state === "done" && "opacity-55",
+                  step.state === "active" && "font-semibold text-[#2f2014]"
+                )}
+              >
+                {step.title}
+              </ChainOfThoughtTrigger>
+              <ChainOfThoughtContent className="pb-1">
+                <ChainOfThoughtItem className="text-[0.7rem] leading-4.5 text-[#84715e]">
+                  {step.description}
+                </ChainOfThoughtItem>
+                {step.state === "active" ? (
+                  <ChainOfThoughtItem className="pt-1">
+                    <Reasoning className="px-0.5 py-1">
+                      <ReasoningTrigger className="text-[0.68rem] font-medium tracking-[0.12em] text-[#6b533e] uppercase">
+                        Reasoning
+                      </ReasoningTrigger>
+                      <ReasoningContent
+                        contentClassName="mt-2 prose-p:my-0 prose-p:text-[0.68rem] prose-p:leading-4.5 prose-p:text-[#7b6754]"
+                        markdown
+                      >
+                        Confirm clause, notice method, effective date. Compare source file against governing language before drafting response.
+                      </ReasoningContent>
+                    </Reasoning>
+                  </ChainOfThoughtItem>
+                ) : null}
+              </ChainOfThoughtContent>
+            </ChainOfThoughtStep>
+          ))}
+        </ChainOfThought>
+      </div>
+
+      <div data-flow-step>
+        <div className="flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.14em] text-[#4f3c2d] uppercase">
+          <Sparkles className="size-4" />
+          Thinking
+        </div>
+        <div className="mt-2">
+          {isThinking ? (
+            <TextShimmerWave className="text-[0.7rem] text-[#7b6754]" duration={1}>
+              Comparing clauses, timing, service method, and next action.
+            </TextShimmerWave>
+          ) : (
+            <p className="text-[0.68rem] leading-4.5 text-[#7b6754]">
+              Waiting for the next matter update.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div data-flow-step>
+        <div className="flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.14em] text-[#4f3c2d] uppercase">
+          <Quote className="size-4" />
+          Quotes
+        </div>
+        <div className="mt-2 space-y-1.5">
+          {WORKFLOW_QUOTES.map((quote) => (
             <div
-              className={cn(
-                "absolute left-0 top-1 size-3 rounded-full border",
-                step.state === "done" && "border-[#2b2117] bg-[#2b2117]",
-                step.state === "active" &&
-                  "border-[#4c86de] bg-white ring-2 ring-[#4c86de]/40",
-                step.state === "upcoming" && "border-[#e6ddd1] bg-[#f3ede4]"
-              )}
-            />
-            <p
-              className={cn(
-                "text-[13px] leading-5 text-[#20170f]",
-                step.state === "done" && "line-through"
-              )}
+              key={quote}
+              className="px-0 text-[0.68rem] leading-4.5 text-[#7b6754]"
             >
-              {step.title}
-            </p>
-            <p className="mt-2 max-w-[180px] text-xs leading-4 text-[#20170f]">
-              {step.description}
-            </p>
+              <AnimatedText>{quote}</AnimatedText>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div data-flow-step>
+        <div className="flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.14em] text-[#4f3c2d] uppercase">
+          <ExternalLink className="size-4" />
+          Sources
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {WORKFLOW_SOURCES.map((source) => (
+            <Source key={source.href} href={source.href}>
+              <SourceTrigger
+                label={source.label}
+                showFavicon
+                className="h-6 rounded-full bg-[#f6efe4] px-2 text-[0.65rem] text-[#6b533e] hover:bg-[#efe6d7]"
+              />
+              <SourceContent
+                title={source.title}
+                description={source.description}
+              />
+            </Source>
+          ))}
+        </div>
+
+        <div className="mt-3 px-0 py-1">
+          <div className="flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.14em] text-[#4f3c2d] uppercase">
+            <Sparkles className="size-4" />
+            Citations
           </div>
-        ))}
+          <ul className="mt-2 space-y-1 text-[0.66rem] leading-4.5 text-[#7b6754]">
+            <li>Section 8.1 notice clause</li>
+            <li>Section 12 service method</li>
+            <li>State Code 104.B</li>
+          </ul>
+        </div>
       </div>
     </div>
   )
@@ -382,212 +570,633 @@ function InlineLawyerSuggestions() {
   )
 }
 
+type AttachmentPreviewProps = {
+  attachment: AttachmentItem
+  onRemove: (id: string) => void
+}
+
+function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewProps) {
+  const isImage = attachment.type.startsWith("image/")
+  const ext = attachment.name.split(".").pop()?.toUpperCase() ?? "FILE"
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <div className="relative inline-flex size-12 items-center justify-center overflow-hidden rounded-xl bg-[#f6efe4]">
+          {isImage && attachment.previewUrl ? (
+            <img
+              src={attachment.previewUrl}
+              alt={attachment.name}
+              className="size-full object-cover"
+            />
+          ) : (
+            <div className="flex size-full flex-col items-center justify-center bg-white text-[#7a6755]">
+              <FileText className="size-4" />
+              <span className="mt-1 text-[0.45rem] leading-none">{ext}</span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => onRemove(attachment.id)}
+            className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-white/92 text-[#9b866f] shadow-sm"
+            aria-label={`Remove ${attachment.name}`}
+          >
+            <X className="size-2.5" />
+          </button>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{attachment.name}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function MessageAttachmentSquare({ attachment }: { attachment: AttachmentItem }) {
+  const isImage = attachment.type.startsWith("image/")
+  const ext = attachment.name.split(".").pop()?.toUpperCase() ?? "FILE"
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <div className="inline-flex size-14 items-center justify-center overflow-hidden rounded-xl bg-[#f6efe4]">
+          {isImage && attachment.previewUrl ? (
+            <img
+              src={attachment.previewUrl}
+              alt={attachment.name}
+              className="size-full object-cover"
+            />
+          ) : (
+            <div className="flex size-full flex-col items-center justify-center bg-white text-[#7a6755]">
+              <FileText className="size-4.5" />
+              <span className="mt-1 text-[0.48rem] leading-none">{ext}</span>
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{attachment.name}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 type ChatSidebarProps = {
   side?: "left" | "right"
+  folders: FolderItem[]
   expandedFolders: Set<string>
   onToggleFolder: (id: string) => void
   activeFileId: string | null
   onSelectFile: (file: FileItem) => void
+  onCreateDocument: () => void
+  onCreateFolder: () => void
+  onRenameFolder: (folderId: string) => void
+  onOpenEditor: () => void
+  onDeleteFile: (fileId: string) => void
+  onMoveFile: (fileId: string, targetFolderId?: string) => void
+  hasConversation?: boolean
+  isThinking?: boolean
+}
+
+type AnimatedTextProps = {
+  children: ReactNode
+  className?: string
+  per?: "char" | "word"
+}
+
+function AnimatedText({ children, className, per = "word" }: AnimatedTextProps) {
+  return typeof children === "string" ? (
+    <TextEffect className={className} per={per} preset="fade">
+      {children}
+    </TextEffect>
+  ) : (
+    <span className={className}>{children}</span>
+  )
+}
+
+const animatedMarkdownComponents = {
+  h2: ({ children }: { children?: ReactNode }) => (
+    <h2 className="mt-6 mb-3 text-[1rem] font-semibold text-[#4d392b]">
+      <AnimatedText>{children}</AnimatedText>
+    </h2>
+  ),
+  p: ({ children }: { children?: ReactNode }) => (
+    <p className="mb-4 text-[0.92rem] leading-7 text-[#5b4838]">
+      <AnimatedText>{children}</AnimatedText>
+    </p>
+  ),
+  li: ({ children }: { children?: ReactNode }) => (
+    <li className="text-[0.92rem] leading-7 text-[#5b4838]">
+      <AnimatedText>{children}</AnimatedText>
+    </li>
+  ),
+  blockquote: ({ children }: { children?: ReactNode }) => (
+    <blockquote className="my-4 border-l-2 border-[#e8c58b] pl-4 italic text-[#75604b]">
+      <AnimatedText>{children}</AnimatedText>
+    </blockquote>
+  ),
 }
 
 export function ChatSidebar({
   side = "left",
+  folders,
   expandedFolders,
   onToggleFolder,
   activeFileId,
   onSelectFile,
+  onCreateDocument,
+  onCreateFolder,
+  onRenameFolder,
+  onOpenEditor,
+  onDeleteFile,
+  onMoveFile,
+  hasConversation = false,
+  isThinking = false,
 }: ChatSidebarProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const { open, openRight } = useSidebar()
+  const isOpen = side === "right" ? openRight : open
+
+  useEffect(() => {
+    if (!isOpen || !panelRef.current) return
+
+    gsap.fromTo(
+      panelRef.current,
+      {
+        opacity: 0,
+        x: side === "right" ? 18 : -18,
+      },
+      {
+        opacity: 1,
+        x: 0,
+        duration: 0.28,
+        ease: "power2.out",
+      }
+    )
+  }, [isOpen, side])
+
   return (
-    <Sidebar side={side}>
-      <SidebarHeader className="group/sidebar-head relative border-b border-border/50 px-4 py-4">
-        <p className="text-sm font-semibold tracking-tight text-foreground">
-          {side === "right" ? "Timeline" : "JusticePath"}
-        </p>
-        <SidebarHoverCloseButton side={side} />
-      </SidebarHeader>
+    <Sidebar side={side} className="z-30">
+      <div ref={panelRef} data-animate-panel className="flex size-full flex-col">
+        <SidebarHeader className="group/sidebar-head relative px-3.5 py-2.5">
+          {side === "right" ? (
+            <div className="h-5" />
+          ) : (
+            <div className="flex justify-center py-0.5">
+              <img src={logoMark} alt="JusticePath" className="h-auto w-[3.1rem]" />
+            </div>
+          )}
+          <SidebarHoverCloseButton side={side} />
+        </SidebarHeader>
 
-      <SidebarContent className="overflow-y-auto py-3">
-        {side === "right" ? (
-          <WorkflowTimeline />
-        ) : (
-          folderTree.map((folder) => {
-            const isOpen = expandedFolders.has(folder.id)
-            return (
-              <div key={folder.id} className="mb-0.5">
-                <button
-                  onClick={() => onToggleFolder(folder.id)}
-                  className="mx-2 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
-                  style={{ width: "calc(100% - 16px)" }}
-                >
-                  <ChevronRight
-                    className={cn(
-                      "size-3 shrink-0 transition-transform duration-150",
-                      isOpen && "rotate-90"
-                    )}
-                  />
-                  {isOpen ? (
-                    <FolderOpen className="size-3.5 shrink-0 text-amber-500" />
-                  ) : (
-                    <Folder className="size-3.5 shrink-0 text-amber-500/80" />
-                  )}
-                  <span className="truncate">{folder.name}</span>
-                </button>
-
-                {isOpen ? (
-                  <SidebarMenu className="mt-0.5 ml-4 gap-0">
-                    {folder.files.map((file) => (
-                      <SidebarMenuItem key={file.id}>
-                        <SidebarMenuButton
-                          isActive={activeFileId === file.id}
-                          onClick={() => onSelectFile(file)}
-                          className="h-7 pl-5 text-xs"
-                        >
-                          <File className="size-3 shrink-0 text-muted-foreground" />
-                          <span className="truncate">{file.name}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                ) : null}
+        <SidebarContent className="overflow-y-auto py-1">
+          {side === "right" ? (
+            <WorkflowTimeline hasConversation={hasConversation} isThinking={isThinking} />
+          ) : (
+            <div className="space-y-4 px-3.5">
+              <div className="space-y-1.5">
+                <p className="text-[0.62rem] font-semibold tracking-[0.18em] text-[#a7927c] uppercase">
+                  Workspace
+                </p>
+                <div className="grid grid-cols-1 gap-1">
+                  <button
+                    type="button"
+                    onClick={onCreateDocument}
+                    className="flex h-8 items-center gap-2 rounded-full px-2 text-[0.72rem] font-medium text-[#4f3c2d] transition hover:bg-[#f4ecde]"
+                    aria-label="New document"
+                    title="New document"
+                  >
+                    <Plus className="size-4" />
+                    New document
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={onCreateFolder}
+                      className="flex h-8 flex-1 items-center gap-2 rounded-full px-2 text-[0.7rem] text-[#7a6755] transition hover:bg-[#f4ecde] hover:text-[#4f3c2d]"
+                      aria-label="New folder"
+                      title="New folder"
+                    >
+                      <FolderPlus className="size-3.5" />
+                      Folder
+                    </button>
+                    <NavLink
+                      to="/settings"
+                      className="flex h-8 flex-1 items-center gap-2 rounded-full px-2 text-[0.7rem] text-[#7a6755] transition hover:bg-[#f4ecde] hover:text-[#4f3c2d]"
+                      aria-label="Settings"
+                      title="Settings"
+                    >
+                      <Settings2 className="size-3.5" />
+                      Settings
+                    </NavLink>
+                  </div>
+                </div>
               </div>
-            )
-          })
-        )}
-      </SidebarContent>
 
-      {side === "left" ? (
-        <SidebarFooter className="border-t border-border/50 px-2 py-2">
-          <NavLink to="/settings">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-full justify-start rounded-xl px-3 text-muted-foreground hover:text-foreground"
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[0.62rem] font-semibold tracking-[0.18em] text-[#a7927c] uppercase">
+                  Folders
+                </p>
+                <span className="text-[0.62rem] text-[#b19a84]">{folders.length}</span>
+              </div>
+
+              <Accordion
+                key={Array.from(expandedFolders).sort().join(",")}
+                defaultValue={Array.from(expandedFolders)}
+                className="space-y-2"
+              >
+                {folders.map((folder) => {
+                  const isFolderOpen = expandedFolders.has(folder.id)
+                  return (
+                    <AccordionItem key={folder.id} value={folder.id} className="py-0.5">
+                      <AccordionTrigger
+                        value={folder.id}
+                        onClick={() => onToggleFolder(folder.id)}
+                        className="w-full text-left text-[#5a4737]"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            {isFolderOpen ? (
+                              <FolderOpen className="size-4 shrink-0 text-[#7c6348]" />
+                            ) : (
+                              <Folder className="size-4 shrink-0 text-[#7c6348]" />
+                            )}
+                            <span className="truncate text-[0.7rem] font-semibold">
+                              {folder.name}
+                            </span>
+                          </div>
+                          <ChevronUp className="size-3.5 shrink-0 transition-transform duration-200 group-data-[expanded=true]:-rotate-180" />
+                        </div>
+                      </AccordionTrigger>
+
+                      <AccordionContent value={folder.id} className="pt-1.5">
+                        <div className="mb-1 flex items-center justify-end pr-1">
+                          <button
+                            type="button"
+                            onClick={() => onRenameFolder(folder.id)}
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.62rem] text-[#b3a59a] transition hover:bg-[#f4ecde] hover:text-[#4f3c2d]"
+                            title="Rename folder"
+                          >
+                            <FolderPen className="size-3" />
+                            Rename
+                          </button>
+                        </div>
+                        <SidebarMenu className="gap-0.5 pl-4">
+                          {folder.files.map((file) => (
+                            <SidebarMenuItem key={file.id}>
+                              <div className="group/file-row flex items-center gap-1.5 py-1">
+                                {file.ext === "txt" || file.name.includes("State Code") ? (
+                                  <BookOpen className="size-3.25 shrink-0 text-[#94826f]" />
+                                ) : (
+                                  <FileText className="size-3.25 shrink-0 text-[#94826f]" />
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => onSelectFile(file)}
+                                  className={cn(
+                                    "min-w-0 flex-1 truncate whitespace-nowrap text-left text-[0.64rem] leading-4 text-[#7a6755]",
+                                    activeFileId === file.id && "font-semibold text-[#2f2014]"
+                                  )}
+                                  title={file.name}
+                                >
+                                  {file.name}
+                                </button>
+                                <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/file-row:opacity-100">
+                                  <button
+                                    type="button"
+                                    onClick={() => onMoveFile(file.id)}
+                                    className="rounded-full p-1 text-[#b3a59a] transition hover:text-[#4f3c2d]"
+                                    aria-label={`Move ${file.name}`}
+                                    title="Move file"
+                                  >
+                                    <ArrowRightLeft className="size-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onSelectFile(file)
+                                      onOpenEditor()
+                                    }}
+                                    className="rounded-full p-1 text-[#b3a59a] transition hover:text-[#4f3c2d]"
+                                    aria-label={`Edit ${file.name}`}
+                                    title="Edit document"
+                                  >
+                                    <Pencil className="size-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => onDeleteFile(file.id)}
+                                    className="rounded-full p-1 text-[#d5a09a] transition hover:text-[#c26c62]"
+                                    aria-label={`Delete ${file.name}`}
+                                    title="Delete document"
+                                  >
+                                    <Trash2 className="size-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            </SidebarMenuItem>
+                          ))}
+                        </SidebarMenu>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )
+                })}
+              </Accordion>
+            </div>
+          )}
+        </SidebarContent>
+
+        {side === "left" ? (
+          <SidebarFooter className="px-3.5 py-3">
+            <NavLink
+              to="/settings"
+              className="flex items-center gap-2.5 rounded-[14px] px-1.5 py-1.5 text-[#4f3c2d] transition hover:bg-[#f4ecde]"
             >
-              <Settings2 className="size-4" />
-              <span className="text-xs">Settings</span>
-            </Button>
-          </NavLink>
-        </SidebarFooter>
-      ) : null}
+              <div className="flex size-8 items-center justify-center rounded-full bg-[#f0d9aa] text-[0.88rem] font-semibold text-[#4f3c2d]">
+                JP
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[0.78rem] font-semibold text-[#3f3024]">
+                  JusticePath AI
+                </p>
+                <div className="mt-0.5 flex items-center gap-1 text-[0.64rem] text-[#9b866f]">
+                  <ShieldCheck className="size-3" />
+                  Legal Assistant
+                </div>
+              </div>
+              <Settings2 className="size-3.5 text-[#9b866f]" />
+            </NavLink>
+          </SidebarFooter>
+        ) : null}
+      </div>
     </Sidebar>
   )
 }
 
 type ChatContentProps = {
   activeFile: FileItem | null
+  onOpenEditor: () => void
+  onDocumentChange: (value: string) => void
+  onConversationStateChange?: (hasConversation: boolean) => void
 }
 
-export function ChatContent({ activeFile }: ChatContentProps) {
+export function ChatContent({
+  activeFile,
+  onOpenEditor: _onOpenEditor,
+  onDocumentChange: _onDocumentChange,
+  onConversationStateChange,
+}: ChatContentProps) {
   const [prompt, setPrompt] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages)
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([])
+  const [listening, setListening] = useState(false)
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null)
+  const [editingValue, setEditingValue] = useState("")
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const streamAnchorRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const streamTimerRef = useRef<number | null>(null)
+
+  async function copyText(value: string) {
+    await navigator.clipboard.writeText(value)
+    toast("Copied")
+  }
+
+  function openFilePicker() {
+    fileInputRef.current?.click()
+  }
+
+  function scrollToGeneratedText(behavior: ScrollBehavior = "auto") {
+    requestAnimationFrame(() => {
+      streamAnchorRef.current?.scrollIntoView({
+        block: "end",
+        behavior,
+      })
+
+      if (!chatContainerRef.current) return
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior,
+      })
+    })
+  }
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop()
+      if (streamTimerRef.current) {
+        window.clearInterval(streamTimerRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    scrollToGeneratedText(isLoading ? "auto" : "smooth")
+  }, [chatMessages, isLoading])
+
+  useEffect(() => {
+    onConversationStateChange?.(chatMessages.length > 0)
+  }, [chatMessages.length, onConversationStateChange])
+
+  function toggleVoice() {
+    const speechApi = (
+      window as typeof window & {
+        SpeechRecognition?: SpeechRecognitionConstructor
+        webkitSpeechRecognition?: SpeechRecognitionConstructor
+      }
+    ).SpeechRecognition ??
+      (
+        window as typeof window & {
+          webkitSpeechRecognition?: SpeechRecognitionConstructor
+        }
+      ).webkitSpeechRecognition
+
+    if (!speechApi) {
+      toast.warning("Voice input unavailable")
+      return
+    }
+
+    if (listening) {
+      recognitionRef.current?.stop()
+      setListening(false)
+      toast("Voice capture stopped")
+      return
+    }
+
+    const recognition = new speechApi()
+    recognition.continuous = false
+    recognition.interimResults = true
+    recognition.lang = "en-US"
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript ?? "")
+        .join(" ")
+        .trim()
+
+      setPrompt(transcript)
+    }
+    recognition.onend = () => {
+      setListening(false)
+      recognitionRef.current = null
+    }
+
+    recognitionRef.current = recognition
+    setListening(true)
+    recognition.start()
+    toast("Voice capture started")
+  }
 
   const handleSubmit = () => {
-    if (!prompt.trim()) return
+    if (!prompt.trim() && attachments.length === 0) return
 
     const submittedPrompt = prompt.trim()
     const shouldSuggestLawyers = LAWYER_QUERY_RE.test(submittedPrompt)
+    const submittedAttachments = attachments
+    const userId = Date.now()
+    const assistantId = userId + 1
 
     const userMsg: ChatMessage = {
-      id: chatMessages.length + 1,
+      id: userId,
       role: "user",
       content: submittedPrompt,
+      attachments: submittedAttachments,
     }
 
-    setChatMessages((prev) => [...prev, userMsg])
-    setPrompt("")
-    setIsLoading(true)
-
-    setTimeout(() => {
-      const context = activeFile ? `Based on ${activeFile.name}: ` : ""
-      const assistantMsg: ChatMessage = {
-        id: chatMessages.length + 2,
+    setChatMessages((prev) => [
+      ...prev,
+      userMsg,
+      {
+        id: assistantId,
         role: "assistant",
-        content: `${context}${
-          submittedPrompt.endsWith("?")
-            ? "I reviewed the relevant clause and prepared a focused legal summary."
-            : "I prepared the legal summary, immediate risk points, and the next recommended action."
-        }
+        content: "",
+        suggestLawyers: shouldSuggestLawyers,
+        revealLawyers: false,
+      },
+    ])
+    setPrompt("")
+    setAttachments([])
+    setIsLoading(true)
+    toast("Prompt sent")
+
+    const context = activeFile ? `Based on ${activeFile.name}: ` : ""
+    const fullResponse = `${context}${
+      submittedPrompt.endsWith("?")
+        ? "I reviewed clause, notice method, and deadline."
+        : "I prepared summary, risk points, and next move."
+    }
 
 > "Confirm the operative clause language, the required notice method, and the effective date before sending."
 
 ## Key Takeaways
 
-State the controlling provision clearly.
+State controlling provision clearly.
 
-List the notice deadline and delivery method.
+List notice deadline and delivery method.
 
-Prepare the next draft or filing based on the selected record.`,
-        suggestLawyers: shouldSuggestLawyers,
+Prepare next draft from selected record.`
+
+    let cursor = 0
+    const stride = Math.max(2, Math.ceil(fullResponse.length / 70))
+    if (streamTimerRef.current) {
+      window.clearInterval(streamTimerRef.current)
+    }
+
+    streamTimerRef.current = window.setInterval(() => {
+      cursor = Math.min(fullResponse.length, cursor + stride)
+      const nextContent = fullResponse.slice(0, cursor)
+
+      setChatMessages((prev) =>
+        prev.map((message) =>
+          message.id === assistantId ? { ...message, content: nextContent } : message
+        )
+      )
+      scrollToGeneratedText("auto")
+
+      if (cursor >= fullResponse.length) {
+        setChatMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId
+              ? { ...message, revealLawyers: shouldSuggestLawyers }
+              : message
+          )
+        )
+        if (streamTimerRef.current) {
+          window.clearInterval(streamTimerRef.current)
+          streamTimerRef.current = null
+        }
+        setIsLoading(false)
       }
-      setChatMessages((prev) => [...prev, assistantMsg])
-      setIsLoading(false)
-    }, 1200)
+    }, 45)
+  }
+
+  function startEditingMessage(message: ChatMessage) {
+    setEditingMessageId(message.id)
+    setEditingValue(message.content)
+    toast("Editing message")
+  }
+
+  function saveEditedMessage(messageId: number) {
+    setChatMessages((prev) =>
+      prev.map((message) =>
+        message.id === messageId ? { ...message, content: editingValue.trim() } : message
+      )
+    )
+    setEditingMessageId(null)
+    setEditingValue("")
+    toast("Message updated")
   }
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fcf7ee]">
       <div ref={chatContainerRef} className="relative flex-1 overflow-y-auto">
         <ChatContainerRoot className="h-full">
-          <ChatContainerContent className="space-y-0 px-5 py-8 md:py-10">
-            <div className="mx-auto mb-12 max-w-4xl px-4 pt-6 text-center">
-              <h1 className="text-[clamp(2rem,3vw,3.2rem)] font-normal tracking-[-0.04em] text-[#7a6755]">
-                How can I assist with your legal document today?
-              </h1>
-            </div>
+          <ChatContainerContent className="space-y-0 px-4 pb-64 pt-4 md:pb-72 md:pt-5">
+            {chatMessages.length === 0 ? (
+              <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl items-center justify-center px-4 text-center">
+                <div>
+                  <h1 className="text-[clamp(1.4rem,2.2vw,2.05rem)] font-normal tracking-[-0.03em] text-[#6f5d4d]">
+                    Start a legal task.
+                  </h1>
+                  <p className="mt-3 text-[0.86rem] text-[#9b866f]">
+                    Ask for review, drafting, citation, or strategy.
+                  </p>
+                </div>
+              </div>
+            ) : null}
 
             {chatMessages.map((message, index) => {
               const isAssistant = message.role === "assistant"
               const isLastMessage = index === chatMessages.length - 1
-              const assistantCopy = isAssistant
-                ? splitLeadParagraph(message.content)
-                : null
 
               return (
                 <Message
                   key={message.id}
                   className={cn(
-                    "mx-auto mb-8 flex w-full max-w-6xl flex-col gap-1 px-4",
+                    "mx-auto mb-5 flex w-full max-w-5xl flex-col gap-1 px-4",
                     isAssistant ? "items-start" : "items-end"
                   )}
                 >
                   {isAssistant ? (
-                    <div className="group flex w-full items-start gap-5">
-                      <div className="mt-1 flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-[18px] border border-[#ead5aa] bg-[#f8edd6] text-[#36271a] shadow-[0_1px_4px_rgba(90,62,38,0.06)]">
-                        <Scale className="size-7" />
+                    <div className="group flex w-full items-start gap-4">
+                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3e2bd] text-[#36271a]">
+                        <Scale className="size-4" />
                       </div>
 
-                      <div className="w-full max-w-[68rem] rounded-[2rem] border border-[#e6dbc9] bg-[#f5efe4] px-8 py-8 text-[#5b4838] shadow-[0_2px_8px_rgba(95,71,47,0.06)]">
-                        <div className="mb-6 text-[1.12rem] leading-8">
-                          <TextEffectPerChar>
-                            {assistantCopy?.lead ?? message.content}
-                          </TextEffectPerChar>
-                        </div>
-                        {assistantCopy?.rest ? (
+                      <div className="w-full max-w-[54rem] pt-1 text-[#5b4838]">
+                        {message.content ? (
                           <Markdown
-                            className="text-[1.02rem] leading-8 [&_h2]:mt-7 [&_h2]:mb-4 [&_h2]:text-[1.15rem] [&_h2]:font-semibold [&_h2]:text-[#4d392b] [&_p]:mb-4 [&_strong]:font-semibold [&_strong]:text-[#463528] [&_blockquote]:my-6 [&_blockquote]:rounded-[18px] [&_blockquote]:border [&_blockquote]:border-[#ecd9b9] [&_blockquote]:bg-white [&_blockquote]:px-8 [&_blockquote]:py-7 [&_blockquote]:text-[#75604b] [&_blockquote]:shadow-[inset_4px_0_0_#e8c58b]"
+                            components={animatedMarkdownComponents}
+                            className="text-[0.88rem] leading-6.5 [&_ol]:ml-5 [&_ol]:space-y-2 [&_ul]:ml-5 [&_ul]:space-y-2 [&_strong]:font-semibold [&_strong]:text-[#463528]"
                           >
-                            {assistantCopy.rest}
+                            {message.content}
                           </Markdown>
-                        ) : null}
+                        ) : (
+                          <div className="px-0.5 py-1 text-[#6d5a48]">
+                            <TextShimmerWave className="font-mono text-[0.78rem]" duration={1}>
+                              Generating legal analysis...
+                            </TextShimmerWave>
+                          </div>
+                        )}
 
-                        {message.suggestLawyers ? <InlineLawyerSuggestions /> : null}
-
-                        <div className="mt-8 flex flex-wrap gap-3">
-                          <Button
-                            variant="outline"
-                            className="h-12 rounded-full border-[#e3d7c3] bg-white px-7 text-[1.05rem] font-semibold text-[#6b533e] shadow-none hover:bg-white"
-                          >
-                            Draft Notice
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="h-12 rounded-full border-[#e3d7c3] bg-white px-7 text-[1.05rem] font-semibold text-[#6b533e] shadow-none hover:bg-white"
-                          >
-                            Check Section 12
-                          </Button>
-                        </div>
+                        {message.revealLawyers ? <InlineLawyerSuggestions /> : null}
                       </div>
 
                       <MessageActions
@@ -597,25 +1206,99 @@ Prepare the next draft or filing based on the selected record.`,
                         )}
                       >
                         <MessageAction tooltip="Copy">
-                          <Button variant="ghost" size="icon" className="size-7 rounded-full">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 rounded-full"
+                            onClick={() => copyText(message.content)}
+                          >
                             <Copy className="size-3.5" />
                           </Button>
                         </MessageAction>
                       </MessageActions>
                     </div>
                   ) : (
-                    <div className="group flex w-full max-w-[58rem] flex-col items-end gap-1">
-                      <div className="rounded-[2rem] border border-[#e8dfd3] bg-white px-7 py-6 text-[1.2rem] leading-[1.55] text-[#624f3d] shadow-[0_2px_10px_rgba(92,70,46,0.06)]">
-                        {message.content}
+                    <div className="group flex w-full max-w-[48rem] flex-col items-end gap-1">
+                      <div className="px-1 py-1 text-[0.88rem] leading-6 text-[#624f3d]">
+                        {message.attachments?.length ? (
+                          <div className="mb-3 flex flex-wrap gap-2">
+                            {message.attachments.map((attachment) => (
+                              <MessageAttachmentSquare
+                                key={attachment.id}
+                                attachment={attachment}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {editingMessageId === message.id ? (
+                          <div className="relative">
+                            <textarea
+                              value={editingValue}
+                              onChange={(event) => setEditingValue(event.target.value)}
+                              onKeyDown={(event) => {
+                                if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                                  event.preventDefault()
+                                  saveEditedMessage(message.id)
+                                }
+
+                                if (event.key === "Escape") {
+                                  event.preventDefault()
+                                  setEditingMessageId(null)
+                                  setEditingValue("")
+                                  toast("Edit canceled")
+                                }
+                              }}
+                              style={{
+                                minHeight: `${Math.max(28, message.content.split("\n").length * 24)}px`,
+                                height: `${Math.max(28, message.content.split("\n").length * 24)}px`,
+                              }}
+                              className="w-full resize-none bg-transparent px-1 py-1.5 text-[0.88rem] leading-6 outline-none"
+                            />
+                            <div className="absolute right-0 top-0 flex items-center gap-1 bg-[#fcf7ee]/95 pl-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7 rounded-full"
+                                onClick={() => {
+                                  setEditingMessageId(null)
+                                  setEditingValue("")
+                                  toast("Edit canceled")
+                                }}
+                              >
+                                <X className="size-3.5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                className="size-7 rounded-full"
+                                onClick={() => saveEditedMessage(message.id)}
+                              >
+                                <Check className="size-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : message.content ? (
+                          message.content
+                        ) : null}
                       </div>
                       <MessageActions className="flex gap-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                         <MessageAction tooltip="Edit">
-                          <Button variant="ghost" size="icon" className="size-7 rounded-full">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 rounded-full"
+                            onClick={() => startEditingMessage(message)}
+                          >
                             <Pencil className="size-3.5" />
                           </Button>
                         </MessageAction>
                         <MessageAction tooltip="Copy">
-                          <Button variant="ghost" size="icon" className="size-7 rounded-full">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 rounded-full"
+                            onClick={() => copyText(message.content)}
+                          >
                             <Copy className="size-3.5" />
                           </Button>
                         </MessageAction>
@@ -625,57 +1308,129 @@ Prepare the next draft or filing based on the selected record.`,
                 </Message>
               )
             })}
-
-            {isLoading ? (
-              <Message className="mx-auto flex w-full max-w-3xl flex-col items-start gap-1 px-4">
-                <div className="px-1 py-2 text-[#6d5a48]">
-                  <TextShimmerWave className="font-mono text-sm" duration={1}>
-                    Generating legal analysis...
-                  </TextShimmerWave>
-                </div>
-              </Message>
-            ) : null}
+            <ChatContainerScrollAnchor
+              ref={streamAnchorRef}
+              className="h-40 scroll-mt-72"
+            />
           </ChatContainerContent>
 
-          <div className="absolute bottom-4 left-1/2 flex w-full max-w-3xl -translate-x-1/2 justify-end px-5">
+          <div className="absolute bottom-44 left-1/2 flex w-full max-w-3xl -translate-x-1/2 justify-end px-5">
             <ScrollButton className="shadow-sm" />
           </div>
         </ChatContainerRoot>
       </div>
 
-      <div className="sticky bottom-0 z-20 shrink-0 bg-transparent px-6 pb-6 pt-4">
-        <div className="mx-auto max-w-6xl">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center bg-gradient-to-t from-[#fcf7ee] via-[#fcf7ee]/97 to-transparent px-4 pb-5 pt-8">
+        <div className="mx-auto flex max-w-4xl flex-col items-center gap-3">
+          <div className="pointer-events-auto flex w-[min(100vw-2rem,52rem)] flex-wrap justify-center gap-2">
+            {QUICK_PROMPTS.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => {
+                  setPrompt(suggestion)
+                  toast(`Suggestion loaded: ${suggestion}`)
+                }}
+                className="rounded-full bg-white/90 px-3 py-1.5 text-[0.72rem] text-[#7a6755] shadow-[0_8px_22px_rgba(92,70,46,0.08)] transition hover:text-[#4f3c2d]"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
           <PromptInput
             isLoading={isLoading}
             value={prompt}
             onValueChange={setPrompt}
             onSubmit={handleSubmit}
-            className="relative z-10 w-full rounded-[2rem] border border-[#eadfcd] bg-white p-0 shadow-[0_18px_50px_rgba(204,173,125,0.34)]"
+            className="pointer-events-auto relative z-10 w-[min(100vw-2rem,52rem)] rounded-[1.25rem] border border-[#eadfcd] bg-white p-0 shadow-[0_18px_50px_rgba(204,173,125,0.28)]"
           >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const nextFiles = Array.from(event.target.files ?? []).map((file) => ({
+                  id: `${file.name}-${file.lastModified}`,
+                  name: file.name,
+                  type: file.type,
+                  previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+                }))
+                if (nextFiles.length) {
+                  setAttachments((prev) => [...prev, ...nextFiles])
+                  toast(`${nextFiles.length} file${nextFiles.length > 1 ? "s" : ""} added`)
+                }
+                event.target.value = ""
+              }}
+            />
+            {attachments.length ? (
+              <div className="flex flex-wrap gap-2 px-4 pt-4">
+                {attachments.map((attachment) => (
+                  <AttachmentPreview
+                    key={attachment.id}
+                    attachment={attachment}
+                    onRemove={(id) =>
+                      setAttachments((prev) => {
+                        const removed = prev.find((item) => item.id === id)
+                        if (removed?.previewUrl) {
+                          URL.revokeObjectURL(removed.previewUrl)
+                        }
+                        return prev.filter((item) => item.id !== id)
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            ) : null}
             <PromptInputTextarea
               placeholder="Type your response or instructions here..."
-              className="min-h-[116px] px-8 pt-7 pb-4 text-[1.12rem] leading-snug text-[#5d4937] placeholder:text-[#b39d88]"
+              className="min-h-[78px] px-5 pt-4 pb-2 text-[0.92rem] leading-6 text-[#5d4937] placeholder:text-[#b39d88]"
             />
-            <div className="flex items-center justify-end gap-3 px-6 pb-5 pt-0">
+            <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-0">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <PromptInputAction tooltip="Append files">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full border border-[#eadfcd] px-3 text-[0.78rem] text-[#70553d] hover:bg-[#f7f0e5]"
+                    onClick={openFilePicker}
+                  >
+                    <Plus className="size-3.5" />
+                    Files
+                  </Button>
+                </PromptInputAction>
+              </div>
               <PromptInputAction tooltip="Voice input">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-11 rounded-full text-[#70553d] hover:bg-transparent hover:text-[#5c422b]"
+                  aria-pressed={listening}
+                  onClick={toggleVoice}
+                  className={cn(
+                    "size-9 rounded-full text-[#70553d] hover:bg-transparent hover:text-[#5c422b]",
+                    listening && "bg-[#f6efe4] text-[#5c422b]"
+                  )}
                 >
-                  <Mic className="size-6" />
+                  {listening ? (
+                    <span className="relative flex items-center justify-center">
+                      <span className="absolute inline-flex size-7 animate-ping rounded-full bg-[#e6c58b]/55" />
+                      <Square className="relative z-10 size-3.5 fill-current" />
+                    </span>
+                  ) : (
+                    <Mic className="size-4.5" />
+                  )}
                 </Button>
               </PromptInputAction>
               <Button
                 size="icon"
-                disabled={!prompt.trim() || isLoading}
+                disabled={(!prompt.trim() && attachments.length === 0) || isLoading}
                 onClick={handleSubmit}
-                className="size-14 rounded-[1.15rem] bg-[#6a4f34] text-white shadow-none hover:bg-[#5c442e]"
+                className="size-10 rounded-[0.95rem] bg-[#6a4f34] text-white shadow-none hover:bg-[#5c442e]"
               >
                 {isLoading ? (
                   <span className="size-4 rounded-sm bg-white" />
                 ) : (
-                  <SendHorizontal className="size-6" />
+                  <SendHorizontal className="size-4.5" />
                 )}
               </Button>
             </div>
@@ -711,17 +1466,28 @@ export function FullChatApp() {
   }
 
   const sidebarProps = {
+    folders: folderTree,
     expandedFolders,
     onToggleFolder: toggleFolder,
     activeFileId,
     onSelectFile: selectFile,
+    onCreateDocument: () => {},
+    onCreateFolder: () => {},
+    onRenameFolder: () => {},
+    onOpenEditor: () => {},
+    onDeleteFile: () => {},
+    onMoveFile: () => {},
   }
 
   return (
     <SidebarProvider>
       <ChatSidebar side="left" {...sidebarProps} />
       <SidebarInset>
-        <ChatContent activeFile={activeFile} />
+        <ChatContent
+          activeFile={activeFile}
+          onOpenEditor={() => {}}
+          onDocumentChange={() => {}}
+        />
       </SidebarInset>
       <ChatSidebar side="right" {...sidebarProps} />
     </SidebarProvider>

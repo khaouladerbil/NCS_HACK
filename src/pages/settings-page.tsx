@@ -1,30 +1,33 @@
 import {
+  ArrowLeft,
   Bell,
-  Briefcase,
+  Calendar,
   Check,
   CreditCard,
-  Globe,
+  KeyRound,
   Mail,
   Palette,
   Phone,
+  MapPinned,
   Save,
   Shield,
   User,
 } from "lucide-react"
 import { useState } from "react"
+import { toast } from "@heroui/react"
 import { NavLink } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const USER = {
-  name: "Alexandra Morgan",
+  firstName: "Alexandra",
+  lastName: "Morgan",
+  dob: "1989-04-16",
   email: "a.morgan@lawfirm.io",
-  role: "Senior Partner",
-  organisation: "Morgan & Associates LLP",
   phone: "+44 20 7946 0958",
-  website: "morganassociates.law",
-  location: "London, United Kingdom",
+  password: "********",
+  region: "London, United Kingdom",
 }
 
 const SETTINGS_NAV = [
@@ -38,17 +41,18 @@ const SETTINGS_NAV = [
 function ProfileSection() {
   const [saved, setSaved] = useState(false)
   const [form, setForm] = useState({
-    name: USER.name,
+    firstName: USER.firstName,
+    lastName: USER.lastName,
+    dob: USER.dob,
     email: USER.email,
-    role: USER.role,
-    organisation: USER.organisation,
     phone: USER.phone,
-    website: USER.website,
-    location: USER.location,
+    password: USER.password,
+    region: USER.region,
   })
 
   const handleSave = () => {
     setSaved(true)
+    toast("Settings saved")
     setTimeout(() => setSaved(false), 2500)
   }
 
@@ -58,13 +62,13 @@ function ProfileSection() {
     icon: React.ElementType
     type?: string
   }[] = [
-    { key: "name", label: "Full Name", icon: User },
+    { key: "firstName", label: "First Name", icon: User },
+    { key: "lastName", label: "Last Name", icon: User },
+    { key: "dob", label: "Date of Birth", icon: Calendar, type: "date" },
+    { key: "phone", label: "Phone Number", icon: Phone, type: "tel" },
     { key: "email", label: "Email", icon: Mail, type: "email" },
-    { key: "role", label: "Role", icon: Briefcase },
-    { key: "organisation", label: "Organisation", icon: Briefcase },
-    { key: "phone", label: "Phone", icon: Phone, type: "tel" },
-    { key: "website", label: "Website", icon: Globe },
-    { key: "location", label: "Jurisdiction", icon: Globe },
+    { key: "password", label: "Password", icon: KeyRound, type: "password" },
+    { key: "region", label: "Region", icon: MapPinned },
   ]
 
   return (
@@ -118,12 +122,12 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background">
+      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
           <p className="text-sm font-medium text-foreground">Settings</p>
           <NavLink to="/assistant">
-            <Button variant="ghost" size="sm">
-              Back
+            <Button variant="ghost" size="icon-sm" aria-label="Back to assistant">
+              <ArrowLeft className="size-4" />
             </Button>
           </NavLink>
         </div>
