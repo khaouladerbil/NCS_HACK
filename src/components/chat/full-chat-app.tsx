@@ -882,6 +882,34 @@ function AnimatedText({ children, className, per = "word" }: AnimatedTextProps) 
   )
 }
 
+function getStreamedParagraphs(
+  paragraphs: ResponseParagraph[],
+  streamedContent: string
+) {
+  const trimmedStream = streamedContent.trim()
+  let remaining = trimmedStream.length
+
+  return paragraphs.map((paragraph) => {
+    if (remaining <= 0) {
+      return {
+        ...paragraph,
+        visibleText: "",
+        isComplete: false,
+      }
+    }
+
+    const visibleLength = Math.min(paragraph.text.length, remaining)
+    const visibleText = paragraph.text.slice(0, visibleLength).trimEnd()
+    remaining = Math.max(0, remaining - paragraph.text.length - 1)
+
+    return {
+      ...paragraph,
+      visibleText,
+      isComplete: visibleLength >= paragraph.text.length,
+    }
+  })
+}
+
 function EditorUtilities({
   activeFile,
   documentOutline = [],
@@ -1583,6 +1611,12 @@ export function ChatContent({
             {chatMessages.map((message, index) => {
               const isAssistant = message.role === "assistant"
               const isLastMessage = index === chatMessages.length - 1
+              const streamedParagraphs = message.responseContext
+                ? getStreamedParagraphs(
+                    message.responseContext.answerParagraphs,
+                    message.content
+                  )
+                : []
 
               return (
                 <Message
@@ -1602,35 +1636,39 @@ export function ChatContent({
                         {message.content ? (
                           message.responseContext ? (
                             <div className="space-y-3">
-                              {message.responseContext.answerParagraphs.map((paragraph) => (
-                                <p
-                                  key={paragraph.id}
-                                  className="text-[0.88rem] leading-6.5 text-[#1f2937]"
-                                >
-                                  <AnimatedText>{paragraph.text}</AnimatedText>
-                                  {paragraph.citationIds.map((citationId) => {
-                                    const citation = message.responseContext?.citations.find(
-                                      (item) => item.id === citationId
-                                    )
-                                    if (!citation) return null
+                              {streamedParagraphs
+                                .filter((paragraph) => paragraph.visibleText)
+                                .map((paragraph) => (
+                                  <p
+                                    key={paragraph.id}
+                                    className="text-[0.88rem] leading-6.5 text-[#1f2937]"
+                                  >
+                                    <AnimatedText>{paragraph.visibleText}</AnimatedText>
+                                    {paragraph.isComplete
+                                      ? paragraph.citationIds.map((citationId) => {
+                                          const citation = message.responseContext?.citations.find(
+                                            (item) => item.id === citationId
+                                          )
+                                          if (!citation) return null
 
-                                    return (
-                                      <button
-                                        key={citation.id}
-                                        type="button"
-                                        onClick={() => focusCitation(citation.id)}
-                                        className={cn(
-                                          "ml-1 inline-flex min-w-4 -translate-y-1 items-center justify-center rounded-full border border-[#d6dce5] bg-white px-1 py-0.5 align-super text-[0.56rem] font-semibold leading-none text-[#374151] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:border-[#6ee7d5] hover:bg-[#dff7f2] hover:text-[#0f766e]",
-                                          activeCitationId === citation.id &&
-                                            "border-[#0f766e] bg-[#0f766e] text-white shadow-[0_0_0_2px_rgba(15,118,110,0.12)]"
-                                        )}
-                                      >
-                                        {citation.label}
-                                      </button>
-                                    )
-                                  })}
-                                </p>
-                              ))}
+                                          return (
+                                            <button
+                                              key={citation.id}
+                                              type="button"
+                                              onClick={() => focusCitation(citation.id)}
+                                              className={cn(
+                                                "ml-1 inline-flex min-w-4 -translate-y-1 items-center justify-center rounded-full border border-[#d6dce5] bg-white px-1 py-0.5 align-super text-[0.56rem] font-semibold leading-none text-[#374151] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:border-[#6ee7d5] hover:bg-[#dff7f2] hover:text-[#0f766e]",
+                                                activeCitationId === citation.id &&
+                                                  "border-[#0f766e] bg-[#0f766e] text-white shadow-[0_0_0_2px_rgba(15,118,110,0.12)]"
+                                              )}
+                                            >
+                                              {citation.label}
+                                            </button>
+                                          )
+                                        })
+                                      : null}
+                                  </p>
+                                ))}
                             </div>
                           ) : (
                             <Markdown

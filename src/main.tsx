@@ -3,8 +3,8 @@ import { createRoot } from "react-dom/client"
 import { Toast } from "@heroui/react"
 import { BrowserRouter } from "react-router-dom"
 
-import App from "@/App"
-import { TooltipProvider } from "@/components/ui/tooltip"
+import App from "./App"
+import { TooltipProvider } from "./components/ui/tooltip"
 
 import "./index.css"
 

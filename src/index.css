@@ -71,6 +71,7 @@
   --sidebar-accent-foreground: oklch(0.26 0.02 255);
   --sidebar-border: oklch(0.88 0.01 245);
   --sidebar-ring: oklch(0.55 0.02 245);
+  scroll-behavior: smooth;
 }
 
 * {
@@ -171,5 +172,22 @@ select {
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@layer utilities {
+  .animate-hero-float {
+    animation: hero-float 6s ease-in-out infinite;
   }
 }
