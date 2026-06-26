@@ -10,6 +10,8 @@ GEMINI_TIMEOUT = getattr(settings, "GEMINI_TIMEOUT", 30)
 GEMINI_MAX_RETRIES = getattr(settings, "GEMINI_MAX_RETRIES", 3)
 GEMINI_RETRY_DELAY = getattr(settings, "GEMINI_RETRY_DELAY", 1.0)
 
+_GEMINI_RETRY_AFTER = 300
+
 
 class GeminiError(RuntimeError):
     pass
@@ -67,13 +69,26 @@ class GeminiClient:
 
 
 _GEMINI_CLIENT = None
+_GEMINI_FAILED_AT = 0.0
 
 
 def get_gemini_client():
-    global _GEMINI_CLIENT
-    if _GEMINI_CLIENT is None:
+    global _GEMINI_CLIENT, _GEMINI_FAILED_AT
+
+    if _GEMINI_CLIENT is not None:
+        return _GEMINI_CLIENT
+
+    now = time.time()
+    if _GEMINI_FAILED_AT and (now - _GEMINI_FAILED_AT) < _GEMINI_RETRY_AFTER:
+        raise GeminiError("Gemini unavailable (retry window).")
+
+    try:
         _GEMINI_CLIENT = GeminiClient()
-    return _GEMINI_CLIENT
+        _GEMINI_FAILED_AT = 0.0
+        return _GEMINI_CLIENT
+    except GeminiError:
+        _GEMINI_FAILED_AT = time.time()
+        raise
 
 
 def generate_with_gemini(prompt):

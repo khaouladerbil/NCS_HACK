@@ -13,24 +13,31 @@ from rest_framework.views import APIView
 from .models import (
     AssistantDocument,
     ChatSession,
+    DocumentTemplate,
     DraftDocument,
     LawyerProfile,
+    LegalDocument,
     LegalSource,
 )
 from .serializers import (
     AssistantDocumentSerializer,
     ChatRequestSerializer,
     ChatSessionSerializer,
+    DocumentTemplateSerializer,
     DraftDocumentSerializer,
     DraftRequestSerializer,
+    GenerateLegalDocumentSerializer,
     LawyerProfileSerializer,
     LawyerRecommendationRequestSerializer,
+    LegalDocumentSerializer,
     LegalSourceSerializer,
 )
 from .services.dataset_loader import load_legal_dataset
 from .services.documents import index_assistant_document
 from .services.chat_service import AIServiceError, ChatService
 from .services.lawyer_recommender import recommend_lawyers
+from .services.template_service import ensure_default_templates
+from .services.writer_service import WriterServiceError, generate_legal_document
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +51,11 @@ class ChatThrottle(UserRateThrottle):
 
 class DraftThrottle(UserRateThrottle):
     """CORRECTION ① : max 5 drafts/heure par utilisateur."""
+    scope = "draft"
+
+
+class WriterThrottle(UserRateThrottle):
+    """Max 5 generations de documents/heure par utilisateur."""
     scope = "draft"
 
 
@@ -138,6 +150,52 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
 
 
 # ── Chat ───────────────────────────────────────────────────────────────────────
+
+class DocumentTemplateViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = DocumentTemplateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        ensure_default_templates()
+        return DocumentTemplate.objects.filter(is_active=True)
+
+
+class LegalDocumentViewSet(viewsets.ModelViewSet):
+    serializer_class = LegalDocumentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return LegalDocument.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user, status="edited")
+
+
+class GenerateLegalDocumentAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [WriterThrottle]
+
+    def post(self, request):
+        serializer = GenerateLegalDocumentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            document = generate_legal_document(request.user, serializer.validated_data)
+            return Response(
+                LegalDocumentSerializer(document).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except WriterServiceError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as exc:
+            logger.exception("Unexpected GenerateLegalDocumentAPIView error: %s", exc)
+            return Response(
+                {"error": "Une erreur inattendue s'est produite pendant la generation."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class ChatAPIView(APIView):
     permission_classes = [IsAuthenticated]

@@ -7,27 +7,26 @@ KEYWORDS = {
     "labor": [
         "travail", "salaire", "licenciement", "employeur", "contrat de travail",
         "cnss", "preavis", "conge", "accident de travail", "عمل", "راتب",
-        "فصل", "اجر", "khdma", "khedma", "patron",
+        "فصل", "اجر", "patron",
     ],
     "family": [
         "famille", "divorce", "garde", "pension", "mariage", "succession",
         "heritage", "kafala", "طلاق", "حضانة", "نفقة", "زواج", "ميراث",
-        "talaq", "hdana", "nafaqa", "zwaj", "miras",
     ],
     "property": [
         "logement", "loyer", "location", "voisin", "propriete", "bail",
         "expulsion", "notaire", "سكن", "ايجار", "إيجار", "ملكية", "عقار",
-        "طرد", "dar", "sken", "kiraa", "3qar",
+        "طرد",
     ],
     "commercial": [
         "societe", "commerce", "facture", "client", "fournisseur", "entreprise",
         "registre de commerce", "dette", "creance", "شركة", "تجارة", "فاتورة",
-        "ديون", "shrika", "tijara", "rc",
+        "ديون", "rc",
     ],
     "administrative": [
         "commune", "wilaya", "ministere", "administration", "certificat",
         "daira", "attestation", "passeport", "permis", "autorisation",
-        "بلدية", "ولاية", "وزارة", "شهادة", "ترخيص", "baladiya",
+        "بلدية", "ولاية", "وزارة", "شهادة", "ترخيص",
     ],
     "consumer": [
         "remboursement", "garantie", "vendeur", "consommateur", "arnaque",
@@ -51,7 +50,6 @@ RELATED = {
     "criminal": {"administrative"},
 }
 
-# CORRECTION : limite pour éviter un chargement complet de la table en mémoire
 _LAWYER_QUERY_LIMIT = 200
 
 
@@ -70,16 +68,19 @@ def classify_specialty(text):
 
 def recommend_lawyers(message, wilaya="", language="fr", limit=5):
     specialty = classify_specialty(message)
-
-    # CORRECTION : limiter la requête DB + utiliser only() pour ne charger
-    # que les champs nécessaires au scoring
     lawyers = LawyerProfile.objects.filter(is_available=True).only(
-        "id", "full_name", "specialties", "wilaya", "languages",
-        "phone", "email", "commune", "metadata",
+        "id",
+        "full_name",
+        "specialties",
+        "wilaya",
+        "languages",
+        "phone",
+        "email",
+        "commune",
+        "metadata",
     )[:_LAWYER_QUERY_LIMIT]
 
     scored = []
-
     for lawyer in lawyers:
         score = 0
         specialties = set(lawyer.specialties or [])

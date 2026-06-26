@@ -33,6 +33,9 @@ INSTALLED_APPS = [
     "legal_twin",
     "legal_path",
     "ai_assistant",
+    "directory_data",
+    "legal_writer",
+    "legal_quiz",
 ]
 
 MIDDLEWARE = [
@@ -51,7 +54,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -141,11 +144,11 @@ if not GEMINI_API_KEY:
 
 # ── RAG ───────────────────────────────────────────────────────────────────────
 RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "intfloat/multilingual-e5-large")
-RAG_MIN_SCORE = float(os.getenv("RAG_MIN_SCORE", "0.30"))
-RAG_VECTOR_WEIGHT = float(os.getenv("RAG_VECTOR_WEIGHT", "0.75"))
-RAG_KEYWORD_WEIGHT = float(os.getenv("RAG_KEYWORD_WEIGHT", "0.25"))
+RAG_MIN_SCORE = float(os.getenv("RAG_MIN_SCORE", "0.55"))
+RAG_VECTOR_WEIGHT = float(os.getenv("RAG_VECTOR_WEIGHT", "0.45"))
+RAG_KEYWORD_WEIGHT = float(os.getenv("RAG_KEYWORD_WEIGHT", "0.55"))
 RAG_USER_DOC_BOOST = float(os.getenv("RAG_USER_DOC_BOOST", "0.05"))
-RAG_MAX_CONTEXT_CHARS = int(os.getenv("RAG_MAX_CONTEXT_CHARS", "12000"))
+RAG_MAX_CONTEXT_CHARS = int(os.getenv("RAG_MAX_CONTEXT_CHARS", "8000"))
 
 # CORRECTION ⑤ : limite taille upload documents (en Mo)
 MAX_UPLOAD_SIZE_MB = int(os.getenv("MAX_UPLOAD_SIZE_MB", "10"))

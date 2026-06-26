@@ -35,7 +35,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--lang",
             default="fr",
-            choices=["fr", "ar", "en", "darija"],
+            choices=["fr", "ar", "en"],
             help="Langue principale utilisee pour le texte embedde (fallback automatique si vide).",
         )
 
@@ -88,7 +88,7 @@ class Command(BaseCommand):
         total_imported = 0
         total_skipped = 0
         start_time = time.time()
-        fallback_order = [primary_lang, "fr", "en", "ar", "darija"]
+        fallback_order = [primary_lang, "fr", "en", "ar"]
 
         for i, record in enumerate(records, start=1):
             law_id = record.get("law_id", f"<loi #{i}>")
@@ -138,6 +138,11 @@ class Command(BaseCommand):
 
                 if not text:
                     continue
+
+                # Append Arabic translation so Arabic queries get keyword overlap
+                ar_text = (article.get("ar") or "").strip()
+                if ar_text and used_lang != "ar" and ar_text not in text:
+                    text = f"{text}\n{ar_text}"
 
                 article_number = article.get("article_number", "") or ""
                 chunk_id_str = article.get("chunk_id", f"{law_id}_{index}")

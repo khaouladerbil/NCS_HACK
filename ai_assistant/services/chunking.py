@@ -17,7 +17,7 @@ def normalize_text(text):
     return re.sub(r"\s+", " ", (text or "")).strip()
 
 
-def chunk_text(text, max_chars=1400, overlap_chars=180):
+def chunk_text(text, max_chars=1100, overlap_chars=220):
     text = normalize_text(text)
     if not text:
         return []

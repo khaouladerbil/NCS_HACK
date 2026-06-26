@@ -8,6 +8,7 @@ from .embeddings import EmbeddingUnavailableError
 from .gemini_client import GeminiError, generate_with_gemini
 from .language import detect_language
 from .prompts import build_prompt
+from .query_enrichment import is_legal_query
 from .retrieval import format_context, retrieve_context
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,25 @@ class ChatService:
         session = _get_or_create_session(user, data, legal_request)
 
         ChatMessage.objects.create(session=session, role="user", content=data["message"])
+
+        if not is_legal_query(data["message"]):
+            answer = (
+                "Je suis un assistant juridique specialise dans le droit algerien. "
+                "Je ne peux pas répondre aux questions qui ne concernent pas le domaine juridique. "
+                "Posez-moi une question sur vos droits, vos démarches juridiques, ou une situation legale "
+                "et je vous aiderai avec plaisir."
+            )
+            with transaction.atomic():
+                ChatMessage.objects.create(
+                    session=session, role="assistant", content=answer,
+                    citations=[], metadata={"task": data["task"], "language": response_language},
+                )
+                session.task = data["task"]
+                session.language = response_language
+                if not session.title:
+                    session.title = data["message"][:80]
+                session.save(update_fields=["task", "language", "title", "updated_at"])
+            return {"session_id": session.id, "message_id": None, "answer": answer, "citations": []}
 
         # CORRECTION ④ : retrieve_context retourne [] si embedder indisponible
         try:

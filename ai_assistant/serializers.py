@@ -4,8 +4,10 @@ from .models import (
     AssistantDocument,
     ChatMessage,
     ChatSession,
+    DocumentTemplate,
     DraftDocument,
     LawyerProfile,
+    LegalDocument,
     LegalChunk,
     LegalSource,
 )
@@ -96,6 +98,32 @@ class DraftDocumentSerializer(serializers.ModelSerializer):
         model = DraftDocument
         fields = "__all__"
         read_only_fields = ("user", "content", "file", "citations", "created_at")
+
+
+class DocumentTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentTemplate
+        fields = "__all__"
+        read_only_fields = ("created_at", "updated_at")
+
+
+class LegalDocumentSerializer(serializers.ModelSerializer):
+    template_name = serializers.CharField(source="template.name", read_only=True)
+
+    class Meta:
+        model = LegalDocument
+        fields = "__all__"
+        read_only_fields = ("user", "citations", "metadata", "created_at", "updated_at")
+
+
+class GenerateLegalDocumentSerializer(serializers.Serializer):
+    template_id = serializers.IntegerField(required=False)
+    document_type = serializers.CharField(required=False, allow_blank=True)
+    title = serializers.CharField(required=False, allow_blank=True)
+    situation = serializers.CharField()
+    example_document_id = serializers.IntegerField(required=False)
+    legal_request_id = serializers.IntegerField(required=False)
+    language = serializers.ChoiceField(choices=["fr", "ar", "en"], default="fr")
 
 
 class LawyerProfileSerializer(serializers.ModelSerializer):

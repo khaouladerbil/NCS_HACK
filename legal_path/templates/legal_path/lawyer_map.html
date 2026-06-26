@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lawyer Recommendations Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin:0; padding:0; font-family:Arial,sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        #token-bar { position:fixed; top:10px; left:10px; z-index:1000; background:white; padding:10px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.2); display:none; }
+        #token-bar input { width:300px; padding:6px; border:1px solid #ccc; border-radius:4px; }
+        #token-bar button { padding:6px 12px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; }
+        .lawyer-popup h3 { margin:0 0 5px; }
+        .lawyer-popup p { margin:2px 0; font-size:13px; }
+        .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; margin-right:4px; color:white; }
+        .badge.rating { background:#FF9800; }
+        .badge.distance { background:#2196F3; }
+        .badge.spec { background:#4CAF50; }
+    </style>
+</head>
+<body>
+    <div id="token-bar">
+        <input id="token-input" type="text" placeholder="Paste your JWT token here" />
+        <button onclick="loadMap()">Load Map</button>
+    </div>
+    <div id="map"></div>
+    <script>
+        const requestId = {{ request_id }};
+
+        function getToken() {
+            return localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        }
+
+        function loadMap() {
+            const tokenInput = document.getElementById('token-input');
+            const token = tokenInput.value || getToken();
+            if (tokenInput.value) {
+                localStorage.setItem('access_token', token);
+            }
+
+            if (!token) {
+                document.getElementById('token-bar').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('token-bar').style.display = 'none';
+
+            Promise.all([
+                fetch('/api/legal-path/requests/' + requestId + '/recommended_lawyers/', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }).then(r => { if (!r.ok) throw new Error('API error: ' + r.status); return r.json(); }),
+                fetch('/api/legal-path/requests/' + requestId + '/', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }).then(r => { if (!r.ok) throw new Error('API error: ' + r.status); return r.json(); })
+            ]).then(([lawyers, request]) => {
+                const map = L.map('map').setView([28.0339, 1.6596], 6);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 18, attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                const bounds = [];
+                const userCoords = {{ user_coords|safe }};
+
+                if (userCoords) {
+                    L.circleMarker(userCoords, {
+                        radius: 10, color: '#E91E63', fillColor: '#E91E63', fillOpacity: 0.3
+                    }).addTo(map).bindPopup('<b>Your location</b> ({{ user_wilaya }})');
+                    bounds.push(userCoords);
+                }
+
+                lawyers.forEach(l => {
+                    const addr = l.address;
+                    if (addr && addr.latitude && addr.longitude) {
+                        const lat = parseFloat(addr.latitude);
+                        const lng = parseFloat(addr.longitude);
+                        const coords = [lat, lng];
+                        bounds.push(coords);
+
+                        const specs = (l.specializations || []).slice(0, 3).join(', ');
+                        const rating = l.rating ? `<span class="badge rating">${l.rating}/5</span>` : '';
+                        const dist = l.distance_km ? `<span class="badge distance">${l.distance_km} km</span>` : '';
+                        const specBadge = specs ? `<span class="badge spec">${specs}</span>` : '';
+
+                        L.marker(coords).addTo(map).bindPopup(`
+                            <div class="lawyer-popup">
+                                <h3>${l.first_name || ''} ${l.last_name || ''}</h3>
+                                <p>${specBadge} ${rating} ${dist}</p>
+                                ${l.phone_number ? `<p>📞 ${l.phone_number}</p>` : ''}
+                                ${l.language ? `<p>🌐 ${l.language}</p>` : ''}
+                                <p style="font-size:11px;color:#666;">${l.match_reason || ''}</p>
+                            </div>
+                        `);
+                    }
+                });
+
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            }).catch(err => {
+                alert('Error: ' + err.message);
+                document.getElementById('token-bar').style.display = 'block';
+            });
+        }
+
+        if (getToken()) {
+            loadMap();
+        } else {
+            document.getElementById('token-bar').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

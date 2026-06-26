@@ -1,9 +1,12 @@
 import logging
 import os
+import time
 
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+_RETRY_AFTER_SECONDS = 300
 
 
 class EmbeddingUnavailableError(RuntimeError):
@@ -50,39 +53,31 @@ class EmbeddingService:
         return model.encode(text, normalize_embeddings=True).tolist()
 
 
-# CORRECTION ④ : singleton avec gestion d'échec explicite
-# Si le modèle ne charge pas, _EMBEDDING_SERVICE reste None.
-# get_embedder() retourne None au lieu de crasher toute la requête.
 _EMBEDDING_SERVICE = None
-_EMBEDDING_FAILED = False
+_EMBEDDING_FAILED_AT = 0.0
 
 
 def get_embedder():
-    """
-    Retourne l'EmbeddingService ou None si le modèle est indisponible.
-    Les appelants doivent vérifier la valeur retournée.
-    """
-    global _EMBEDDING_SERVICE, _EMBEDDING_FAILED
+    global _EMBEDDING_SERVICE, _EMBEDDING_FAILED_AT
 
-    # Si déjà chargé : retour immédiat
     if _EMBEDDING_SERVICE is not None:
         return _EMBEDDING_SERVICE
 
-    # Si on a déjà échoué : ne pas réessayer à chaque requête
-    if _EMBEDDING_FAILED:
+    now = time.time()
+    if _EMBEDDING_FAILED_AT and (now - _EMBEDDING_FAILED_AT) < _RETRY_AFTER_SECONDS:
         return None
+    _EMBEDDING_FAILED_AT = 0.0
 
     try:
         service = EmbeddingService()
-        # Test rapide pour valider que le modèle fonctionne
         service.embed_query("test de validation")
         _EMBEDDING_SERVICE = service
         logger.info("Embedding service initialized successfully.")
         return _EMBEDDING_SERVICE
     except EmbeddingUnavailableError as exc:
-        _EMBEDDING_FAILED = True
+        _EMBEDDING_FAILED_AT = time.time()
         logger.critical(
-            "Embedding service FAILED to initialize — RAG disabled: %s", exc
+            "Embedding service FAILED to initialize - RAG disabled: %s", exc
         )
         return None
 

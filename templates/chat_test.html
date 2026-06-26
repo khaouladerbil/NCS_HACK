@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JurididAI Test Lab</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+  }
+  .hidden { display: none !important; }
+  .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+  .auth-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+  .auth-card, .panel, .card {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+  }
+  .auth-card {
+    width: min(420px, 100%);
+    padding: 24px;
+  }
+  .auth-card h1 { margin: 0 0 8px; font-size: 24px; }
+  .auth-card p { margin: 0 0 20px; color: #6b7280; }
+  .row { display: flex; gap: 12px; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; font-weight: 700; }
+  input, select, textarea, button {
+    font: inherit;
+  }
+  input, select, textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fff;
+  }
+  textarea { min-height: 110px; resize: vertical; }
+  button {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-secondary { background: #e5e7eb; color: #111827; }
+  .btn-danger { background: #dc2626; color: #fff; }
+  .btn-small { padding: 8px 10px; font-size: 13px; }
+  .error, .notice {
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .error { background: #fee2e2; color: #991b1b; }
+  .notice { background: #eff6ff; color: #1d4ed8; }
+  .topbar {
+    background: #111827;
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .topbar h1 { font-size: 18px; margin: 0; }
+  .topbar .spacer { flex: 1; }
+  .stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .stat {
+    background: #1f2937;
+    padding: 6px 10px;
+    border-radius: 999px;
+  }
+  .main {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 56px);
+  }
+  .sidebar {
+    background: #fff;
+    border-right: 1px solid #d1d5db;
+    padding: 16px;
+  }
+  .sidebar h2 {
+    font-size: 12px;
+    margin: 0 0 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+  }
+  .tab-btn {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: #111827;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+  }
+  .tab-btn.active {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+  }
+  .content {
+    padding: 18px;
+    overflow: auto;
+  }
+  .panel {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .panel h2, .card h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+  }
+  .card {
+    padding: 14px;
+  }
+  .chat-log, .result-box {
+    background: #0f172a;
+    color: #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 180px;
+    white-space: pre-wrap;
+    overflow: auto;
+  }
+  .chat-log .msg {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .chat-log .msg:last-child { border-bottom: 0; }
+  .muted { color: #6b7280; font-size: 13px; }
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .item {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fff;
+  }
+  .item strong { display: block; margin-bottom: 4px; }
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .pill {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #eef2ff;
+    color: #4338ca;
+    border-radius: 999px;
+    font-size: 12px;
+    margin-right: 6px;
+    margin-top: 6px;
+  }
+  @media (max-width: 980px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { border-right: 0; border-bottom: 1px solid #d1d5db; }
+  }
+</style>
+</head>
+<body>
+<div id="auth-shell" class="auth-shell">
+  <div class="auth-card">
+    <h1>JurididAI Test Lab</h1>
+    <p>Page unique pour tester chat, RAG, uploads, generation de documents, legal path, roadmap et timeline.</p>
+    <div class="grid">
+      <div class="stack">
+        <h3>Connexion</h3>
+        <div class="field">
+          <label>Email</label>
+          <input id="login-email" type="email" value="test@example.com">
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <input id="login-password" type="password" value="testpass123">
+        </div>
+        <button class="btn-primary" onclick="login()">Se connecter</button>
+        <div id="login-error" class="error hidden"></div>
+      </div>
+      <div class="stack">
+        <h3>Inscription</h3>
+        <div class="field">
+          <label>Email</label>
+          <input id="register-email" type="email">
+        </div>
+        <div class="field">
+          <label>Nom d'utilisateur</label>
+          <input id="register-username" type="text">
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <input id="register-password" type="password">
+        </div>
+        <button class="btn-secondary" onclick="registerUser()">Creer un compte</button>
+        <div id="register-error" class="error hidden"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app-shell" class="app-shell hidden">
+  <div class="topbar">
+    <h1>JurididAI Test Lab</h1>
+    <div class="stats">
+      <div class="stat">User: <span id="user-label">-</span></div>
+      <div class="stat">Session chat: <span id="session-label">-</span></div>
+      <div class="stat">Request active: <span id="request-label">-</span></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn-danger btn-small" onclick="logout()">Deconnexion</button>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <h2>Modules</h2>
+      <button class="tab-btn active" data-tab="assistant" onclick="showTab('assistant', this)">Assistant + RAG</button>
+      <button class="tab-btn" data-tab="writer" onclick="showTab('writer', this)">AI Writer</button>
+      <button class="tab-btn" data-tab="legal-path" onclick="showTab('legal-path', this)">Legal Path + Roadmap</button>
+      <button class="tab-btn" data-tab="diagnostics" onclick="showTab('diagnostics', this)">Diagnostics</button>
+    </div>
+
+    <div class="content">
+      <div id="global-notice" class="notice hidden"></div>
+
+      <section id="tab-assistant" class="tab-panel">
+        <div class="panel">
+          <h2>Assistant + RAG</h2>
+          <div class="grid">
+            <div class="card stack">
+              <div class="field">
+                <label>Tache</label>
+                <select id="chat-task">
+                  <option value="qa">Question / Reponse</option>
+                  <option value="explain">Expliquer une loi</option>
+                  <option value="analyze">Analyser un cas</option>
+                  <option value="draft">Rediger</option>
+                  <option value="lawyer">Trouver un avocat</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Langue</label>
+                <select id="chat-language">
+                  <option value="fr">Francais</option>
+                  <option value="ar">Arabe</option>
+                  <option value="en">Anglais</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Question</label>
+                <textarea id="chat-message">Comment divorcer en Algerie ?</textarea>
+              </div>
+              <div class="toolbar">
+                <button class="btn-primary" onclick="sendChat()">Envoyer</button>
+                <button class="btn-secondary" onclick="resetChat()">Nouvelle session</button>
+              </div>
+              <div class="muted">Teste gate out-of-domain, abstention, citations, contexte utilisateur, cas famille/travail/penal/logement/commercial.</div>
+            </div>
+
+            <div class="card stack">
+              <div class="field">
+                <label>Ajouter document utilisateur</label>
+                <input id="assistant-file" type="file" accept="image/*,.pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
+              </div>
+              <div class="toolbar">
+                <button class="btn-secondary" onclick="uploadAssistantDocument()">Uploader</button>
+                <button class="btn-secondary" onclick="loadAssistantDocuments()">Rafraichir documents</button>
+              </div>
+              <div id="assistant-documents" class="list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Conversation</h2>
+          <div id="chat-log" class="chat-log"></div>
+        </div>
+      </section>
+
+      <section id="tab-writer" class="tab-panel hidden">
+        <div class="panel">
+          <h2>AI Writer</h2>
+          <div class="toolbar">
+            <button class="btn-secondary" onclick="loadTemplates()">Charger templates</button>
+            <button class="btn-secondary" onclick="loadLegalDocuments()">Charger documents sauvegardes</button>
+            <button class="btn-secondary" onclick="loadDrafts()">Charger drafts</button>
+          </div>
+          <div class="grid">
+            <div class="card stack">
+              <h3>Generation document final</h3>
+              <div class="field">
+                <label>Template</label>
+                <select id="writer-template"></select>
+              </div>
+              <div class="field">
+                <label>Type document</label>
+                <input id="writer-document-type" type="text" value="Plainte">
+              </div>
+              <div class="field">
+                <label>Titre</label>
+                <input id="writer-title" type="text" value="Plainte pour non-paiement de salaire">
+              </div>
+              <div class="field">
+                <label>Situation</label>
+                <textarea id="writer-situation">Mon employeur ne m'a pas paye depuis deux mois et refuse de me remettre une fiche de paie.</textarea>
+              </div>
+              <div class="field">
+                <label>Langue</label>
+                <select id="writer-language">
+                  <option value="fr">Francais</option>
+                  <option value="ar">Arabe</option>
+                  <option value="en">Anglais</option>
+                </select>
+              </div>
+              <button class="btn-primary" onclick="generateLegalDocument()">Generer document</button>
+            </div>
+
+            <div class="card stack">
+              <h3>Draft rapide</h3>
+              <div class="field">
+                <label>Type</label>
+                <input id="draft-type" type="text" value="Requete">
+              </div>
+              <div class="field">
+                <label>Message</label>
+                <textarea id="draft-message">Redige une requete simple pour demander pension alimentaire apres divorce.</textarea>
+              </div>
+              <div class="field">
+                <label>Format</label>
+                <select id="draft-format">
+                  <option value="text">Text</option>
+                  <option value="pdf">PDF</option>
+                  <option value="docx">DOCX</option>
+                </select>
+              </div>
+              <button class="btn-secondary" onclick="generateDraft()">Generer draft</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="panel">
+            <h2>Templates</h2>
+            <div id="templates-list" class="list"></div>
+          </div>
+          <div class="panel">
+            <h2>Documents legaux</h2>
+            <div id="legal-documents-list" class="list"></div>
+          </div>
+          <div class="panel">
+            <h2>Drafts</h2>
+            <div id="drafts-list" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-legal-path" class="tab-panel hidden">
+        <div class="panel">
+          <h2>Legal Path + Roadmap</h2>
+          <div class="grid">
+            <div class="card stack">
+              <h3>Creer legal request</h3>
+              <div class="field">
+                <label>Titre</label>
+                <input id="request-title" type="text" value="Litige de travail">
+              </div>
+              <div class="field">
+                <label>Category</label>
+                <select id="request-category">
+                  <option value="labor">Labor</option>
+                  <option value="family">Family</option>
+                  <option value="civil">Civil</option>
+                  <option value="criminal">Criminal</option>
+                  <option value="property">Property</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="administrative">Administrative</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Description</label>
+                <textarea id="request-description">Mon employeur refuse de payer mes salaires et menace de me licencier.</textarea>
+              </div>
+              <button class="btn-primary" onclick="createLegalRequest()">Creer</button>
+            </div>
+
+            <div class="card stack">
+              <h3>Ajouter etapes / recommandations</h3>
+              <div class="field">
+                <label>Roadmap step title</label>
+                <input id="roadmap-title" type="text" value="Envoyer mise en demeure">
+              </div>
+              <div class="field">
+                <label>Roadmap step description</label>
+                <textarea id="roadmap-description">Envoyer une mise en demeure ecrite a l'employeur avec preuve de reception.</textarea>
+              </div>
+              <div class="row">
+                <div class="field" style="flex:1">
+                  <label>Order</label>
+                  <input id="roadmap-order" type="number" value="1">
+                </div>
+                <div class="field" style="flex:1">
+                  <label>Jours</label>
+                  <input id="roadmap-days" type="number" value="3">
+                </div>
+              </div>
+              <button class="btn-secondary" onclick="addRoadmapStep()">Ajouter roadmap step</button>
+
+              <div class="field">
+                <label>Recommendation</label>
+                <textarea id="recommendation-description">Conserver fiches de paie, contrat de travail et preuves de relance.</textarea>
+              </div>
+              <button class="btn-secondary" onclick="addRecommendation()">Ajouter recommendation</button>
+
+              <div class="field">
+                <label>Timeline note</label>
+                <input id="timeline-title" type="text" value="Premier contact avocat">
+              </div>
+              <button class="btn-secondary" onclick="addTimelineEvent()">Ajouter timeline</button>
+            </div>
+
+            <div class="card stack">
+              <h3>Documents et avocats</h3>
+              <div class="field">
+                <label>Required document name</label>
+                <input id="required-doc-name" type="text" value="Contrat de travail">
+              </div>
+              <div class="field">
+                <label>Description</label>
+                <textarea id="required-doc-description">Preuve du lien de travail et des obligations salariales.</textarea>
+              </div>
+              <button class="btn-secondary" onclick="addRequiredDocument()">Ajouter document requis</button>
+              <button class="btn-secondary" onclick="loadRecommendedLawyers()">Charger avocats recommandes</button>
+              <button class="btn-secondary" onclick="loadLegalRequests()">Rafraichir legal requests</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <h2>Legal requests</h2>
+            <div id="requests-list" class="list"></div>
+          </div>
+          <div class="panel">
+            <h2>Roadmap</h2>
+            <div id="roadmap-list" class="list"></div>
+          </div>
+          <div class="panel">
+            <h2>Documents requis</h2>
+            <div id="required-documents-list" class="list"></div>
+          </div>
+          <div class="panel">
+            <h2>Recommendations</h2>
+            <div id="recommendations-list" class="list"></div>
+          </div>
+          <div class="panel">
+            <h2>Timeline</h2>
+            <div id="timeline-list" class="list"></div>
+          </div>
+          <div class="panel">
+            <h2>Avocats recommandes</h2>
+            <div id="recommended-lawyers-list" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-diagnostics" class="tab-panel hidden">
+        <div class="panel">
+          <h2>Diagnostics</h2>
+          <div class="toolbar">
+            <button class="btn-secondary" onclick="loadAssistantDocuments()">Documents assistant</button>
+            <button class="btn-secondary" onclick="loadTemplates()">Templates</button>
+            <button class="btn-secondary" onclick="loadLegalDocuments()">Legal docs</button>
+            <button class="btn-secondary" onclick="loadDrafts()">Drafts</button>
+            <button class="btn-secondary" onclick="loadLegalRequests()">Legal requests</button>
+          </div>
+          <div id="diagnostics-box" class="result-box"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "";
+let accessToken = localStorage.getItem("jwt_access") || "";
+let refreshToken = localStorage.getItem("jwt_refresh") || "";
+let sessionId = null;
+let activeRequestId = null;
+let templatesCache = [];
+
+function showNotice(message, isError = false) {
+  const box = document.getElementById("global-notice");
+  box.textContent = message;
+  box.className = isError ? "error" : "notice";
+  box.classList.remove("hidden");
+  window.clearTimeout(showNotice._timer);
+  showNotice._timer = window.setTimeout(() => box.classList.add("hidden"), 4500);
+}
+
+function esc(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function logout() {
+  accessToken = "";
+  refreshToken = "";
+  sessionId = null;
+  activeRequestId = null;
+  localStorage.removeItem("jwt_access");
+  localStorage.removeItem("jwt_refresh");
+  localStorage.removeItem("user_email");
+  document.getElementById("auth-shell").classList.remove("hidden");
+  document.getElementById("app-shell").classList.add("hidden");
+}
+
+function showApp() {
+  document.getElementById("auth-shell").classList.add("hidden");
+  document.getElementById("app-shell").classList.remove("hidden");
+  document.getElementById("user-label").textContent = localStorage.getItem("user_email") || "-";
+  bootstrapData();
+}
+
+function showTab(name, button) {
+  document.querySelectorAll(".tab-btn").forEach((el) => el.classList.remove("active"));
+  button.classList.add("active");
+  document.querySelectorAll(".tab-panel").forEach((el) => el.classList.add("hidden"));
+  document.getElementById(`tab-${name}`).classList.remove("hidden");
+}
+
+async function refreshAccess() {
+  if (!refreshToken) return false;
+  const res = await fetch(`${API}/api/auth/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh: refreshToken })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.access) return false;
+  accessToken = data.access;
+  localStorage.setItem("jwt_access", accessToken);
+  return true;
+}
+
+async function authFetch(url, options = {}, retry = true) {
+  const headers = new Headers(options.headers || {});
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(url, { ...options, headers });
+  if (response.status !== 401 || !retry) return response;
+  const ok = await refreshAccess();
+  if (!ok) {
+    logout();
+    throw new Error("Session expiree.");
+  }
+  return authFetch(url, options, false);
+}
+
+async function login() {
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const error = document.getElementById("login-error");
+  error.classList.add("hidden");
+  try {
+    const res = await fetch(`${API}/api/auth/login/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+    accessToken = data.access;
+    refreshToken = data.refresh || "";
+    localStorage.setItem("jwt_access", accessToken);
+    localStorage.setItem("jwt_refresh", refreshToken);
+    localStorage.setItem("user_email", email);
+    showApp();
+  } catch (err) {
+    error.textContent = err.message;
+    error.classList.remove("hidden");
+  }
+}
+
+async function registerUser() {
+  const email = document.getElementById("register-email").value.trim();
+  const username = document.getElementById("register-username").value.trim();
+  const password = document.getElementById("register-password").value;
+  const error = document.getElementById("register-error");
+  error.classList.add("hidden");
+  try {
+    const res = await fetch(`${API}/api/auth/register/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    showNotice("Compte cree. Connecte-toi.");
+    document.getElementById("login-email").value = email;
+    document.getElementById("login-password").value = password;
+  } catch (err) {
+    error.textContent = err.message;
+    error.classList.remove("hidden");
+  }
+}
+
+function setSessionLabel() {
+  document.getElementById("session-label").textContent = sessionId || "-";
+}
+
+function setRequestLabel() {
+  document.getElementById("request-label").textContent = activeRequestId || "-";
+}
+
+function renderChatMessage(role, text, citations = []) {
+  const log = document.getElementById("chat-log");
+  const wrapper = document.createElement("div");
+  wrapper.className = "msg";
+  const citationHtml = citations.length
+    ? "\n" + citations.map((c) => {
+        const source = c.source || c.document || "source";
+        const article = c.article ? ` / art. ${c.article}` : "";
+        return `[${source}${article}]`;
+      }).join(" ")
+    : "";
+  wrapper.textContent = `${role.toUpperCase()}\n${text}${citationHtml}`;
+  log.appendChild(wrapper);
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetChat() {
+  sessionId = null;
+  setSessionLabel();
+  document.getElementById("chat-log").textContent = "";
+}
+
+async function sendChat() {
+  const message = document.getElementById("chat-message").value.trim();
+  if (!message) return;
+  const task = document.getElementById("chat-task").value;
+  const language = document.getElementById("chat-language").value;
+  renderChatMessage("user", message);
+  try {
+    const payload = { message, task, language };
+    if (sessionId) payload.session_id = sessionId;
+    if (activeRequestId) payload.legal_request_id = activeRequestId;
+    const res = await authFetch(`${API}/api/assistant/chat/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.detail || JSON.stringify(data));
+    sessionId = data.session_id || sessionId;
+    setSessionLabel();
+    renderChatMessage("assistant", data.answer || "", data.citations || []);
+  } catch (err) {
+    renderChatMessage("assistant", `Erreur: ${err.message}`);
+  }
+}
+
+async function loadAssistantDocuments() {
+  const box = document.getElementById("assistant-documents");
+  box.innerHTML = '<div class="item">Chargement...</div>';
+  try {
+    const res = await authFetch(`${API}/api/assistant/documents/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+    const items = Array.isArray(data) ? data : (data.results || []);
+    box.innerHTML = items.length ? items.map((doc) => `
+      <div class="item">
+        <strong>${esc(doc.title || "Document")}</strong>
+        <div class="muted">${esc(doc.document_type || "")}</div>
+      </div>`).join("") : '<div class="item">Aucun document.</div>';
+    writeDiagnostics("documents_assistant", items);
+  } catch (err) {
+    box.innerHTML = `<div class="item">Erreur: ${esc(err.message)}</div>`;
+  }
+}
+
+async function uploadAssistantDocument() {
+  const input = document.getElementById("assistant-file");
+  const file = input.files[0];
+  if (!file) return showNotice("Choisis un fichier.", true);
+  const ext = file.name.toLowerCase();
+  let documentType = "other";
+  if (file.type.startsWith("image/")) documentType = "image";
+  else if (ext.endsWith(".pdf")) documentType = "pdf";
+  else if (ext.endsWith(".doc") || ext.endsWith(".docx")) documentType = "word";
+  else if (ext.endsWith(".txt")) documentType = "text";
+  const form = new FormData();
+  form.append("title", file.name);
+  form.append("document_type", documentType);
+  form.append("file", file);
+  try {
+    const res = await authFetch(`${API}/api/assistant/documents/`, { method: "POST", body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.detail || JSON.stringify(data));
+    showNotice("Document uploade.");
+    input.value = "";
+    await loadAssistantDocuments();
+  } catch (err) {
+    showNotice(`Upload erreur: ${err.message}`, true);
+  }
+}
+
+function renderList(containerId, items, renderer) {
+  const box = document.getElementById(containerId);
+  box.innerHTML = items.length ? items.map(renderer).join("") : '<div class="item">Aucun element.</div>';
+}
+
+async function loadTemplates() {
+  try {
+    const res = await authFetch(`${API}/api/assistant/templates/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    templatesCache = Array.isArray(data) ? data : (data.results || []);
+    const select = document.getElementById("writer-template");
+    select.innerHTML = '<option value="">Sans template</option>' + templatesCache.map((tpl) =>
+      `<option value="${tpl.id}">${esc(tpl.name || `Template ${tpl.id}`)}</option>`
+    ).join("");
+    renderList("templates-list", templatesCache, (tpl) => `
+      <div class="item">
+        <strong>${esc(tpl.name || `Template ${tpl.id}`)}</strong>
+        <div class="muted">${esc(tpl.document_type || "")}</div>
+        <div>${esc(tpl.description || "")}</div>
+      </div>`);
+    writeDiagnostics("templates", templatesCache);
+  } catch (err) {
+    renderList("templates-list", [{ error: err.message }], (item) => `<div class="item">Erreur: ${esc(item.error)}</div>`);
+  }
+}
+
+async function generateLegalDocument() {
+  const templateId = document.getElementById("writer-template").value;
+  const payload = {
+    document_type: document.getElementById("writer-document-type").value,
+    title: document.getElementById("writer-title").value,
+    situation: document.getElementById("writer-situation").value,
+    language: document.getElementById("writer-language").value
+  };
+  if (templateId) payload.template_id = Number(templateId);
+  if (activeRequestId) payload.legal_request_id = activeRequestId;
+  try {
+    const res = await authFetch(`${API}/api/assistant/generate-document/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.detail || JSON.stringify(data));
+    showNotice("Document legal genere.");
+    await loadLegalDocuments();
+    writeDiagnostics("last_generated_document", data);
+  } catch (err) {
+    showNotice(`Generation erreur: ${err.message}`, true);
+  }
+}
+
+async function generateDraft() {
+  const payload = {
+    message: document.getElementById("draft-message").value,
+    document_type: document.getElementById("draft-type").value,
+    output_format: document.getElementById("draft-format").value,
+    language: document.getElementById("writer-language").value
+  };
+  if (activeRequestId) payload.legal_request_id = activeRequestId;
+  try {
+    const res = await authFetch(`${API}/api/assistant/draft/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.detail || JSON.stringify(data));
+    showNotice("Draft genere.");
+    await loadDrafts();
+    writeDiagnostics("last_draft", data);
+  } catch (err) {
+    showNotice(`Draft erreur: ${err.message}`, true);
+  }
+}
+
+async function loadLegalDocuments() {
+  try {
+    const res = await authFetch(`${API}/api/assistant/legal-documents/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    const items = Array.isArray(data) ? data : (data.results || []);
+    renderList("legal-documents-list", items, (doc) => `
+      <div class="item">
+        <strong>${esc(doc.title || `Document ${doc.id}`)}</strong>
+        <div class="muted">${esc(doc.document_type || "")} ${doc.template_name ? "- " + esc(doc.template_name) : ""}</div>
+        <div>${esc((doc.content || "").slice(0, 260))}</div>
+      </div>`);
+    writeDiagnostics("legal_documents", items);
+  } catch (err) {
+    renderList("legal-documents-list", [{ error: err.message }], (item) => `<div class="item">Erreur: ${esc(item.error)}</div>`);
+  }
+}
+
+async function loadDrafts() {
+  try {
+    const res = await authFetch(`${API}/api/assistant/drafts/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    const items = Array.isArray(data) ? data : (data.results || []);
+    renderList("drafts-list", items, (draft) => `
+      <div class="item">
+        <strong>${esc(draft.title || `Draft ${draft.id}`)}</strong>
+        <div class="muted">${esc(draft.document_type || "")} / ${esc(draft.output_format || "")}</div>
+        <div>${esc((draft.content || "").slice(0, 260))}</div>
+      </div>`);
+    writeDiagnostics("drafts", items);
+  } catch (err) {
+    renderList("drafts-list", [{ error: err.message }], (item) => `<div class="item">Erreur: ${esc(item.error)}</div>`);
+  }
+}
+
+async function createLegalRequest() {
+  const payload = {
+    title: document.getElementById("request-title").value,
+    description: document.getElementById("request-description").value,
+    category: document.getElementById("request-category").value,
+    status: "draft"
+  };
+  try {
+    const res = await authFetch(`${API}/api/legal-path/requests/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    activeRequestId = data.id;
+    setRequestLabel();
+    showNotice(`Legal request creee: #${data.id}`);
+    await loadLegalRequests();
+    await loadLegalRequestDetails();
+  } catch (err) {
+    showNotice(`Creation request erreur: ${err.message}`, true);
+  }
+}
+
+async function loadLegalRequests() {
+  try {
+    const res = await authFetch(`${API}/api/legal-path/requests/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    const items = Array.isArray(data) ? data : (data.results || []);
+    renderList("requests-list", items, (request) => `
+      <div class="item">
+        <strong>#${request.id} - ${esc(request.title)}</strong>
+        <div class="muted">${esc(request.category)} / ${esc(request.status)}</div>
+        <div>${esc(request.description || "")}</div>
+        <div class="toolbar" style="margin-top:10px">
+          <button class="btn-secondary btn-small" onclick="selectLegalRequest(${request.id})">Selectionner</button>
+        </div>
+      </div>`);
+    if (!activeRequestId && items.length) {
+      activeRequestId = items[0].id;
+      setRequestLabel();
+      await loadLegalRequestDetails();
+    }
+    writeDiagnostics("legal_requests", items);
+  } catch (err) {
+    renderList("requests-list", [{ error: err.message }], (item) => `<div class="item">Erreur: ${esc(item.error)}</div>`);
+  }
+}
+
+async function selectLegalRequest(id) {
+  activeRequestId = id;
+  setRequestLabel();
+  await loadLegalRequestDetails();
+}
+
+async function addRoadmapStep() {
+  if (!activeRequestId) return showNotice("Aucune legal request selectionnee.", true);
+  const payload = {
+    order: Number(document.getElementById("roadmap-order").value || 1),
+    title: document.getElementById("roadmap-title").value,
+    description: document.getElementById("roadmap-description").value,
+    estimated_days: Number(document.getElementById("roadmap-days").value || 0),
+    status: "pending"
+  };
+  try {
+    const res = await authFetch(`${API}/api/legal-path/requests/${activeRequestId}/roadmap-steps/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    showNotice("Roadmap step ajoute.");
+    await loadLegalRequestDetails();
+  } catch (err) {
+    showNotice(`Roadmap erreur: ${err.message}`, true);
+  }
+}
+
+async function addRequiredDocument() {
+  if (!activeRequestId) return showNotice("Aucune legal request selectionnee.", true);
+  const payload = {
+    name: document.getElementById("required-doc-name").value,
+    description: document.getElementById("required-doc-description").value,
+    is_uploaded: false
+  };
+  try {
+    const res = await authFetch(`${API}/api/legal-path/requests/${activeRequestId}/documents/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    showNotice("Document requis ajoute.");
+    await loadLegalRequestDetails();
+  } catch (err) {
+    showNotice(`Document requis erreur: ${err.message}`, true);
+  }
+}
+
+async function addRecommendation() {
+  if (!activeRequestId) return showNotice("Aucune legal request selectionnee.", true);
+  const payload = {
+    title: "Recommandation pratique",
+    description: document.getElementById("recommendation-description").value,
+    priority: "high",
+    is_actioned: false
+  };
+  try {
+    const res = await authFetch(`${API}/api/legal-path/requests/${activeRequestId}/recommendations/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    showNotice("Recommendation ajoutee.");
+    await loadLegalRequestDetails();
+  } catch (err) {
+    showNotice(`Recommendation erreur: ${err.message}`, true);
+  }
+}
+
+async function addTimelineEvent() {
+  if (!activeRequestId) return showNotice("Aucune legal request selectionnee.", true);
+  const payload = {
+    event_type: "note",
+    title: document.getElementById("timeline-title").value,
+    description: "Ajoute depuis la page de test."
+  };
+  try {
+    const res = await authFetch(`${API}/api/legal-path/requests/${activeRequestId}/timeline/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    showNotice("Timeline event ajoute.");
+    await loadLegalRequestDetails();
+  } catch (err) {
+    showNotice(`Timeline erreur: ${err.message}`, true);
+  }
+}
+
+async function loadRecommendedLawyers() {
+  if (!activeRequestId) return showNotice("Aucune legal request selectionnee.", true);
+  try {
+    const res = await authFetch(`${API}/api/legal-path/requests/${activeRequestId}/recommended_lawyers/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    const items = Array.isArray(data) ? data : [];
+    renderList("recommended-lawyers-list", items, (lawyer) => `
+      <div class="item">
+        <strong>${esc(lawyer.full_name || "Avocat")}</strong>
+        <div class="muted">${esc(lawyer.wilaya || "")} ${lawyer.distance_km ? "- " + esc(lawyer.distance_km) + " km" : ""}</div>
+        <div>${esc(lawyer.match_reason || "")}</div>
+      </div>`);
+    writeDiagnostics("recommended_lawyers", items);
+  } catch (err) {
+    renderList("recommended-lawyers-list", [{ error: err.message }], (item) => `<div class="item">Erreur: ${esc(item.error)}</div>`);
+  }
+}
+
+async function loadLegalRequestDetails() {
+  if (!activeRequestId) return;
+  const endpoints = [
+    ["roadmap-list", "roadmap-steps", (step) => `
+      <div class="item">
+        <strong>${esc(step.order)}. ${esc(step.title)}</strong>
+        <div class="muted">${esc(step.status)} ${step.estimated_days ? "- " + esc(step.estimated_days) + " jours" : ""}</div>
+        <div>${esc(step.description || "")}</div>
+      </div>`],
+    ["required-documents-list", "documents", (doc) => `
+      <div class="item">
+        <strong>${esc(doc.name)}</strong>
+        <div class="muted">${doc.is_uploaded ? "upload ok" : "non upload"}</div>
+        <div>${esc(doc.description || "")}</div>
+      </div>`],
+    ["recommendations-list", "recommendations", (rec) => `
+      <div class="item">
+        <strong>${esc(rec.title)}</strong>
+        <div class="muted">${esc(rec.priority)} ${rec.is_actioned ? "- fait" : ""}</div>
+        <div>${esc(rec.description || "")}</div>
+      </div>`],
+    ["timeline-list", "timeline", (event) => `
+      <div class="item">
+        <strong>${esc(event.title)}</strong>
+        <div class="muted">${esc(event.event_type)}</div>
+        <div>${esc(event.description || "")}</div>
+      </div>`]
+  ];
+
+  for (const [containerId, endpoint, renderFn] of endpoints) {
+    try {
+      const res = await authFetch(`${API}/api/legal-path/requests/${activeRequestId}/${endpoint}/`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(JSON.stringify(data));
+      const items = Array.isArray(data) ? data : (data.results || []);
+      renderList(containerId, items, renderFn);
+      writeDiagnostics(endpoint, items);
+    } catch (err) {
+      renderList(containerId, [{ error: err.message }], (item) => `<div class="item">Erreur: ${esc(item.error)}</div>`);
+    }
+  }
+}
+
+function writeDiagnostics(key, value) {
+  const box = document.getElementById("diagnostics-box");
+  const current = box.dataset.payload ? JSON.parse(box.dataset.payload) : {};
+  current[key] = value;
+  box.dataset.payload = JSON.stringify(current);
+  box.textContent = JSON.stringify(current, null, 2);
+}
+
+async function bootstrapData() {
+  setSessionLabel();
+  setRequestLabel();
+  document.getElementById("chat-log").textContent = "";
+  document.getElementById("diagnostics-box").textContent = "En attente...";
+  await Promise.all([
+    loadAssistantDocuments(),
+    loadTemplates(),
+    loadLegalDocuments(),
+    loadDrafts(),
+    loadLegalRequests()
+  ]);
+}
+
+if (accessToken) {
+  showApp();
+}
+</script>
+</body>
+</html>

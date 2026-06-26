@@ -17,11 +17,50 @@ def extract_text_from_file(file_field):
 
 
 def _extract_pdf(path):
+    extractors = (_extract_pdf_pypdf, _extract_pdf_pypdf2, _extract_pdf_plumber, _extract_pdf_fitz)
+    for extractor in extractors:
+        text = extractor(path)
+        if text.strip():
+            return text
+    return ""
+
+
+def _extract_pdf_pypdf(path):
     try:
         from pypdf import PdfReader
 
         reader = PdfReader(str(path))
         return "\n".join(page.extract_text() or "" for page in reader.pages)
+    except Exception:
+        return ""
+
+
+def _extract_pdf_pypdf2(path):
+    try:
+        from PyPDF2 import PdfReader
+
+        reader = PdfReader(str(path))
+        return "\n".join(page.extract_text() or "" for page in reader.pages)
+    except Exception:
+        return ""
+
+
+def _extract_pdf_plumber(path):
+    try:
+        import pdfplumber
+
+        with pdfplumber.open(str(path)) as pdf:
+            return "\n".join(page.extract_text() or "" for page in pdf.pages)
+    except Exception:
+        return ""
+
+
+def _extract_pdf_fitz(path):
+    try:
+        import fitz
+
+        document = fitz.open(str(path))
+        return "\n".join(page.get_text() or "" for page in document)
     except Exception:
         return ""
 

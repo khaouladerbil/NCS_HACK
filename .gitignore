@@ -1,1 +1,10 @@
 .env
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+chroma_data/
+media/
+*.log
+*.err.log
+directory_data/

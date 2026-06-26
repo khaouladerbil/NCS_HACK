@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from ai_assistant.models import AssistantDocumentChunk
 
 from .chunking import chunk_text
@@ -10,14 +12,23 @@ def index_assistant_document(document):
     document.extracted_text = text
     document.save(update_fields=["extracted_text", "updated_at"])
 
-    document.chunks.all().delete()
     embedder = get_embedder()
+    if embedder is None:
+        raise RuntimeError("Embedding service unavailable for document indexing.")
+
     chunks = chunk_text(text)
+    prepared_chunks = []
     for index, chunk in enumerate(chunks):
-        AssistantDocumentChunk.objects.create(
-            document=document,
-            chunk_index=index,
-            text=chunk,
-            embedding=embedder.embed_passage(chunk),
+        prepared_chunks.append(
+            AssistantDocumentChunk(
+                document=document,
+                chunk_index=index,
+                text=chunk,
+                embedding=embedder.embed_passage(chunk),
+            )
         )
+
+    with transaction.atomic():
+        document.chunks.all().delete()
+        AssistantDocumentChunk.objects.bulk_create(prepared_chunks)
     return len(chunks)

@@ -193,6 +193,80 @@ class DraftDocument(models.Model):
         return self.title
 
 
+class DocumentTemplate(models.Model):
+    DOCUMENT_TYPES = [
+        ("complaint", "Complaint"),
+        ("appeal", "Appeal"),
+        ("petition", "Petition"),
+        ("administrative_request", "Administrative Request"),
+        ("employment_complaint", "Employment Complaint"),
+        ("rental_complaint", "Rental Complaint"),
+        ("power_of_attorney", "Power of Attorney"),
+        ("contract", "Contract"),
+    ]
+
+    name = models.CharField(max_length=255)
+    document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES, unique=True)
+    description = models.TextField(blank=True)
+    structure = models.TextField()
+    required_fields = models.JSONField(default=list, blank=True)
+    language = models.CharField(max_length=20, default="fr")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class LegalDocument(models.Model):
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("generated", "Generated"),
+        ("edited", "Edited"),
+        ("archived", "Archived"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="legal_documents",
+    )
+    template = models.ForeignKey(
+        DocumentTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+    )
+    legal_request = models.ForeignKey(
+        "legal_path.LegalRequest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="legal_documents",
+    )
+    title = models.CharField(max_length=255)
+    document_type = models.CharField(max_length=50)
+    situation = models.TextField(blank=True)
+    content = models.TextField()
+    language = models.CharField(max_length=20, default="fr")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="generated")
+    citations = models.JSONField(default=list, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.title
+
+
 class LawyerProfile(models.Model):
     SPECIALTIES = [
         ("labor", "Labor"),
