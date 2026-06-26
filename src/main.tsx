@@ -11,7 +11,7 @@ import "./index.css"
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <Toast.Provider width="fit-content" />
+      <Toast.Provider placement="bottom" width="fit-content" />
       <TooltipProvider>
         <App />
       </TooltipProvider>

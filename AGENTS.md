@@ -47,8 +47,11 @@
 - Editor should now read as a premium alt-Google-Docs surface: editorial serif paper, inline autocomplete at caret, and zoom that scales real layout instead of distorting input chrome.
 - Pretext-backed text measurement should be part of the workspace text stack, especially in consultant streaming and editor text layout behavior.
 - `/` is now a marketing landing page; `/assistant` remains the main product workspace route.
-- `/auth` now handles login, signup, and signup onboarding using the same assistant-adjacent shell styling.
+- Auth now opens as a landing-page popup with sticky sign-in/sign-up controls; `/auth` only redirects into that popup state for compatibility.
 - Copy should stay terse.
+- Toasts should stay centered across the workspace.
+- Editor should stay visually quiet: full-screen paper, one inline suggestion only, and explicit DOCX/PDF export.
+- File rows should stay type-aware, with smaller labels and confirmation before destructive deletion.
 
 ## Workflow
 

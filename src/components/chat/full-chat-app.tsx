@@ -338,6 +338,54 @@ const QUICK_PROMPTS = [
 const CONSULTANT_LINE_HEIGHT = 30
 const CONSULTANT_BODY_FONT =
   '500 15px "Geist Variable", "Geist", "Inter", sans-serif'
+const THINKING_DELAY_MS = 820
+
+function getFileTypeMeta(file: FileItem) {
+  const ext = (file.ext ?? file.name.split(".").pop() ?? "file").toLowerCase()
+
+  if (ext === "pdf") {
+    return {
+      badgeClassName: "border-[#ead0cb] bg-[#fbefed] text-[#9f2d20]",
+      iconClassName: "text-[#9f2d20]",
+      labelClassName: "text-[#5a3028]",
+      shortLabel: "PDF",
+    }
+  }
+
+  if (ext === "docx") {
+    return {
+      badgeClassName: "border-[#d4dced] bg-[#eef4ff] text-[#2f5ea8]",
+      iconClassName: "text-[#2f5ea8]",
+      labelClassName: "text-[#294162]",
+      shortLabel: "DOCX",
+    }
+  }
+
+  if (ext === "md" || ext === "txt") {
+    return {
+      badgeClassName: "border-[#d9d6ea] bg-[#f2f0fb] text-[#5f4ca7]",
+      iconClassName: "text-[#5f4ca7]",
+      labelClassName: "text-[#3f3566]",
+      shortLabel: ext.toUpperCase(),
+    }
+  }
+
+  if (ext === "xlsx") {
+    return {
+      badgeClassName: "border-[#cfe3d2] bg-[#edf7ef] text-[#2f7a45]",
+      iconClassName: "text-[#2f7a45]",
+      labelClassName: "text-[#29523a]",
+      shortLabel: "XLSX",
+    }
+  }
+
+  return {
+    badgeClassName: "border-[color:var(--jp-accent-soft)] bg-[color:var(--jp-accent-muted)] text-[#7b5a2d]",
+    iconClassName: "text-[#7b5a2d]",
+    labelClassName: "text-[#4d3b1e]",
+    shortLabel: ext.toUpperCase(),
+  }
+}
 
 function buildResponseContext(prompt: string, activeFile?: FileItem | null): ResponseContext {
   const fileLabel = activeFile?.name?.replace(/\.[^.]+$/, "") ?? "selected record"
@@ -813,18 +861,21 @@ function ConditionalTooltip({
 function TruncatingFileLabel({
   label,
   fullPath,
+  ext,
   active,
   onClick,
   onRename,
 }: {
   label: string
   fullPath: string
+  ext?: string
   active: boolean
   onClick: () => void
   onRename: () => void
 }) {
   const labelRef = useRef<HTMLSpanElement | null>(null)
   const [truncated, setTruncated] = useState(false)
+  const typeMeta = getFileTypeMeta({ id: "preview", name: label, ext })
 
   useEffect(() => {
     const node = labelRef.current
@@ -848,20 +899,34 @@ function TruncatingFileLabel({
         onRename()
       }}
       className={cn(
-        "min-w-0 flex-1 text-left text-[0.5rem] leading-4 text-[#374151]",
-        active && "font-semibold text-[#111827]"
+        "min-w-0 flex-1 text-left",
+        active && "font-semibold"
       )}
     >
-      <span
-        ref={labelRef}
-        className="block overflow-hidden"
-        style={{
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-        }}
-      >
-        {label}
+      <span className="flex items-start gap-2">
+        <span
+          className={cn(
+            "mt-0.5 inline-flex h-4 shrink-0 items-center rounded-full border px-1.5 text-[0.5rem] font-semibold tracking-[0.14em]",
+            typeMeta.badgeClassName
+          )}
+        >
+          {typeMeta.shortLabel}
+        </span>
+        <span
+          ref={labelRef}
+          className={cn(
+            "block overflow-hidden text-[0.68rem] leading-3.5",
+            typeMeta.labelClassName,
+            active && "text-[#111827]"
+          )}
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
+          {label}
+        </span>
       </span>
     </button>
   )
@@ -1375,13 +1440,24 @@ export function ChatSidebar({
                                     <GripVertical className="size-3" />
                                   </button>
                                   {file.ext === "txt" || file.name.includes("State Code") ? (
-                                    <BookOpen className="size-3.25 shrink-0 text-[#6b7280]" />
+                                    <BookOpen
+                                      className={cn(
+                                        "size-3.25 shrink-0",
+                                        getFileTypeMeta(file).iconClassName
+                                      )}
+                                    />
                                   ) : (
-                                    <FileText className="size-3.25 shrink-0 text-[#6b7280]" />
+                                    <FileText
+                                      className={cn(
+                                        "size-3.25 shrink-0",
+                                        getFileTypeMeta(file).iconClassName
+                                      )}
+                                    />
                                   )}
                                   <TruncatingFileLabel
                                     label={file.name}
                                     fullPath={`${folder.name}/${file.name}`}
+                                    ext={file.ext}
                                     active={activeFileId === file.id}
                                     onClick={() => onSelectFile(file)}
                                     onRename={() => onRenameFile?.(file.id)}
@@ -1457,6 +1533,7 @@ type ChatContentProps = {
   onOpenEditor: () => void
   onDocumentChange: (value: string) => void
   onConversationStateChange?: (hasConversation: boolean) => void
+  onThinkingStateChange?: (isThinking: boolean) => void
   onResponseContextChange?: (context: ResponseContext | null) => void
   activeCitationId?: string | null
   onActiveCitationChange?: (citationId: string | null) => void
@@ -1467,6 +1544,7 @@ export function ChatContent({
   onOpenEditor: _onOpenEditor,
   onDocumentChange: _onDocumentChange,
   onConversationStateChange,
+  onThinkingStateChange,
   onResponseContextChange,
   activeCitationId,
   onActiveCitationChange,
@@ -1481,6 +1559,7 @@ export function ChatContent({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
   const streamTimerRef = useRef<number | null>(null)
+  const thinkingTimerRef = useRef<number | null>(null)
 
   async function copyText(value: string) {
     await navigator.clipboard.writeText(value)
@@ -1507,8 +1586,13 @@ export function ChatContent({
   }
 
   useEffect(() => {
+    onThinkingStateChange?.(isLoading)
+  }, [isLoading, onThinkingStateChange])
+
+  useEffect(() => {
     return () => {
       recognitionRef.current?.stop()
+      if (thinkingTimerRef.current) window.clearTimeout(thinkingTimerRef.current)
       if (streamTimerRef.current) window.clearInterval(streamTimerRef.current)
     }
   }, [])
@@ -1570,6 +1654,10 @@ export function ChatContent({
   }
 
   function stopResponse() {
+    if (thinkingTimerRef.current) {
+      window.clearTimeout(thinkingTimerRef.current)
+      thinkingTimerRef.current = null
+    }
     if (streamTimerRef.current) {
       window.clearInterval(streamTimerRef.current)
       streamTimerRef.current = null
@@ -1621,33 +1709,39 @@ export function ChatContent({
     if (streamTimerRef.current) {
       window.clearInterval(streamTimerRef.current)
     }
+    if (thinkingTimerRef.current) {
+      window.clearTimeout(thinkingTimerRef.current)
+    }
 
-    streamTimerRef.current = window.setInterval(() => {
-      cursor = Math.min(fullResponse.length, cursor + stride)
-      const nextContent = fullResponse.slice(0, cursor)
+    thinkingTimerRef.current = window.setTimeout(() => {
+      thinkingTimerRef.current = null
+      streamTimerRef.current = window.setInterval(() => {
+        cursor = Math.min(fullResponse.length, cursor + stride)
+        const nextContent = fullResponse.slice(0, cursor)
 
-      setChatMessages((prev) =>
-        prev.map((message) =>
-          message.id === assistantId ? { ...message, content: nextContent } : message
-        )
-      )
-      scrollToGeneratedText("auto")
-
-      if (cursor >= fullResponse.length) {
         setChatMessages((prev) =>
           prev.map((message) =>
-            message.id === assistantId
-              ? { ...message, revealLawyers: shouldSuggestLawyers }
-              : message
+            message.id === assistantId ? { ...message, content: nextContent } : message
           )
         )
-        if (streamTimerRef.current) {
-          window.clearInterval(streamTimerRef.current)
-          streamTimerRef.current = null
+        scrollToGeneratedText("auto")
+
+        if (cursor >= fullResponse.length) {
+          setChatMessages((prev) =>
+            prev.map((message) =>
+              message.id === assistantId
+                ? { ...message, revealLawyers: shouldSuggestLawyers }
+                : message
+            )
+          )
+          if (streamTimerRef.current) {
+            window.clearInterval(streamTimerRef.current)
+            streamTimerRef.current = null
+          }
+          setIsLoading(false)
         }
-        setIsLoading(false)
-      }
-    }, 45)
+      }, 45)
+    }, THINKING_DELAY_MS)
   }
 
   function editPrompt(message: ChatMessage) {
@@ -1731,7 +1825,7 @@ export function ChatContent({
                         ) : (
                           <div className="px-0.5 py-1 text-[#5f5245]">
                             <TextShimmerWave className="text-[0.8rem] uppercase tracking-[0.14em]" duration={1}>
-                              Generating legal analysis...
+                              Thinking through record...
                             </TextShimmerWave>
                           </div>
                         )}

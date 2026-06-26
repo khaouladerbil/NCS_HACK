@@ -1,5 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react"
-import { BookOpen, Eye, FilePenLine, FileText, MessagesSquare, Minus, PencilLine, Plus } from "lucide-react"
+import {
+  BookOpen,
+  Eye,
+  FilePenLine,
+  FileText,
+  MessagesSquare,
+  Minus,
+  PencilLine,
+  Plus,
+} from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import { ChatContent, type ResponseContext } from "@/components/chat/full-chat-app"
@@ -29,6 +38,7 @@ type WorkspaceModesProps = {
   documentValue: string
   onDocumentChange: (value: string) => void
   onConversationStateChange?: (hasConversation: boolean) => void
+  onThinkingStateChange?: (isThinking: boolean) => void
   onResponseContextChange?: (context: ResponseContext | null) => void
   activeCitationId?: string | null
   onActiveCitationChange?: (citationId: string | null) => void
@@ -41,6 +51,7 @@ export function WorkspaceModes({
   documentValue,
   onDocumentChange,
   onConversationStateChange,
+  onThinkingStateChange,
   onResponseContextChange,
   activeCitationId,
   onActiveCitationChange,
@@ -181,6 +192,20 @@ export function WorkspaceModes({
                       Source file
                     </a>
                   ) : null}
+                  <ToolbarGroup>
+                    <ToolbarTextButton
+                      label="Export DOCX"
+                      onClick={() => triggerEditorAction("export-docx")}
+                    >
+                      DOCX
+                    </ToolbarTextButton>
+                    <ToolbarTextButton
+                      label="Export PDF"
+                      onClick={() => triggerEditorAction("export-pdf")}
+                    >
+                      PDF
+                    </ToolbarTextButton>
+                  </ToolbarGroup>
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -194,6 +219,7 @@ export function WorkspaceModes({
           onOpenEditor={() => onModeChange("editor")}
           onDocumentChange={onDocumentChange}
           onConversationStateChange={onConversationStateChange}
+          onThinkingStateChange={onThinkingStateChange}
           onResponseContextChange={onResponseContextChange}
           activeCitationId={activeCitationId}
           onActiveCitationChange={onActiveCitationChange}
@@ -243,6 +269,28 @@ function ToolbarIconButton({
       )}
     >
       <Icon className="size-4" />
+    </button>
+  )
+}
+
+function ToolbarTextButton({
+  children,
+  label,
+  onClick,
+}: {
+  children: ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="inline-flex h-8 items-center justify-center rounded-full px-3 text-[0.66rem] font-semibold tracking-[0.14em] text-[#6d5640] transition-colors hover:bg-[#f4ecdf] hover:text-[#24170d] lg:h-9"
+    >
+      {children}
     </button>
   )
 }

@@ -74,6 +74,10 @@
   --sidebar-accent-foreground: oklch(0.24 0.02 64);
   --sidebar-border: oklch(0.89 0.01 75);
   --sidebar-ring: oklch(0.62 0.02 60);
+  --jp-accent: #d6ab66;
+  --jp-accent-strong: #a67834;
+  --jp-accent-muted: #f7eedc;
+  --jp-accent-soft: #e7d8c2;
   scroll-behavior: smooth;
 }
 
@@ -147,6 +151,9 @@ select {
   [data-slot="toast-region"] {
     width: fit-content !important;
     max-width: min(36rem, calc(100vw - 1rem));
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
   }
 
   [data-slot="toast"] {

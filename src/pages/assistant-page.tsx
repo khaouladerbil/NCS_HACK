@@ -30,12 +30,17 @@ export function AssistantPage() {
   const [activeFile, setActiveFile] = useState<FileItem | null>(null)
   const [documentValue, setDocumentValue] = useState(createDocumentFromFile(null))
   const [hasConversation, setHasConversation] = useState(false)
+  const [isThinking, setIsThinking] = useState(false)
   const [creationMode, setCreationMode] = useState<"folder" | "file" | null>(null)
   const [creationValue, setCreationValue] = useState("")
   const [creationFolderId, setCreationFolderId] = useState<string | null>(null)
   const [renamingFileId, setRenamingFileId] = useState<string | null>(null)
   const [renamingFileValue, setRenamingFileValue] = useState("")
-  const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
+  const [deletionTarget, setDeletionTarget] = useState<{
+    id: string
+    label: string
+    type: "file" | "folder"
+  } | null>(null)
   const [responseContext, setResponseContext] = useState<ResponseContext | null>(null)
   const [activeCitationId, setActiveCitationId] = useState<string | null>(null)
   const documentOutline = getDocumentOutline(activeFile, documentValue)
@@ -112,6 +117,17 @@ export function AssistantPage() {
     }
 
     toast(`Folder removed: ${folder.name}`)
+  }
+
+  const requestDeleteFolder = (folderId: string) => {
+    const folder = folders.find((item) => item.id === folderId)
+    if (!folder) return
+
+    setDeletionTarget({
+      id: folderId,
+      label: folder.name,
+      type: "folder",
+    })
   }
 
   const createFolder = (name: string) => {
@@ -211,12 +227,27 @@ export function AssistantPage() {
   }
 
   const requestDeleteFile = (fileId: string) => {
-    setDeletingFileId(fileId)
+    const sourceFolder = folders.find((folder) => folder.files.some((file) => file.id === fileId))
+    const file = sourceFolder?.files.find((item) => item.id === fileId)
+    if (!file) return
+
+    setDeletionTarget({
+      id: fileId,
+      label: file.name,
+      type: "file",
+    })
   }
 
-  const confirmDeleteFile = () => {
-    const fileId = deletingFileId
-    if (!fileId) return
+  const confirmDelete = () => {
+    if (!deletionTarget) return
+
+    if (deletionTarget.type === "folder") {
+      deleteFolder(deletionTarget.id)
+      setDeletionTarget(null)
+      return
+    }
+
+    const fileId = deletionTarget.id
 
     setFolders((prev) =>
       prev
@@ -234,7 +265,7 @@ export function AssistantPage() {
     }
 
     toast("File removed")
-    setDeletingFileId(null)
+    setDeletionTarget(null)
   }
 
   const moveFile = (fileId: string, targetFolderId?: string, targetIndex?: number) => {
@@ -280,7 +311,7 @@ export function AssistantPage() {
     onCreateFolder: () => openCreationDialog("folder"),
     onAddFile: (folderId: string) => openCreationDialog("file", folderId),
     onRenameFolder: renameFolder,
-    onDeleteFolder: deleteFolder,
+    onDeleteFolder: requestDeleteFolder,
     onRenameFile: openRenameFileDialog,
     onOpenEditor: () => {
       setMode("editor")
@@ -423,30 +454,32 @@ export function AssistantPage() {
       </Dialog>
 
       <Dialog
-        open={deletingFileId !== null}
-        onOpenChange={(open) => !open && setDeletingFileId(null)}
+        open={deletionTarget !== null}
+        onOpenChange={(open) => !open && setDeletionTarget(null)}
         variants={dialogVariants}
         transition={dialogTransition}
       >
         <DialogContent className="w-full max-w-md bg-white p-6">
           <DialogHeader>
-            <DialogTitle className="text-zinc-900">Delete file?</DialogTitle>
+            <DialogTitle className="text-zinc-900">
+              Delete {deletionTarget?.type === "folder" ? "folder" : "file"}?
+            </DialogTitle>
             <DialogDescription className="text-zinc-600">
-              This removes the file from the workspace sidebar.
+              {deletionTarget?.label ?? "This item"} will be removed from the workspace.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-6 flex justify-end gap-2">
             <button
               className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700"
               type="button"
-              onClick={() => setDeletingFileId(null)}
+              onClick={() => setDeletionTarget(null)}
             >
               Cancel
             </button>
             <button
               className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-medium text-zinc-50"
               type="button"
-              onClick={confirmDeleteFile}
+              onClick={confirmDelete}
             >
               Delete
             </button>
@@ -472,7 +505,7 @@ export function AssistantPage() {
             activeFile={activeFile}
             documentOutline={documentOutline}
             hasConversation={hasConversation}
-            isThinking={mode === "consultant" && hasConversation}
+            isThinking={mode === "consultant" && isThinking}
             responseContext={responseContext}
             activeCitationId={activeCitationId}
             onCitationSelect={setActiveCitationId}
@@ -487,6 +520,7 @@ export function AssistantPage() {
           documentValue={documentValue}
           onDocumentChange={setDocumentValue}
           onConversationStateChange={setHasConversation}
+          onThinkingStateChange={setIsThinking}
           onResponseContextChange={setResponseContext}
           activeCitationId={activeCitationId}
           onActiveCitationChange={setActiveCitationId}

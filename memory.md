@@ -10,7 +10,6 @@ Last updated: 2026-06-26
 - HeroUI installed for top mode buttons.
 - Active routes:
   - `/`
-  - `/auth`
   - `/assistant`
   - `/settings`
 
@@ -21,7 +20,8 @@ Last updated: 2026-06-26
 - Top mode switch in `src/components/modes/workspace-modes.tsx`.
 - Assistant page is primary implemented route.
 - Landing page now owns `/`, using a warm serif-forward legal brand presentation and routing CTAs into `/assistant`.
-- Auth flow now lives at `/auth`, with login/signup mode switch, Google option, and a front-end onboarding step before entering `/assistant`.
+- Landing page now owns auth entry with a centered popup, sticky sign-in/sign-up toggle, Google option, and front-end onboarding before entering `/assistant`.
+- `/auth` now redirects into the landing-page auth popup for compatibility with older CTA links.
 - Settings page is routed and profile-led.
 - Main content is full-screen.
 - Left navigation overlays above content instead of affecting width.
@@ -36,7 +36,7 @@ Last updated: 2026-06-26
 - Left rail now follows the branded document-manager look with a smaller logo, icon-only new-document action, and tighter text hierarchy.
 - Consultant and editor are now tied together by shared draft state; assistant actions can push text straight into the editor.
 - Assistant answers now stream sequentially, follow a bottom anchor during generation, and render without answer boxes.
-- Editor now uses a black-and-white Times New Roman document surface with a stateful floating dock, autocomplete chips, and AI suggestion chips.
+- Editor now uses a quieter full-screen Baskerville-style paper surface with one inline ghost suggestion and no suggestion tray chrome.
 - GSAP button press animation and Lenis smooth scrolling are enabled in the assistant workspace.
 - Consultant now starts blank, shows prompt suggestions above the composer, and keeps user prompts unboxed.
 - Lawyer cards stay hidden until the assistant stream finishes their turn.
@@ -44,7 +44,7 @@ Last updated: 2026-06-26
 - Left folders now open with animated accordion motion, and the right rail stays empty until a matter begins.
 - Editor now paginates long documents, supports page navigation + zoom, and keeps editing constrained to a stable page-sized writing surface.
 - Left rail now keeps settings at the bottom, with add-folder beside folder count and add-file beside each folder name.
-- Chat content now sits higher above the sticky composer, message editing stays in place without layout jumps, and action toasts cover more workspace actions.
+- Chat content now sits higher above the sticky composer, message editing stays in place without layout jumps, action toasts stay centered, and assistant replies pause briefly to "think" before streaming.
 - Workspace palette now uses higher-contrast neutral surfaces instead of the earlier cream-heavy treatment.
 - Prompt suggestion chips now live inside the composer shell as a horizontal scroller and auto-hide once drafting begins.
 - Editor right rail now swaps away from matter-tracking into document utilities, and the formatting dock now lives on the paper canvas instead of the viewport bottom.
@@ -55,12 +55,14 @@ Last updated: 2026-06-26
 - Consultant header now hides empty file subtitle, prompt streaming can be stopped mid-generation, and sidebar toggle pills now peek out while closed.
 - Left rail now supports double-click folder rename, add-file buttons next to folder names, slightly larger folder labels, smaller file labels, and drag-handle file moves/reordering.
 - Editor now uses stacked page canvases with zoom scaling the page itself, a pill-style top toolbar, clickable TOC wiring through the right rail, and real sample PDF/DOCX assets in `public/test-docs/`.
+- Editor toolbar now exposes direct DOCX and PDF export actions.
 - Professor mode now shows study modules as expandable visual cards instead of an empty placeholder.
 - Folder and file creation now use a local centered dialog component instead of `window.prompt`.
 - Consultant top-left header metadata now hides entirely when no file is active.
 - Folder rename now works directly in place on double-click, while editor TOC clicks jump and autoscroll for markdown, PDF, and DOCX-backed views.
 - Closed-folder headers now act as file drop targets, so dragged files can move into collapsed folders.
 - Sidebar folder count keeps a compact add-folder icon beside it; folder labels are larger and file labels are smaller.
+- Sidebar file rows now show file-type badges/colors and require confirmation before file or folder deletion.
 - Settings page now reuses the same sidebar chrome/components as the assistant workspace.
 - Editor formatting controls now flank the always-centered mode tabs, sharing the same pill/tab button styling.
 - Editor now uses a more premium docs-style paper system with typography-scaled zoom, inline ghost autocomplete at the caret, completion chips, and Pretext-backed text measurement.
