@@ -8,6 +8,7 @@ import {
   Folder,
   FolderOpen,
   GripVertical,
+  Loader2,
   Mic,
   MoreHorizontal,
   Pencil,
@@ -132,6 +133,7 @@ type ChatMessage = {
   attachments?: AttachmentItem[]
   suggestLawyers?: boolean
   revealLawyers?: boolean
+  userPrompt?: string
   responseContext?: ResponseContext
 }
 
@@ -331,7 +333,7 @@ const LAWYERS: Lawyer[] = [
 ]
 
 const LAWYER_QUERY_RE =
-  /\b(lawyer|lawyers|attorney|attorneys|counsel|solicitor|advocate|representation|represent me|hire counsel|need counsel)\b/i
+  /\b(lawyer|attorney|counsel|solicitor|advocate|avocat|juriste|محامي|محامى|licenci|salaire|salary|loyer|rent|expuls|divorce|garde|custody|pension|succession|heritage|kafala|wilaya|commune|administration|plainte|complaint|agress|assault|crime|vol|theft|arnaque|fraude|scam|contrat|contract|bail|logement|propr|commercial|societ|famille|mariage|marriage|police|gendarm|tribunal|droit|litige|emploi|employ|travail|work|fired|dismiss|probleme|problème|aide juridique|legal|juridique)\b/i
 
 const initialMessages: ChatMessage[] = []
 
@@ -773,12 +775,145 @@ function MorphingDialogBasicTwo({ lawyer }: { lawyer: Lawyer }) {
   )
 }
 
-function InlineLawyerSuggestions() {
+function makeInitialsAvatar(initials: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" rx="12" fill="#35230F"/><text x="100" y="130" text-anchor="middle" font-family="Georgia,serif" font-size="72" fill="#F7EEDC">${initials}</text></svg>`
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
+function apiLawyerToLawyer(l: {
+  id: number
+  first_name: string
+  last_name: string
+  rating: number | null
+  address: { city: string; state: string }
+  specializations: string[]
+  distance_km: number | null
+}): Lawyer {
+  const name = `${l.first_name} ${l.last_name}`.trim()
+  const initials = name.split(" ").map((w) => w[0] ?? "").slice(0, 2).join("").toUpperCase()
+  const city = l.address.city || l.address.state || "Algérie"
+  const distLabel = l.distance_km !== null ? ` · ${l.distance_km} km` : ""
+  return {
+    name,
+    firm: name,
+    practice: l.specializations.slice(0, 2).join(", ") || "Droit général",
+    jurisdiction: `${city}${distLabel}`,
+    image: makeInitialsAvatar(initials),
+    body: [
+      `Spécialisations : ${l.specializations.join(", ") || "Général"}`,
+      `Localisation : ${city}`,
+      l.distance_km !== null ? `Distance : ${l.distance_km} km` : "Distance non disponible",
+      l.rating !== null ? `Note : ${l.rating}/5` : "Non encore évalué",
+    ],
+  }
+}
+
+type AnalyzeResult = {
+  specialty: string
+  specialty_label: string
+  steps: { title: string; description: string }[]
+  lawyers: {
+    id: number
+    first_name: string
+    last_name: string
+    rating: number | null
+    address: { city: string; state: string }
+    specializations: string[]
+    distance_km: number | null
+  }[]
+}
+
+function LegalPathAndLawyers({ message }: { message: string }) {
+  const [data, setData] = useState<AnalyzeResult | null>(null)
+  const [loadStatus, setLoadStatus] = useState<"loading" | "done" | "error">("loading")
+
+  useEffect(() => {
+    const doFetch = (lat: number, lon: number) => {
+      fetch("http://localhost:8000/api/legal-path/analyze/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, lat, lon }),
+      })
+        .then((r) => {
+          if (!r.ok) throw new Error("failed")
+          return r.json() as Promise<AnalyzeResult>
+        })
+        .then((d) => {
+          setData(d)
+          setLoadStatus("done")
+        })
+        .catch(() => setLoadStatus("error"))
+    }
+
+    if (!navigator.geolocation) {
+      doFetch(36.7372, 3.0865)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => doFetch(pos.coords.latitude, pos.coords.longitude),
+      () => doFetch(36.7372, 3.0865),
+      { timeout: 5000 }
+    )
+  }, [message])
+
+  if (loadStatus === "loading") {
+    return (
+      <div className="mt-6 flex items-center gap-2 text-sm text-[#7a6655]">
+        <Loader2 className="size-4 animate-spin" />
+        Analyse de votre situation juridique…
+      </div>
+    )
+  }
+
+  if (loadStatus === "error" || !data) return null
+
+  const lawyers = data.lawyers.map(apiLawyerToLawyer)
+
   return (
-    <div className="mt-4 grid gap-3 md:grid-cols-3">
-      {LAWYERS.map((lawyer) => (
-        <MorphingDialogBasicTwo key={lawyer.name} lawyer={lawyer} />
-      ))}
+    <div className="mt-6 space-y-6">
+      {/* Legal Path Roadmap */}
+      <div className="rounded-2xl border border-[#e5ddcf] bg-white/80 p-5 shadow-[0_10px_28px_rgba(41,28,8,0.05)]">
+        <div className="mb-4 flex items-center gap-2">
+          <Scale className="size-4 text-[#7a6655]" />
+          <h3 className="text-[0.72rem] font-semibold tracking-[0.16em] text-[#5b4331] uppercase">
+            Votre chemin juridique · {data.specialty_label}
+          </h3>
+        </div>
+        <ol className="space-y-4">
+          {data.steps.map((step, i) => (
+            <li key={i} className="flex gap-3">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#2f2218] text-[0.6rem] font-bold text-white">
+                {i + 1}
+              </span>
+              <div>
+                <p className="text-[0.82rem] font-semibold leading-5 text-[#241910]">
+                  {step.title}
+                </p>
+                <p className="mt-0.5 text-[0.74rem] leading-[1.4] text-[#6b5a4a]">
+                  {step.description}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {/* Lawyer Recommendations */}
+      {lawyers.length > 0 ? (
+        <div>
+          <p className="mb-3 text-[0.72rem] font-semibold tracking-[0.14em] text-[#5b4331] uppercase">
+            Avocats recommandés près de vous
+          </p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {lawyers.map((lawyer) => (
+              <MorphingDialogBasicTwo
+                key={`${lawyer.name}-${lawyer.jurisdiction}`}
+                lawyer={lawyer}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1767,6 +1902,7 @@ export function ChatContent({
         content: "",
         suggestLawyers: shouldSuggestLawyers,
         revealLawyers: false,
+        userPrompt: submittedPrompt,
         responseContext,
       },
     ])
@@ -1905,7 +2041,9 @@ export function ChatContent({
                           </div>
                         )}
 
-                        {message.revealLawyers ? <InlineLawyerSuggestions /> : null}
+                        {message.revealLawyers ? (
+                          <LegalPathAndLawyers message={message.userPrompt ?? ""} />
+                        ) : null}
                       </div>
 
                       <MessageActions

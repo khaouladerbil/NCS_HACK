@@ -5,8 +5,10 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from directory_data.serializers import LawyerMapSerializer
+from .services.analyze_service import build_analyze_response
 
 from .models import (
     LegalRequest,
@@ -116,6 +118,22 @@ class RecommendationViewSet(NestedViewSet):
 class TimelineEventViewSet(NestedViewSet):
     serializer_class = TimelineEventSerializer
     queryset = TimelineEvent.objects.all()
+
+
+class AnalyzeLegalCaseView(APIView):
+    """Public endpoint: classify message → legal path steps + nearest lawyers."""
+    permission_classes = []
+
+    def post(self, request):
+        message = request.data.get("message", "")
+        try:
+            lat = float(request.data.get("lat", 36.7372))
+            lon = float(request.data.get("lon", 3.0865))
+        except (TypeError, ValueError):
+            lat, lon = 36.7372, 3.0865
+
+        result = build_analyze_response(message, lat, lon)
+        return Response(result)
 
 
 def lawyer_map_view(request, request_id):
