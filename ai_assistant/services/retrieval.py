@@ -99,7 +99,7 @@ def _sanitize_chunk(text):
     return text[:RAG_MAX_CHUNK_CHARS]
 
 
-def _compress_text(query_bundle, text, max_sentences=4):
+def _compress_text(query_bundle, text, max_sentences=7):
     if not text:
         return ""
     clean = re.sub(r"\s+", " ", text).strip()

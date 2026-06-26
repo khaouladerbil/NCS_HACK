@@ -65,10 +65,11 @@ class ChatService:
                 session.save(update_fields=["task", "language", "title", "updated_at"])
             return {"session_id": session.id, "message_id": None, "answer": answer, "citations": []}
 
-        # CORRECTION ④ : retrieve_context retourne [] si embedder indisponible
+        # Enrichir la query avec les derniers messages pour les questions de suivi
+        retrieval_query = _build_retrieval_query(data["message"], session)
         try:
             context_results = retrieve_context(
-                data["message"],
+                retrieval_query,
                 user,
                 legal_request=legal_request,
                 include_user_docs=True,
@@ -76,13 +77,19 @@ class ChatService:
         except EmbeddingUnavailableError:
             context_results = []
 
-        context, citations = format_context(context_results)
+        user_doc_results = [r for r in context_results if r.get("kind") == "user_document"]
+        legal_results = [r for r in context_results if r.get("kind") != "user_document"]
+        user_docs_text, _ = format_context(user_doc_results)
+        dataset_context, citations = format_context(legal_results)
+        context, _ = format_context(context_results)
         prompt = build_prompt(
             task=data["task"],
             language=response_language,
             message=data["message"],
             context=context,
             history=_format_history(session),
+            user_docs=user_docs_text,
+            dataset_context=dataset_context,
         )
 
         try:
@@ -195,6 +202,14 @@ def _get_or_create_session(user, data, legal_request):
         language=data["language"],
         title=data["message"][:80],
     )
+
+
+def _build_retrieval_query(message, session, context_turns=2):
+    recent = list(session.messages.order_by("-created_at")[:context_turns * 2])
+    recent.reverse()
+    parts = [m.content[:200] for m in recent if m.role == "user"]
+    parts.append(message)
+    return " ".join(parts)
 
 
 def _format_history(session, limit=8):
