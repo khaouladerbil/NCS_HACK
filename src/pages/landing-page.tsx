@@ -53,7 +53,7 @@ const modeStories = [
 ]
 
 const showcaseRows = [
-  ["Record", "service-agreement.pdf"],
+  ["Record", "algeria-lease.pdf"],
   ["Found", "30-day written notice"],
   ["Risk", "penalty clause needs counsel"],
   ["Draft", "reply letter ready"],
@@ -61,22 +61,16 @@ const showcaseRows = [
 
 const pricingPlans = [
   {
-    name: "Starter",
-    price: "$19",
-    line: "Personal legal reading.",
-    items: ["10 matters", "PDF/DOCX review", "Draft exports"],
+    name: "Basic",
+    price: "2,500 DA",
+    line: "Per month for light case work.",
+    items: ["2 cases", "Lawyer matches", "2 document exports"],
   },
   {
     name: "Pro",
-    price: "$49",
-    line: "Serious document work.",
-    items: ["Unlimited drafts", "Lawyer matches", "Priority model runs"],
-  },
-  {
-    name: "Team",
     price: "Custom",
-    line: "Clinics and legal ops.",
-    items: ["Shared matters", "Admin controls", "Private onboarding"],
+    line: "For heavier Algerian matter volume.",
+    items: ["5 cases", "Lawyer matches", "10 document exports"],
   },
 ]
 
@@ -304,7 +298,7 @@ export function LandingPage() {
               className="w-full max-w-4xl"
             >
               <p className="mb-8 text-sm font-semibold uppercase text-[#d6a850]">
-                Legal AI workspace
+                Algerian legal AI workspace
               </p>
               <h1 className="font-editor text-7xl leading-[0.82] text-white sm:text-8xl lg:text-[9.5rem]">
                 <TextEffect per="char">JusticePath</TextEffect>
@@ -313,7 +307,7 @@ export function LandingPage() {
                 Ask the legal question. Keep the clause, draft, and next step in one place.
               </p>
               <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-[#d6c7b3] sm:text-lg">
-                Minimal surface. Real matter context. Powered by proprietary models.
+                Minimal surface. Built for Algerian matters. Powered by proprietary models.
               </p>
             </motion.div>
 
@@ -508,11 +502,11 @@ export function LandingPage() {
                 Start small. Scale when legal work gets serious.
               </h2>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-[#5a4b3a]">
-                Clean pricing for document-heavy legal assistance.
+                Algerian pricing for real document-heavy case work.
               </p>
             </Reveal>
 
-            <div className="mt-14 grid border-y border-[#d8c8ab] lg:grid-cols-3">
+            <div className="mt-14 grid border-y border-[#d8c8ab] lg:grid-cols-2">
               {pricingPlans.map((plan, index) => (
                 <Reveal key={plan.name} delay={index * 0.08}>
                   <motion.article
@@ -557,7 +551,7 @@ export function LandingPage() {
           </div>
 
           <p className="max-w-lg text-sm leading-6 text-[#5a4b3a]">
-            Legal assistance powered by proprietary models. Human review still matters.
+            Algerian legal assistance powered by proprietary models. Human review still matters.
           </p>
 
           <div className="flex flex-wrap items-center gap-5 text-sm font-semibold text-[#3b2e20]">
