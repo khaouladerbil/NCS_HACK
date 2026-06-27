@@ -1,0 +1,2382 @@
+"use client"
+
+import {
+  BookOpen,
+  Copy,
+  ExternalLink,
+  FileText,
+  Folder,
+  FolderOpen,
+  GripVertical,
+  Mic,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Quote,
+  Scale,
+  Sparkles,
+  Settings2,
+  Square,
+  SendHorizontal,
+  Trash2,
+  X,
+} from "lucide-react"
+import { toast } from "@heroui/react"
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type ReactNode,
+} from "react"
+import { NavLink } from "react-router-dom"
+import { gsap } from "gsap"
+import { motion } from "motion/react"
+
+import {
+  MorphingDialog,
+  MorphingDialogClose,
+  MorphingDialogContainer,
+  MorphingDialogContent,
+  MorphingDialogImage,
+  MorphingDialogSubtitle,
+  MorphingDialogTitle,
+  MorphingDialogTrigger,
+} from "@/components/core/morphing-dialog"
+import { TextEffect } from "@/components/core/text-effect"
+import { TextShimmerWave } from "@/components/core/text-shimmer-wave"
+import { ScrollArea } from "@/components/website/scroll-area"
+import { Button } from "@/components/ui/button"
+import {
+  ChatContainerContent,
+  ChatContainerRoot,
+  ChatContainerScrollAnchor,
+} from "@/components/ui/chat-container"
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtItem,
+  ChainOfThoughtStep,
+  ChainOfThoughtTrigger,
+} from "@/components/ui/chain-of-thought"
+import { Markdown } from "@/components/ui/markdown"
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+} from "@/components/ui/message"
+import {
+  PromptInput,
+  PromptInputAction,
+  PromptInputTextarea,
+} from "@/components/ui/prompt-input"
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ui/reasoning"
+import { ScrollButton } from "@/components/ui/scroll-button"
+import {
+  Source,
+  SourceContent,
+  SourceTrigger,
+} from "@/components/ui/source"
+import { Tree, TreeItem } from "@/components/ui/tree"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarProvider,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { useElementWidth } from "@/hooks/use-element-width"
+import { measurePretextBlock } from "@/lib/pretext"
+import { cn } from "@/lib/utils"
+import { sendAssistantMessage, getLawyers, getAccessToken, getDrafts, uploadAssistantDocument } from "@/lib/backend"
+import type { OutlineItem } from "@/lib/document"
+import type { WorkspaceMode } from "@/pages/assistant-page"
+import logoMark from "../../../Logo.svg"
+
+export type FileItem = {
+  id: string
+  name: string
+  ext?: string
+}
+
+export type FolderItem = {
+  id: string
+  name: string
+  files: FileItem[]
+}
+
+type ChatMessage = {
+  id: number
+  role: "user" | "assistant"
+  content: string
+  attachments?: AttachmentItem[]
+  suggestLawyers?: boolean
+  revealLawyers?: boolean
+  responseContext?: ResponseContext
+}
+
+type Lawyer = {
+  name: string
+  firm: string
+  practice: string
+  jurisdiction: string
+  image: string
+  body: string[]
+  lat?: number
+  lon?: number
+  street?: string
+  distance?: number | null
+  rating?: number | null
+}
+
+type TimelineStep = {
+  title: string
+  description: string
+  state: "done" | "active" | "upcoming"
+}
+
+type AttachmentItem = {
+  id: string
+  name: string
+  type: string
+  previewUrl?: string
+}
+
+type ResponseReasoningStep = {
+  id: string
+  label: string
+  detail: string
+}
+
+type ResponseSourceItem = {
+  id: string
+  href: string
+  title: string
+  description: string
+  label: string
+  quote: string
+}
+
+type ResponseCitation = {
+  id: string
+  label: string
+  sourceId: string
+  quote: string
+}
+
+type ResponseParagraph = {
+  id: string
+  text: string
+  citationIds: string[]
+}
+
+export type ResponseContext = {
+  thinking: string
+  reasoningSteps: ResponseReasoningStep[]
+  sources: ResponseSourceItem[]
+  citations: ResponseCitation[]
+  answerParagraphs: ResponseParagraph[]
+}
+
+export type ResponseProgress = {
+  completedParagraphs: number
+  visibleCitationIds: string[]
+  visibleSourceIds: string[]
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
+
+type SpeechRecognitionLike = {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null
+  onend: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
+type SpeechRecognitionEventLike = {
+  results: ArrayLike<{
+    0: {
+      transcript: string
+    }
+  }>
+}
+
+export const folderTree: FolderItem[] = [
+  { id: "dossiers", name: "Dossiers actifs", files: [] },
+  { id: "documents", name: "Documents juridiques", files: [] },
+  { id: "brouillons", name: "Brouillons", files: [] },
+  { id: "contrats", name: "Contrats", files: [] },
+]
+
+const TIMELINE: TimelineStep[] = [
+  {
+    title: "Initial Consultation",
+    description: "Gathered basic facts.",
+    state: "done",
+  },
+  {
+    title: "Document Drafting",
+    description: "Structuring the contestment letter based on state code.",
+    state: "active",
+  },
+  {
+    title: "Review & Revisions",
+    description: "Finalize language before sending.",
+    state: "upcoming",
+  },
+  {
+    title: "Execution",
+    description: "Sign and dispatch via certified mail.",
+    state: "upcoming",
+  },
+]
+
+const LAWYERS: Lawyer[] = [
+  {
+    name: "Nora Patel",
+    firm: "Patel Legal",
+    practice: "Commercial disputes",
+    jurisdiction: "London, UK",
+    body: [
+      "Commercial disputes and urgent injunction work.",
+      "Pre-action pressure, settlement framing, and contract breach escalation.",
+      "Jurisdiction: London, UK.",
+    ],
+    image:
+      "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#334155"/></linearGradient></defs><rect width="600" height="800" fill="url(#g)"/><circle cx="300" cy="275" r="120" fill="#e2e8f0"/><rect x="165" y="410" width="270" height="210" rx="105" fill="#cbd5e1"/><text x="300" y="725" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" fill="#ffffff">NP</text></svg>`
+      ),
+  },
+  {
+    name: "Daniel Okafor",
+    firm: "Okafor & Co",
+    practice: "Employment law",
+    jurisdiction: "New York, US",
+    body: [
+      "Wrongful termination, policy review, and workplace investigations.",
+      "Useful where employer records, notices, or internal findings matter.",
+      "Jurisdiction: New York, US.",
+    ],
+    image:
+      "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><defs><linearGradient id="g" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#111827"/><stop offset="100%" stop-color="#1f2937"/></linearGradient></defs><rect width="600" height="800" fill="url(#g)"/><circle cx="300" cy="275" r="120" fill="#d1d5db"/><rect x="165" y="410" width="270" height="210" rx="105" fill="#9ca3af"/><text x="300" y="725" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" fill="#ffffff">DO</text></svg>`
+      ),
+  },
+  {
+    name: "Elena Torres",
+    firm: "Torres Counsel",
+    practice: "Family and civil matters",
+    jurisdiction: "California, US",
+    body: [
+      "Family disputes, protective orders, and settlement-first civil handling.",
+      "Useful where sensitive personal facts and court pacing both matter.",
+      "Jurisdiction: California, US.",
+    ],
+    image:
+      "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#475569"/></linearGradient></defs><rect width="600" height="800" fill="url(#g)"/><circle cx="300" cy="275" r="120" fill="#e5e7eb"/><rect x="165" y="410" width="270" height="210" rx="105" fill="#cbd5e1"/><text x="300" y="725" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" fill="#ffffff">ET</text></svg>`
+      ),
+  },
+]
+
+// Matches explicit lawyer requests OR common legal situations (divorce, eviction, contract dispute, etc.)
+const LAWYER_QUERY_RE =
+  /\b(lawyer|lawyers|attorney|attorneys|counsel|solicitor|advocate|avocat|avocats|conseiller juridique|محامي|محامٍ|مستشار قانوني)\b|\b(je veux|je cherche|trouver|recommande[r]?|besoin d[e'])\s+(un\s+)?avocat\b|\bavocat\s+(spécialis[eé]|en droit|de famille|du travail|pénal|immobilier)\b|\b(divorc|licenci[eé]|licencier|expuls[eé]|expulser|plainte|poursuivre|tribunal|gar[dt]e d['e]enfant|pension alimentaire|succession|heritage|loyer|bail|arnaque|escroquerie|accident de travail|contrat de travail|droit d[eu]|problème (de|avec|juridique)|litige|سرقة|طلاق|فصل|عقد)\b/i
+
+const initialMessages: ChatMessage[] = []
+
+const QUICK_PROMPTS = [
+  "Tighten this clause.",
+  "Draft formal notice.",
+  "Summarize exposure.",
+]
+
+const CONSULTANT_LINE_HEIGHT = 30
+const CONSULTANT_BODY_FONT =
+  '500 15px "Geist Variable", "Geist", "Inter", sans-serif'
+const THINKING_DELAY_MS = 820
+
+function getFileTypeMeta(file: FileItem) {
+  const ext = (file.ext ?? file.name.split(".").pop() ?? "file").toLowerCase()
+
+  if (ext === "pdf") {
+    return {
+      badgeClassName: "border-[#ead0cb] bg-[#fbefed] text-[#9f2d20]",
+      iconClassName: "text-[#9f2d20]",
+      labelClassName: "text-[#5a3028]",
+      shortLabel: "PDF",
+    }
+  }
+
+  if (ext === "docx") {
+    return {
+      badgeClassName: "border-[#d4dced] bg-[#eef4ff] text-[#2f5ea8]",
+      iconClassName: "text-[#2f5ea8]",
+      labelClassName: "text-[#294162]",
+      shortLabel: "DOCX",
+    }
+  }
+
+  if (ext === "md" || ext === "txt") {
+    return {
+      badgeClassName: "border-[#d9d6ea] bg-[#f2f0fb] text-[#5f4ca7]",
+      iconClassName: "text-[#5f4ca7]",
+      labelClassName: "text-[#3f3566]",
+      shortLabel: ext.toUpperCase(),
+    }
+  }
+
+  if (ext === "xlsx") {
+    return {
+      badgeClassName: "border-[#cfe3d2] bg-[#edf7ef] text-[#2f7a45]",
+      iconClassName: "text-[#2f7a45]",
+      labelClassName: "text-[#29523a]",
+      shortLabel: "XLSX",
+    }
+  }
+
+  return {
+    badgeClassName: "border-[color:var(--jp-accent-soft)] bg-[color:var(--jp-accent-muted)] text-[#7b5a2d]",
+    iconClassName: "text-[#7b5a2d]",
+    labelClassName: "text-[#4d3b1e]",
+    shortLabel: ext.toUpperCase(),
+  }
+}
+
+function buildResponseContext(prompt: string, activeFile?: FileItem | null): ResponseContext {
+  const fileLabel = activeFile?.name?.replace(/\.[^.]+$/, "") ?? "selected record"
+  const sources: ResponseSourceItem[] = [
+    {
+      id: "notice-clause",
+      href: "https://www.law.cornell.edu/wex/notice",
+      title: "Notice requirement overview",
+      description: "Background on formal notice obligations and delivery mechanics.",
+      label: "Notice",
+      quote:
+        '"Written notice must be delivered no later than thirty (30) days before the intended effective date."',
+    },
+    {
+      id: "service-clause",
+      href: "https://www.law.cornell.edu/ucc/2/2-309",
+      title: "Termination and reasonable notice",
+      description: "Reference for termination timing and notice concepts.",
+      label: "UCC 2-309",
+      quote:
+        '"Service by email is effective only when the agreement expressly permits electronic notice."',
+    },
+  ]
+
+  const citations: ResponseCitation[] = [
+    {
+      id: "fn-1",
+      label: "[1]",
+      sourceId: "notice-clause",
+      quote: sources[0].quote,
+    },
+    {
+      id: "fn-2",
+      label: "[2]",
+      sourceId: "service-clause",
+      quote: sources[1].quote,
+    },
+  ]
+
+  return {
+    thinking: `Reading ${fileLabel}, isolating operative clause, checking service method, then drafting answer for: ${prompt}`,
+    reasoningSteps: [
+      {
+        id: "step-1",
+        label: "Parse record",
+        detail: `Locate controlling clause in ${fileLabel} and strip background noise.`,
+      },
+      {
+        id: "step-2",
+        label: "Test notice rule",
+        detail: "Compare delivery deadline against quoted notice language.",
+      },
+      {
+        id: "step-3",
+        label: "Test service method",
+        detail: "Check whether email counts or whether formal service still required.",
+      },
+      {
+        id: "step-4",
+        label: "Draft answer",
+        detail: "State conclusion first, then support with linked authority.",
+      },
+    ],
+    sources,
+    citations,
+    answerParagraphs: [
+      {
+        id: "p-1",
+        text: `In ${fileLabel}, strongest reading is that written notice should be tied to the stated effective date before any next step goes out.`,
+        citationIds: ["fn-1"],
+      },
+      {
+        id: "p-2",
+        text: "Email service should not be treated as sufficient unless the governing document expressly authorizes electronic notice.",
+        citationIds: ["fn-2"],
+      },
+      {
+        id: "p-3",
+        text: "Practical next move: confirm clause text, state deadline cleanly, then send revised draft with the formal delivery method spelled out.",
+        citationIds: ["fn-1", "fn-2"],
+      },
+    ],
+  }
+}
+
+function WorkflowTimeline({
+  hasConversation,
+  isThinking,
+  responseContext,
+  responseProgress,
+  activeCitationId,
+  onCitationSelect,
+  legalRoadmap,
+  legalSpecialty,
+}: {
+  hasConversation: boolean
+  isThinking: boolean
+  responseContext?: ResponseContext | null
+  responseProgress?: ResponseProgress | null
+  activeCitationId?: string | null
+  onCitationSelect?: (citationId: string) => void
+  legalRoadmap?: RoadmapStep[]
+  legalSpecialty?: string
+}) {
+  const sectionRef = useRef<HTMLDivElement | null>(null)
+  const visibleCitationIds = responseProgress?.visibleCitationIds ?? []
+  const visibleSourceIds = responseProgress?.visibleSourceIds ?? []
+  const visibleCitations = (responseContext?.citations ?? []).filter((citation) =>
+    visibleCitationIds.includes(citation.id)
+  )
+  const visibleSources = (responseContext?.sources ?? []).filter((source) =>
+    visibleSourceIds.includes(source.id)
+  )
+  const activeCitation =
+    responseContext?.citations.find((citation) => citation.id === activeCitationId) ?? null
+  const activeSourceId = activeCitation?.sourceId ?? null
+
+  useEffect(() => {
+    if (!hasConversation || !sectionRef.current) return
+
+    gsap.fromTo(
+      sectionRef.current.querySelectorAll("[data-flow-step]"),
+      {
+        opacity: 0,
+        y: 12,
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.28,
+        stagger: 0.08,
+        ease: "power2.out",
+      }
+    )
+  }, [hasConversation, isThinking])
+
+  if (!hasConversation) {
+    return (
+      <div className="flex min-h-full items-center px-4 py-6">
+        <div className="mx-auto max-w-[12rem] text-center">
+          <p className="text-[0.64rem] font-semibold tracking-[0.18em] text-[#5b6472] uppercase">
+            Matter Board
+          </p>
+          <p className="mt-3 text-[0.74rem] leading-5 text-[#4b5563]">
+            Empty until a prompt starts the matter.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div ref={sectionRef} className="space-y-3 px-3 py-2">
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#e5ddcf] bg-white/72 px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
+        <p className="text-[0.62rem] font-semibold tracking-[0.18em] text-[#5b6472] uppercase">
+          Matter Board
+        </p>
+        <ChainOfThought className="mt-1.5">
+          {TIMELINE.map((step, index) => (
+            <ChainOfThoughtStep key={step.title} defaultOpen={index === 1}>
+              <ChainOfThoughtTrigger
+                className={cn(
+                  "text-[0.72rem] text-[#374151]",
+                  step.state === "done" && "opacity-55",
+                  step.state === "active" && "font-semibold text-[#111827]"
+                )}
+              >
+                {step.title}
+              </ChainOfThoughtTrigger>
+              <ChainOfThoughtContent className="pb-1">
+                <ChainOfThoughtItem className="text-[0.64rem] leading-4 text-[#4b5563]">
+                  {step.description}
+                </ChainOfThoughtItem>
+                {step.state === "active" ? (
+                  <ChainOfThoughtItem className="pt-1">
+                    <Reasoning className="px-0.5 py-0.5">
+                      <ReasoningTrigger className="text-[0.62rem] font-medium tracking-[0.12em] text-[#374151] uppercase">
+                        Reasoning
+                      </ReasoningTrigger>
+                      <ReasoningContent
+                        contentClassName="mt-1.5 prose-p:my-0 prose-p:text-[0.62rem] prose-p:leading-4 prose-p:text-[#4b5563]"
+                        markdown
+                      >
+                        {(responseContext?.reasoningSteps ?? []).map((s, i) =>
+                          `${i + 1}. ${s.label}: ${s.detail}`
+                        ).join("\n") || "Compare clauses, source text, and service method before drafting answer."}
+                      </ReasoningContent>
+                    </Reasoning>
+                  </ChainOfThoughtItem>
+                ) : null}
+              </ChainOfThoughtContent>
+            </ChainOfThoughtStep>
+          ))}
+        </ChainOfThought>
+      </div>
+
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#eadfce] bg-[linear-gradient(180deg,#faf5ed_0%,#f6efe3_100%)] px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
+        <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
+          <Sparkles className="size-4" />
+          Thinking
+        </div>
+        <div className="mt-2">
+          {isThinking ? (
+            <TextShimmerWave className="text-[0.64rem] text-[#4b5563]" duration={1}>
+              {responseContext?.thinking ?? "Analyse de votre situation juridique en cours..."}
+            </TextShimmerWave>
+          ) : (
+            <p className="text-[0.62rem] leading-4 text-[#4b5563]">
+              Waiting for the next matter update.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#e5ddcf] bg-white/72 px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
+        <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
+          <Quote className="size-4" />
+          Quotes
+        </div>
+        <div className="mt-1.5 space-y-1">
+          {visibleCitations.length ? visibleCitations.map((citation) => (
+            <button
+              key={citation.id}
+              type="button"
+              onClick={() => onCitationSelect?.(citation.id)}
+              className={cn(
+                "block w-full rounded-lg border border-transparent px-1.5 py-1 text-left text-[0.58rem] leading-3.5 text-[#667085] transition hover:border-[#d6dce5] hover:bg-[#f8fafc]",
+                activeCitationId === citation.id &&
+                  "border-[#6ee7d5] bg-[#dff7f2] text-[#0f766e] shadow-[inset_3px_0_0_0_#0f766e]"
+              )}
+            >
+              <span className="mr-1 rounded-full bg-white/80 px-1 py-0.5 text-[0.52rem] font-semibold text-[#374151]">
+                {citation.label}
+              </span>
+              <AnimatedText>{citation.quote}</AnimatedText>
+            </button>
+          )) : (
+            <p className="text-[0.58rem] leading-3.5 text-[#8a7a69]">
+              Footnotes appear with completed answer lines.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div
+        data-flow-step
+        className="rounded-[1.35rem] border border-[#e5ddcf] bg-white/72 px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
+      >
+        <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
+          <ExternalLink className="size-4" />
+          Sources
+        </div>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {visibleSources.length ? visibleSources.map((source) => (
+            <Source key={source.href} href={source.href}>
+              <SourceTrigger
+                label={source.label}
+                showFavicon
+                className={cn(
+                  "h-5 rounded-full border border-transparent bg-[#eef2f7] px-2 text-[0.6rem] text-[#374151] hover:border-[#d6dce5] hover:bg-[#e5ebf3]",
+                  activeSourceId === source.id &&
+                    "border-[#6ee7d5] bg-[#dff7f2] text-[#0f766e] shadow-[0_0_0_2px_rgba(15,118,110,0.1)]"
+                )}
+              />
+              <SourceContent
+                title={source.title}
+                description={source.description}
+              />
+            </Source>
+          )) : (
+            <p className="text-[0.58rem] leading-3.5 text-[#8a7a69]">
+              Sources unlock as linked support shows.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-3 border-t border-[#eee4d8] px-0 pt-2">
+          <div className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.14em] text-[#374151] uppercase">
+            <Sparkles className="size-4" />
+            Citations
+          </div>
+          <ul className="mt-1.5 space-y-0.5 text-[0.56rem] leading-3 text-[#6b7280]">
+            {visibleCitations.map((citation) => (
+              <li key={citation.id}>
+                <button
+                  type="button"
+                  onClick={() => onCitationSelect?.(citation.id)}
+                  className={cn(
+                    "rounded-md border border-transparent px-1.5 py-0.5 transition hover:border-[#d6dce5] hover:bg-[#eef2f7]",
+                    activeCitationId === citation.id &&
+                      "border-[#6ee7d5] bg-[#dff7f2] text-[#0f766e]"
+                  )}
+                >
+                  {citation.label} {citation.sourceId === "notice-clause" ? "Notice clause" : "Service method"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MorphingDialogBasicTwo({ lawyer }: { lawyer: Lawyer }) {
+  const fullAddress = [lawyer.street, lawyer.firm].filter(Boolean).join(", ")
+  const googleMapsUrl = lawyer.lat && lawyer.lon
+    ? `https://www.google.com/maps?q=${lawyer.lat},${lawyer.lon}`
+    : `https://www.google.com/maps/search/${encodeURIComponent(fullAddress + ", Algérie")}`
+
+  const mapSrc = lawyer.lat && lawyer.lon
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${lawyer.lon - 0.03},${lawyer.lat - 0.03},${lawyer.lon + 0.03},${lawyer.lat + 0.03}&layer=mapnik&marker=${lawyer.lat},${lawyer.lon}`
+    : null
+
+  return (
+    <MorphingDialog
+      transition={{
+        type: "spring",
+        stiffness: 200,
+        damping: 24,
+      }}
+    >
+      <MorphingDialogTrigger
+        style={{ borderRadius: "12px" }}
+        className="border border-gray-200/60 bg-white w-full text-left"
+      >
+        <div className="flex items-center space-x-3 p-3">
+          {/* Initiales à la place de l'image */}
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-[#f4ecdf] text-xs font-bold text-[#5c3d0e]">
+            {lawyer.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}
+          </div>
+          <div className="flex flex-col items-start justify-center space-y-0 min-w-0">
+            <MorphingDialogTitle className="text-[10px] font-medium text-black sm:text-xs truncate">
+              {lawyer.name}
+            </MorphingDialogTitle>
+            <MorphingDialogSubtitle className="text-[10px] text-gray-600 sm:text-xs truncate">
+              {lawyer.practice.split(",")[0].trim()} · {lawyer.firm}
+            </MorphingDialogSubtitle>
+            {lawyer.street && (
+              <span className="text-[9px] text-[#8a7762] truncate block max-w-[160px]">{lawyer.street}</span>
+            )}
+            {lawyer.distance != null && (
+              <span className="text-[9px] text-[#8a7762]">📍 {lawyer.distance} km</span>
+            )}
+          </div>
+        </div>
+      </MorphingDialogTrigger>
+
+      <MorphingDialogContainer>
+        <MorphingDialogContent
+          style={{ borderRadius: "12px" }}
+          className="relative h-auto w-[480px] border border-gray-100 bg-white"
+        >
+          <ScrollArea className="h-[90vh]" type="scroll">
+            <div className="relative p-6 space-y-5">
+              {/* En-tête */}
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#f4ecdf] text-lg font-bold text-[#5c3d0e]">
+                  {lawyer.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}
+                </div>
+                <div>
+                  <MorphingDialogTitle className="text-lg font-semibold text-[#111827]">
+                    {lawyer.name}
+                  </MorphingDialogTitle>
+                  <MorphingDialogSubtitle className="text-sm text-gray-500">
+                    {lawyer.practice.split(",")[0].trim()}
+                  </MorphingDialogSubtitle>
+                </div>
+              </div>
+
+              {/* Infos */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-[#f8f4ef] px-3 py-2 col-span-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8a7762]">Adresse</p>
+                  <p className="mt-0.5 text-sm text-[#291c08]">{lawyer.street || "—"}</p>
+                  <p className="text-xs text-[#6b5c4d]">{lawyer.firm}</p>
+                </div>
+                {lawyer.distance != null && (
+                  <div className="rounded-lg bg-[#f8f4ef] px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8a7762]">Distance</p>
+                    <p className="mt-0.5 text-sm text-[#291c08]">{lawyer.distance} km</p>
+                  </div>
+                )}
+                {lawyer.rating != null && (
+                  <div className="rounded-lg bg-[#f8f4ef] px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8a7762]">Note</p>
+                    <p className="mt-0.5 text-sm text-[#291c08]">
+                      {"★".repeat(Math.min(lawyer.rating, 5))}{"☆".repeat(Math.max(0, 5 - lawyer.rating))}
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-lg bg-[#f8f4ef] px-3 py-2 col-span-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8a7762]">Spécialités</p>
+                  <p className="mt-0.5 text-sm text-[#291c08]">{lawyer.practice}</p>
+                </div>
+              </div>
+
+              {/* Carte OSM + bouton Google Maps */}
+              <div className="overflow-hidden rounded-xl border border-[#e2d9ce]">
+                <div className="flex items-center justify-between bg-[#f8f4ef] px-3 py-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8a7762]">
+                    Localisation du cabinet
+                  </p>
+                  <a
+                    href={googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 rounded-md bg-[#291c08] px-2.5 py-1 text-[10px] font-medium text-white hover:bg-[#1d1406]"
+                  >
+                    <svg className="size-3" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    Ouvrir dans Google Maps
+                  </a>
+                </div>
+                {mapSrc && (
+                  <iframe
+                    src={mapSrc}
+                    title="Localisation avocat"
+                    width="100%"
+                    height="220"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                )}
+              </div>
+            </div>
+          </ScrollArea>
+          <MorphingDialogClose className="text-zinc-500" />
+        </MorphingDialogContent>
+      </MorphingDialogContainer>
+    </MorphingDialog>
+  )
+}
+
+export type RoadmapStep = { step: number; title: string; description: string }
+type AnalyzeResult = {
+  specialty: string
+  roadmap: RoadmapStep[]
+  lawyers: Record<string, unknown>[]
+}
+
+function LegalPathAndLawyers({ message, onRoadmapReady }: { message: string; onRoadmapReady?: (roadmap: RoadmapStep[], specialty: string) => void }) {
+  const [result, setResult] = useState<AnalyzeResult | null>(null)
+
+  useEffect(() => {
+    const payload: Record<string, unknown> = { message }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          payload.lat = pos.coords.latitude
+          payload.lon = pos.coords.longitude
+          fetchAnalyze(payload)
+        },
+        () => fetchAnalyze(payload),
+        { timeout: 3000 }
+      )
+    } else {
+      fetchAnalyze(payload)
+    }
+    function fetchAnalyze(body: Record<string, unknown>) {
+      fetch("/api/legal-path/analyze/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          setResult(data)
+          if (data.roadmap?.length && onRoadmapReady) {
+            onRoadmapReady(data.roadmap, data.specialty)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [message])
+
+  if (!result || !Array.isArray(result.roadmap)) return null
+
+  const specialtyLabels: Record<string, string> = {
+    travail: "Droit du travail", famille: "Droit de la famille",
+    immobilier: "Immobilier", commercial: "Droit commercial",
+    administratif: "Droit administratif", penal: "Droit pénal",
+    consommation: "Consommation", other: "Juridique",
+  }
+
+  type RawLawyer = {
+    first_name?: unknown
+    last_name?: unknown
+    specialization?: unknown
+    rating?: unknown
+    distance_km?: unknown
+    address?: { street?: string; city?: string; state?: string; latitude?: number; longitude?: number }
+  }
+
+  const lawyers: Lawyer[] = ((result.lawyers ?? []) as RawLawyer[]).map((l) => {
+    const city = l.address?.city ?? ""
+    const wilaya = l.address?.state ?? ""
+    const location = [city, wilaya].filter(Boolean).join(", ") || "Algérie"
+    return {
+      name: `${l.first_name ?? ""} ${l.last_name ?? ""}`.trim() || "Avocat",
+      firm: location,
+      practice: String(l.specialization ?? "Droit général"),
+      jurisdiction: wilaya || "Algérie",
+      image: "",
+      body: [],
+      street: l.address?.street ?? "",
+      lat: l.address?.latitude,
+      lon: l.address?.longitude,
+      distance: typeof l.distance_km === "number" ? l.distance_km : null,
+      rating: typeof l.rating === "number" ? l.rating : null,
+    }
+  })
+
+  return (
+    <div className="mt-4 space-y-4">
+      {/* Roadmap compact */}
+      <div className="rounded-xl border border-[#e8ddd4] bg-[#faf7f4] p-4">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8a7762]">
+          Démarches — {specialtyLabels[result.specialty] ?? result.specialty}
+        </p>
+        <ol className="space-y-2">
+          {result.roadmap.map((s) => (
+            <li key={s.step} className="flex gap-3 items-start">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#291c08] text-[10px] font-bold text-white mt-0.5">
+                {s.step}
+              </span>
+              <p className="text-sm text-[#291c08]">
+                <span className="font-medium">{s.title}</span>
+                <span className="text-[#6b5c4d]"> — {s.description}</span>
+              </p>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {/* Lawyer cards — même design morphing, clique pour voir la carte */}
+      {lawyers.length > 0 && (
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#8a7762]">
+            Avocats disponibles — cliquez pour voir la localisation
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+            {lawyers.map((lawyer) => (
+              <MorphingDialogBasicTwo key={lawyer.name} lawyer={lawyer} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+type AttachmentPreviewProps = {
+  attachment: AttachmentItem
+  onRemove: (id: string) => void
+}
+
+function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewProps) {
+  const isImage = attachment.type.startsWith("image/")
+  const ext = attachment.name.split(".").pop()?.toUpperCase() ?? "FILE"
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <div className="relative inline-flex size-12 items-center justify-center overflow-hidden rounded-xl bg-[#f6efe4]">
+          {isImage && attachment.previewUrl ? (
+            <img
+              src={attachment.previewUrl}
+              alt={attachment.name}
+              className="size-full object-cover"
+            />
+          ) : (
+            <div className="flex size-full flex-col items-center justify-center bg-white text-[#7a6755]">
+              <FileText className="size-4" />
+              <span className="mt-1 text-[0.45rem] leading-none">{ext}</span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => onRemove(attachment.id)}
+            className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-white/92 text-[#9b866f] shadow-sm"
+            aria-label={`Remove ${attachment.name}`}
+          >
+            <X className="size-2.5" />
+          </button>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{attachment.name}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function MessageAttachmentSquare({ attachment }: { attachment: AttachmentItem }) {
+  const isImage = attachment.type.startsWith("image/")
+  const ext = attachment.name.split(".").pop()?.toUpperCase() ?? "FILE"
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <div className="inline-flex size-14 items-center justify-center overflow-hidden rounded-xl bg-[#f6efe4]">
+          {isImage && attachment.previewUrl ? (
+            <img
+              src={attachment.previewUrl}
+              alt={attachment.name}
+              className="size-full object-cover"
+            />
+          ) : (
+            <div className="flex size-full flex-col items-center justify-center bg-white text-[#7a6755]">
+              <FileText className="size-4.5" />
+              <span className="mt-1 text-[0.48rem] leading-none">{ext}</span>
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{attachment.name}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+type ChatSidebarProps = {
+  side?: "left" | "right"
+  mode?: WorkspaceMode
+  activeFile?: FileItem | null
+  documentOutline?: OutlineItem[]
+  folders: FolderItem[]
+  expandedFolders: Set<string>
+  onToggleFolder: (id: string) => void
+  activeFileId: string | null
+  onSelectFile: (file: FileItem) => void
+  onCreateFolder: () => void
+  onAddFile: (folderId: string) => void
+  onRenameFolder: (folderId: string, name: string) => void
+  onDeleteFolder: (folderId: string) => void
+  onRenameFile?: (fileId: string) => void
+  onOpenEditor: () => void
+  onDeleteFile: (fileId: string) => void
+  onMoveFile: (fileId: string, targetFolderId?: string, targetIndex?: number) => void
+  hasConversation?: boolean
+  isThinking?: boolean
+  responseContext?: ResponseContext | null
+  responseProgress?: ResponseProgress | null
+  activeCitationId?: string | null
+  onCitationSelect?: (citationId: string) => void
+  legalRoadmap?: RoadmapStep[]
+  legalSpecialty?: string
+}
+
+function ConditionalTooltip({
+  show,
+  content,
+  children,
+}: {
+  show: boolean
+  content: ReactNode
+  children: ReactNode
+}) {
+  if (!show) return <>{children}</>
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>{children}</TooltipTrigger>
+      <TooltipContent>{content}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function TruncatingFileLabel({
+  label,
+  fullPath,
+  ext,
+  active,
+  onClick,
+  onRename,
+}: {
+  label: string
+  fullPath: string
+  ext?: string
+  active: boolean
+  onClick: () => void
+  onRename: () => void
+}) {
+  const labelRef = useRef<HTMLSpanElement | null>(null)
+  const [truncated, setTruncated] = useState(false)
+  const typeMeta = getFileTypeMeta({ id: "preview", name: label, ext })
+
+  useEffect(() => {
+    const node = labelRef.current
+    if (!node) return
+
+    const measure = () => {
+      setTruncated(node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth)
+    }
+
+    measure()
+    window.addEventListener("resize", measure)
+    return () => window.removeEventListener("resize", measure)
+  }, [label])
+
+  const visibleLabel = label.replace(/\.[^.]+$/, "")
+
+  const content = (
+    <button
+      type="button"
+      onClick={onClick}
+      onDoubleClick={(event) => {
+        event.preventDefault()
+        onRename()
+      }}
+      className={cn(
+        "min-w-0 flex-1 text-left",
+        active && "font-semibold"
+      )}
+    >
+      <span className="flex items-start gap-2">
+        <span
+          className={cn(
+            "mt-0.5 inline-flex h-4 shrink-0 items-center rounded-full border px-1.5 text-[0.5rem] font-semibold tracking-[0.14em]",
+            typeMeta.badgeClassName
+          )}
+        >
+          {typeMeta.shortLabel}
+        </span>
+        <span
+          ref={labelRef}
+          className={cn(
+            "block overflow-hidden text-[0.68rem] leading-3.5",
+            typeMeta.labelClassName,
+            active && "text-[#111827]"
+          )}
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
+          {visibleLabel}
+        </span>
+      </span>
+    </button>
+  )
+
+  return (
+    <ConditionalTooltip show={truncated} content={fullPath}>
+      {content}
+    </ConditionalTooltip>
+  )
+}
+
+type AnimatedTextProps = {
+  children: ReactNode
+  className?: string
+  per?: "char" | "word"
+}
+
+function AnimatedText({ children, className, per = "word" }: AnimatedTextProps) {
+  return typeof children === "string" ? (
+    <TextEffect className={className} per={per} preset="fade">
+      {children}
+    </TextEffect>
+  ) : (
+    <span className={className}>{children}</span>
+  )
+}
+
+function MeasuredResponseParagraph({
+  fullText,
+  visibleText,
+  citationIds,
+  activeCitationId,
+  responseContext,
+  onCitationSelect,
+}: {
+  fullText: string
+  visibleText: string
+  citationIds: string[]
+  activeCitationId?: string | null
+  responseContext?: ResponseContext
+  onCitationSelect: (citationId: string) => void
+}) {
+  const ref = useRef<HTMLParagraphElement | null>(null)
+  const width = useElementWidth(ref)
+  const reserved = useMemo(
+    () =>
+      width
+        ? measurePretextBlock(
+            fullText,
+            CONSULTANT_BODY_FONT,
+            width,
+            CONSULTANT_LINE_HEIGHT,
+            { whiteSpace: "normal" }
+          )
+        : null,
+    [fullText, width]
+  )
+
+  return (
+    <p
+      ref={ref}
+      className="text-[0.96rem] leading-[1.92rem] tracking-[-0.012em] text-[#241910]"
+      style={reserved ? { minHeight: `${reserved.height}px` } : undefined}
+    >
+      <AnimatedText>{visibleText}</AnimatedText>
+      {visibleText === fullText
+        ? citationIds.map((citationId) => {
+            const citation = responseContext?.citations.find((item) => item.id === citationId)
+            if (!citation) return null
+
+            return (
+              <button
+                key={citation.id}
+                type="button"
+                onClick={() => onCitationSelect(citation.id)}
+                className={cn(
+                  "ml-1 inline-flex min-w-4 -translate-y-1 items-center justify-center rounded-full border border-[#d7cab8] bg-white px-1 py-0.5 align-super text-[0.56rem] font-semibold leading-none text-[#5b4331] shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:border-[#9fbeb0] hover:bg-[#edf6f1] hover:text-[#264b3d]",
+                  activeCitationId === citation.id &&
+                    "border-[#264b3d] bg-[#264b3d] text-white shadow-[0_0_0_2px_rgba(38,75,61,0.12)]"
+                )}
+              >
+                {citation.label}
+              </button>
+            )
+          })
+        : null}
+    </p>
+  )
+}
+
+function getStreamedParagraphs(
+  paragraphs: ResponseParagraph[],
+  streamedContent: string
+) {
+  const trimmedStream = streamedContent.trim()
+  let remaining = trimmedStream.length
+
+  return paragraphs.map((paragraph) => {
+    if (remaining <= 0) {
+      return {
+        ...paragraph,
+        visibleText: "",
+        isComplete: false,
+      }
+    }
+
+    const visibleLength = Math.min(paragraph.text.length, remaining)
+    const visibleText = paragraph.text.slice(0, visibleLength).trimEnd()
+    remaining = Math.max(0, remaining - paragraph.text.length - 1)
+
+    return {
+      ...paragraph,
+      visibleText,
+      isComplete: visibleLength >= paragraph.text.length,
+    }
+  })
+}
+
+function EditorUtilities({
+  activeFile,
+  documentOutline = [],
+  onRenameFile,
+}: {
+  activeFile?: FileItem | null
+  documentOutline?: OutlineItem[]
+  onRenameFile?: (fileId: string) => void
+}) {
+  const title = activeFile?.name?.replace(/\.[^.]+$/, "") ?? "Untitled Draft"
+  const versions = [
+    { id: "v3", label: "Draft revised.", active: true, page: 2 },
+    { id: "v2", label: "Notice clause inserted.", active: false, page: 1 },
+    { id: "v1", label: "Initial scaffold.", active: false, page: 0 },
+  ]
+
+  return (
+    <div className="px-3.5 py-2">
+      <section className="border-b border-[#e5e7eb] pb-5">
+        <p className="text-[0.68rem] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">
+          Document
+        </p>
+        <div className="group/title mt-2 flex items-center gap-1.5">
+          <p className="min-w-0 flex-1 text-[0.92rem] font-semibold leading-5 break-words text-[#111827]">
+            {title}
+          </p>
+          {activeFile ? (
+            <button
+              type="button"
+              onClick={() => onRenameFile?.(activeFile.id)}
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-[#9ca3af] opacity-0 transition group-hover/title:opacity-100 hover:bg-[#eef2f7] hover:text-[#111827] focus:opacity-100"
+              aria-label={`Rename ${activeFile.name}`}
+              title="Rename"
+            >
+              <Pencil className="size-3" />
+            </button>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="border-b border-[#e5e7eb] py-5">
+        <p className="text-[0.68rem] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">
+          Table of Contents
+        </p>
+        <div className="mt-2 space-y-1 text-[0.72rem] text-[#1f2937]">
+          {documentOutline.length ? (
+            documentOutline.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent("editor:jump", { detail: { page: item.page } })
+                  )
+                }
+                className="group/toc flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-[#f6f8fb]"
+              >
+                <span className="mt-[0.42rem] h-3 w-px bg-[#d6dce5]" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[0.62rem] font-semibold text-[#94a3b8]">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="min-w-0 font-medium leading-5">{item.label}</span>
+                  </div>
+                  <span className="ml-6 block text-[0.62rem] text-[#6b7280]">
+                    Page {item.page + 1}
+                  </span>
+                </div>
+              </button>
+            ))
+          ) : (
+            <p className="text-[#6b7280]">Open document to populate TOC.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="py-5">
+        <p className="text-[0.68rem] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">
+          Version History
+        </p>
+        <div className="relative mt-3 space-y-3 text-[0.72rem] leading-5 text-[#4b5563] before:absolute before:left-[0.43rem] before:top-2 before:h-[calc(100%-1rem)] before:w-px before:bg-[#e5e7eb]">
+          {versions.map((version) => (
+            <button
+              key={version.id}
+              type="button"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent("editor:jump", { detail: { page: version.page } })
+                )
+              }
+              className="relative flex w-full gap-2.5 rounded-md text-left transition hover:bg-[#f6f8fb]"
+            >
+              <span
+                className={cn(
+                  "relative z-10 mt-1 size-3 rounded-full border-2 border-white",
+                  version.active ? "bg-[#0f766e]" : "bg-[#cbd5e1]"
+                )}
+              />
+              <div className="min-w-0">
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[0.62rem] font-semibold",
+                    version.active
+                      ? "bg-[#dff7f2] text-[#0f766e]"
+                      : "bg-[#eef2f7] text-[#6b7280]"
+                  )}
+                >
+                  {version.id}
+                </span>
+                <p className="mt-1">{version.label}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+const animatedMarkdownComponents = {
+  h2: ({ children }: { children?: ReactNode }) => (
+    <h2 className="mt-6 mb-3 text-[1rem] font-semibold text-[#111827]">
+      <AnimatedText>{children}</AnimatedText>
+    </h2>
+  ),
+  p: ({ children }: { children?: ReactNode }) => (
+    <p className="mb-4 text-[0.92rem] leading-7 text-[#1f2937]">
+      <AnimatedText>{children}</AnimatedText>
+    </p>
+  ),
+  li: ({ children }: { children?: ReactNode }) => (
+    <li className="text-[0.92rem] leading-7 text-[#1f2937]">
+      <AnimatedText>{children}</AnimatedText>
+    </li>
+  ),
+  blockquote: ({ children }: { children?: ReactNode }) => (
+    <blockquote className="my-4 border-l-2 border-[#cbd5e1] pl-4 italic text-[#4b5563]">
+      <AnimatedText>{children}</AnimatedText>
+    </blockquote>
+  ),
+}
+
+export function ChatSidebar({
+  side = "left",
+  mode = "consultant",
+  activeFile,
+  documentOutline = [],
+  folders,
+  expandedFolders,
+  onToggleFolder,
+  activeFileId,
+  onSelectFile,
+  onCreateFolder,
+  onAddFile,
+  onRenameFolder,
+  onDeleteFolder,
+  onRenameFile,
+  onOpenEditor,
+  onDeleteFile,
+  onMoveFile,
+  hasConversation = false,
+  isThinking = false,
+  responseContext = null,
+  activeCitationId = null,
+  onCitationSelect,
+  legalRoadmap,
+  legalSpecialty,
+}: ChatSidebarProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const { open, openRight } = useSidebar()
+  const isOpen = side === "right" ? openRight : open
+  const [draggingFileId, setDraggingFileId] = useState<string | null>(null)
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
+  const [editingFolderName, setEditingFolderName] = useState("")
+
+  useEffect(() => {
+    if (!isOpen || !panelRef.current) return
+
+    gsap.fromTo(
+      panelRef.current,
+      {
+        opacity: 0,
+        x: side === "right" ? 18 : -18,
+      },
+      {
+        opacity: 1,
+        x: 0,
+        duration: 0.28,
+        ease: "power2.out",
+      }
+    )
+  }, [isOpen, side])
+
+  return (
+    <Sidebar
+      side={side}
+      className="z-50 [--sidebar-width:18.75rem]"
+    >
+      <motion.div
+        ref={panelRef}
+        data-animate-panel
+        className="flex size-full flex-col will-change-transform"
+        initial={false}
+        animate={{
+          opacity: isOpen ? 1 : 0.96,
+          x: isOpen ? 0 : side === "right" ? 14 : -14,
+        }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        <SidebarHeader className="group/sidebar-head relative px-2 py-2">
+          {side === "right" ? (
+            <div className="h-5" />
+          ) : (
+            <div className="flex justify-start py-0.5 pl-1">
+              <img src={logoMark} alt="JusticePath" className="h-auto w-[3.1rem]" />
+            </div>
+          )}
+        </SidebarHeader>
+
+        <SidebarContent className="overflow-y-auto py-1">
+          {side === "right" ? (
+            mode === "editor" ? (
+              <EditorUtilities
+                activeFile={activeFile}
+                documentOutline={documentOutline}
+                onRenameFile={onRenameFile}
+              />
+            ) : (
+              <WorkflowTimeline
+                hasConversation={hasConversation}
+                isThinking={isThinking}
+                responseContext={responseContext}
+                activeCitationId={activeCitationId}
+                onCitationSelect={onCitationSelect}
+                legalRoadmap={legalRoadmap}
+                legalSpecialty={legalSpecialty}
+              />
+            )
+          ) : (
+            <div className="space-y-4 px-3.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[0.62rem] font-semibold tracking-[0.18em] text-[#5b6472] uppercase">
+                  Folders
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[0.7rem] font-medium text-[#4b5563]">
+                    {folders.length} total
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onCreateFolder}
+                    className="inline-flex size-6 items-center justify-center rounded-full text-[#4b5563] transition hover:bg-[#eef2f7] hover:text-[#111827]"
+                    aria-label="Add folder"
+                    title="Add folder"
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <Tree
+                aria-label="Files"
+                className="w-full space-y-2"
+                defaultExpandedKeys={Array.from(expandedFolders)}
+              >
+                {folders.map((folder) => {
+                  const isFolderOpen = expandedFolders.has(folder.id)
+                  const isEditingFolder = editingFolderId === folder.id
+                  return (
+                    <TreeItem
+                      key={folder.id}
+                      id={folder.id}
+                      expanded={isFolderOpen}
+                      onExpandedChange={() => onToggleFolder(folder.id)}
+                      className="py-0.5"
+                      contentClassName="pt-1.5"
+                      title={
+                        <div
+                          className="flex items-start gap-1 rounded-xl"
+                          onDoubleClick={(event) => {
+                            event.stopPropagation()
+                            setEditingFolderId(folder.id)
+                            setEditingFolderName(folder.name)
+                          }}
+                          onDragOver={(event: DragEvent<HTMLDivElement>) => event.preventDefault()}
+                          onDrop={() => {
+                            if (draggingFileId) {
+                              onMoveFile(draggingFileId, folder.id, 0)
+                              setDraggingFileId(null)
+                            }
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => onToggleFolder(folder.id)}
+                            className="min-w-0 flex-1 text-left text-[#1f2937]"
+                          >
+                            <div className="flex items-center gap-2">
+                              {isFolderOpen ? (
+                                <FolderOpen className="size-4 shrink-0 text-[#4b5563]" />
+                              ) : (
+                                <Folder className="size-4 shrink-0 text-[#4b5563]" />
+                              )}
+                              {isEditingFolder ? (
+                                <input
+                                  value={editingFolderName}
+                                  onChange={(event) => setEditingFolderName(event.target.value)}
+                                  onClick={(event) => event.stopPropagation()}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.preventDefault()
+                                      onRenameFolder(folder.id, editingFolderName.trim())
+                                      setEditingFolderId(null)
+                                    }
+                                    if (event.key === "Escape") {
+                                      event.preventDefault()
+                                      setEditingFolderId(null)
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    onRenameFolder(folder.id, editingFolderName.trim())
+                                    setEditingFolderId(null)
+                                  }}
+                                  autoFocus
+                                  className="h-7 flex-1 rounded-md border border-[#d6dce5] bg-white px-2 text-[0.82rem] font-semibold text-[#111827] outline-none focus:ring-2 focus:ring-[#94a3b8]/40"
+                                />
+                              ) : (
+                                <span className="text-[0.9rem] font-semibold leading-4 break-words text-[#111827]">
+                                  {folder.name}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onAddFile(folder.id)}
+                            className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[#6b7280] transition hover:bg-[#eef2f7] hover:text-[#111827]"
+                            aria-label={`Add file to ${folder.name}`}
+                            title="Add file"
+                          >
+                            <Plus className="size-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteFolder(folder.id)}
+                            className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[#9ca3af] transition hover:bg-[#fbe9e8] hover:text-[#9f2d20]"
+                            aria-label={`Delete ${folder.name}`}
+                            title="Delete folder"
+                          >
+                            <Trash2 className="size-3" />
+                          </button>
+                        </div>
+                      }
+                    >
+                      <div
+                        onDragOver={(event: DragEvent<HTMLDivElement>) => event.preventDefault()}
+                        onDrop={() => {
+                          if (draggingFileId) {
+                            onMoveFile(draggingFileId, folder.id)
+                            setDraggingFileId(null)
+                          }
+                        }}
+                      >
+                        <SidebarMenu className="gap-0.5 pl-2">
+                          {folder.files.map((file, fileIndex) => (
+                            <motion.div
+                              key={file.id}
+                              layout
+                              initial={{ opacity: 0, y: -6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -6 }}
+                              transition={{ duration: 0.16, ease: "easeOut" }}
+                            >
+                              <SidebarMenuItem>
+                                <div
+                                  className="group/file-row flex items-center gap-1.5 py-1"
+                                  onDragOver={(event: DragEvent<HTMLDivElement>) =>
+                                    event.preventDefault()
+                                  }
+                                  onDrop={() => {
+                                    if (draggingFileId) {
+                                      onMoveFile(draggingFileId, folder.id, fileIndex)
+                                      setDraggingFileId(null)
+                                    }
+                                  }}
+                                >
+                                  <button
+                                    type="button"
+                                    draggable
+                                    onDragStart={() => setDraggingFileId(file.id)}
+                                    onDragEnd={() => setDraggingFileId(null)}
+                                    className="rounded-full p-0.5 text-[#9ca3af] transition hover:bg-[#eef2f7] hover:text-[#4b5563]"
+                                    aria-label={`Drag ${file.name}`}
+                                    title="Drag file"
+                                  >
+                                    <GripVertical className="size-3" />
+                                  </button>
+                                  {file.ext === "txt" || file.name.includes("State Code") ? (
+                                    <BookOpen
+                                      className={cn(
+                                        "size-3.25 shrink-0",
+                                        getFileTypeMeta(file).iconClassName
+                                      )}
+                                    />
+                                  ) : (
+                                    <FileText
+                                      className={cn(
+                                        "size-3.25 shrink-0",
+                                        getFileTypeMeta(file).iconClassName
+                                      )}
+                                    />
+                                  )}
+                                  <TruncatingFileLabel
+                                    label={file.name}
+                                    fullPath={`${folder.name}/${file.name}`}
+                                    ext={file.ext}
+                                    active={activeFileId === file.id}
+                                    onClick={() => onSelectFile(file)}
+                                    onRename={() => onRenameFile?.(file.id)}
+                                  />
+                                  <div className="flex items-center opacity-0 transition-opacity group-hover/file-row:opacity-100 group-focus-within/file-row:opacity-100">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger
+                                        render={
+                                          <button
+                                            type="button"
+                                            className="rounded-full p-1 text-[#6b7280] transition hover:bg-[#eef2f7] hover:text-[#111827]"
+                                            aria-label={`Actions for ${file.name}`}
+                                          >
+                                            <MoreHorizontal className="size-3.5" />
+                                          </button>
+                                        }
+                                      />
+                                      <DropdownMenuContent align="end" className="w-40 min-w-40">
+                                        <DropdownMenuItem onClick={() => onRenameFile?.(file.id)}>
+                                          Rename
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            onSelectFile(file)
+                                            onOpenEditor()
+                                          }}
+                                        >
+                                          Replace
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          variant="destructive"
+                                          onClick={() => onDeleteFile(file.id)}
+                                        >
+                                          Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </div>
+                              </SidebarMenuItem>
+                            </motion.div>
+                          ))}
+                        </SidebarMenu>
+                      </div>
+                    </TreeItem>
+                  )
+                })}
+              </Tree>
+            </div>
+          )}
+        </SidebarContent>
+
+        {side === "left" ? (
+          <SidebarFooter className="px-3.5 py-3">
+            <NavLink
+              to="/settings"
+              className="mb-2 flex h-9 items-center gap-2 rounded-full px-2.5 text-[0.68rem] font-medium text-[#4b5563] transition hover:bg-[#eef2f7] hover:text-[#111827]"
+              aria-label="Settings"
+              title="Settings"
+            >
+              <Settings2 className="size-3.5" />
+              Settings
+            </NavLink>
+          </SidebarFooter>
+        ) : null}
+      </motion.div>
+    </Sidebar>
+  )
+}
+
+type ChatContentProps = {
+  activeFile: FileItem | null
+  onOpenEditor: () => void
+  onDocumentChange: (value: string) => void
+  onConversationStateChange?: (hasConversation: boolean) => void
+  onThinkingStateChange?: (isThinking: boolean) => void
+  onResponseContextChange?: (context: ResponseContext | null) => void
+  onResponseProgressChange?: (progress: ResponseProgress | null) => void
+  onRoadmapChange?: (roadmap: RoadmapStep[], specialty: string) => void
+  activeCitationId?: string | null
+  onActiveCitationChange?: (citationId: string | null) => void
+}
+
+export function ChatContent({
+  activeFile,
+  onOpenEditor: _onOpenEditor,
+  onDocumentChange: _onDocumentChange,
+  onConversationStateChange,
+  onThinkingStateChange,
+  onResponseContextChange,
+  onResponseProgressChange,
+  onRoadmapChange,
+  activeCitationId,
+  onActiveCitationChange,
+}: ChatContentProps) {
+  const [prompt, setPrompt] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages)
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([])
+  const [listening, setListening] = useState(false)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const streamAnchorRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const streamTimerRef = useRef<number | null>(null)
+  const thinkingTimerRef = useRef<number | null>(null)
+  const sessionIdRef = useRef<number | null>(null)
+
+  async function copyText(value: string) {
+    await navigator.clipboard.writeText(value)
+    toast("Copied")
+  }
+
+  function openFilePicker() {
+    fileInputRef.current?.click()
+  }
+
+  function scrollToGeneratedText(behavior: ScrollBehavior = "auto") {
+    requestAnimationFrame(() => {
+      streamAnchorRef.current?.scrollIntoView({
+        block: "end",
+        behavior,
+      })
+
+      if (!chatContainerRef.current) return
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior,
+      })
+    })
+  }
+
+  useEffect(() => {
+    onThinkingStateChange?.(isLoading)
+  }, [isLoading, onThinkingStateChange])
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop()
+      if (thinkingTimerRef.current) window.clearTimeout(thinkingTimerRef.current)
+      if (streamTimerRef.current) window.clearInterval(streamTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    scrollToGeneratedText(isLoading ? "auto" : "smooth")
+  }, [chatMessages, isLoading])
+
+  useEffect(() => {
+    onConversationStateChange?.(chatMessages.length > 0)
+  }, [chatMessages.length, onConversationStateChange])
+
+  useEffect(() => {
+    const lastAssistant = [...chatMessages].reverse().find((message) => message.role === "assistant")
+    if (!lastAssistant?.responseContext) {
+      onResponseProgressChange?.(null)
+      return
+    }
+
+    const streamedParagraphs = getStreamedParagraphs(
+      lastAssistant.responseContext.answerParagraphs,
+      lastAssistant.content
+    )
+    const completedParagraphs = streamedParagraphs.filter((item) => item.isComplete).length
+    const visibleCitationIds = Array.from(
+      new Set(
+        streamedParagraphs
+          .filter((item) => item.isComplete)
+          .flatMap((item) => item.citationIds)
+      )
+    )
+    const visibleSourceIds = Array.from(
+      new Set(
+        lastAssistant.responseContext.citations
+          .filter((citation) => visibleCitationIds.includes(citation.id))
+          .map((citation) => citation.sourceId)
+      )
+    )
+
+    onResponseProgressChange?.({
+      completedParagraphs,
+      visibleCitationIds,
+      visibleSourceIds,
+    })
+  }, [chatMessages, onResponseProgressChange])
+
+  function toggleVoice() {
+    const speechApi = (
+      window as typeof window & {
+        SpeechRecognition?: SpeechRecognitionConstructor
+        webkitSpeechRecognition?: SpeechRecognitionConstructor
+      }
+    ).SpeechRecognition ??
+      (
+        window as typeof window & {
+          webkitSpeechRecognition?: SpeechRecognitionConstructor
+        }
+      ).webkitSpeechRecognition
+
+    if (!speechApi) {
+      toast.warning("Voice input unavailable")
+      return
+    }
+
+    if (listening) {
+      recognitionRef.current?.stop()
+      setListening(false)
+      toast("Voice capture stopped")
+      return
+    }
+
+    const recognition = new speechApi()
+    recognition.continuous = false
+    recognition.interimResults = true
+    recognition.lang = "en-US"
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript ?? "")
+        .join(" ")
+        .trim()
+
+      setPrompt(transcript)
+    }
+    recognition.onend = () => {
+      setListening(false)
+      recognitionRef.current = null
+    }
+
+    recognitionRef.current = recognition
+    setListening(true)
+    recognition.start()
+    toast("Voice capture started")
+  }
+
+  function stopResponse() {
+    if (thinkingTimerRef.current) {
+      window.clearTimeout(thinkingTimerRef.current)
+      thinkingTimerRef.current = null
+    }
+    if (streamTimerRef.current) {
+      window.clearInterval(streamTimerRef.current)
+      streamTimerRef.current = null
+    }
+    setIsLoading(false)
+    toast("Generation stopped")
+  }
+
+  const handleSubmit = () => {
+    if (!prompt.trim() && attachments.length === 0) return
+
+    const submittedPrompt = prompt.trim()
+    const shouldSuggestLawyers = LAWYER_QUERY_RE.test(submittedPrompt)
+    const submittedAttachments = attachments
+    const userId = Date.now()
+    const assistantId = userId + 1
+
+    const userMsg: ChatMessage = {
+      id: userId,
+      role: "user",
+      content: submittedPrompt,
+      attachments: submittedAttachments,
+    }
+
+    setChatMessages((prev) => [
+      ...prev,
+      userMsg,
+      {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        suggestLawyers: shouldSuggestLawyers,
+        revealLawyers: false,
+      },
+    ])
+    onActiveCitationChange?.(null)
+    setPrompt("")
+    setAttachments([])
+    setIsLoading(true)
+
+    const fileContext = activeFile ? `[Fichier: ${activeFile.name}]\n` : ""
+
+    sendAssistantMessage({
+      message: fileContext + submittedPrompt,
+      session_id: sessionIdRef.current ?? undefined,
+      language: "fr",
+      task: shouldSuggestLawyers ? "lawyer" : "qa",
+    })
+      .then((data) => {
+        if (data.session_id) sessionIdRef.current = data.session_id
+        const fullResponse = data.answer || "Une erreur est survenue."
+
+        if (streamTimerRef.current) window.clearInterval(streamTimerRef.current)
+        if (thinkingTimerRef.current) window.clearTimeout(thinkingTimerRef.current)
+
+        let cursor = 0
+        const stride = Math.max(2, Math.ceil(fullResponse.length / 70))
+
+        thinkingTimerRef.current = window.setTimeout(() => {
+          thinkingTimerRef.current = null
+          streamTimerRef.current = window.setInterval(() => {
+            cursor = Math.min(fullResponse.length, cursor + stride)
+            setChatMessages((prev) =>
+              prev.map((message) =>
+                message.id === assistantId
+                  ? { ...message, content: fullResponse.slice(0, cursor) }
+                  : message
+              )
+            )
+            scrollToGeneratedText("auto")
+
+            if (cursor >= fullResponse.length) {
+              setChatMessages((prev) =>
+                prev.map((message) =>
+                  message.id === assistantId
+                    ? { ...message, revealLawyers: shouldSuggestLawyers }
+                    : message
+                )
+              )
+              if (streamTimerRef.current) {
+                window.clearInterval(streamTimerRef.current)
+                streamTimerRef.current = null
+              }
+              setIsLoading(false)
+            }
+          }, 20)
+        }, THINKING_DELAY_MS)
+      })
+      .catch((err) => {
+        setChatMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId
+              ? { ...message, content: `Erreur : ${err instanceof Error ? err.message : "Connexion impossible"}` }
+              : message
+          )
+        )
+        setIsLoading(false)
+      })
+  }
+
+  function editPrompt(message: ChatMessage) {
+    setPrompt(message.content)
+    scrollToGeneratedText("smooth")
+    toast("Prompt loaded")
+  }
+
+  function focusCitation(citationId: string) {
+    onActiveCitationChange?.(citationId)
+  }
+
+  return (
+    <main className="font-consultant flex min-h-0 flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(190,164,124,0.16),transparent_22%),linear-gradient(180deg,#f8f2e7_0%,#efe7d7_100%)]">
+      <div ref={chatContainerRef} className="relative flex-1 overflow-y-auto">
+        <ChatContainerRoot className="h-full">
+          <ChatContainerContent className="space-y-0 px-4 pb-64 pt-4 md:pb-72 md:pt-5">
+            {chatMessages.length === 0 ? (
+              <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl items-center justify-center px-4 text-center">
+                <div>
+                  <h1 className="font-editor text-[clamp(1.75rem,2.8vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#24170d]">
+                    Start a legal task.
+                  </h1>
+                  <p className="mt-3 text-[0.88rem] text-[#5f5245]">
+                    Review, draft, cite, strategize.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {chatMessages.map((message, index) => {
+              const isAssistant = message.role === "assistant"
+              const isLastMessage = index === chatMessages.length - 1
+              const streamedParagraphs = message.responseContext
+                ? getStreamedParagraphs(
+                    message.responseContext.answerParagraphs,
+                    message.content
+                  )
+                : []
+
+              return (
+                <Message
+                  key={message.id}
+                  className={cn(
+                    "mx-auto mb-5 flex w-full max-w-5xl flex-col gap-1 px-4",
+                    isAssistant ? "items-start" : "items-end"
+                  )}
+                >
+                  {isAssistant ? (
+                    <div className="group flex w-full items-start gap-4">
+                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9cab7] bg-white/88 text-[#2e2118] shadow-[0_8px_20px_rgba(71,46,22,0.08)]">
+                        <Scale className="size-4" />
+                      </div>
+
+                      <div className="w-full max-w-[54rem] pt-1 text-[#241910]">
+                        {message.content ? (
+                          message.responseContext ? (
+                            <div className="space-y-3">
+                              {streamedParagraphs
+                                .filter((paragraph) => paragraph.visibleText)
+                                .map((paragraph) => (
+                                  <MeasuredResponseParagraph
+                                    key={paragraph.id}
+                                    fullText={paragraph.text}
+                                    visibleText={paragraph.visibleText}
+                                    citationIds={paragraph.citationIds}
+                                    activeCitationId={activeCitationId}
+                                    responseContext={message.responseContext}
+                                    onCitationSelect={focusCitation}
+                                  />
+                                ))}
+                            </div>
+                          ) : (
+                            <Markdown
+                              components={animatedMarkdownComponents}
+                              className="text-[0.95rem] leading-[1.92rem] tracking-[-0.012em] [&_ol]:ml-5 [&_ol]:space-y-2 [&_ul]:ml-5 [&_ul]:space-y-2 [&_strong]:font-semibold [&_strong]:text-[#463528]"
+                            >
+                              {message.content}
+                            </Markdown>
+                          )
+                        ) : (
+                          <div className="px-0.5 py-1 text-[#5f5245]">
+                            <TextShimmerWave className="text-[0.8rem] uppercase tracking-[0.14em]" duration={1}>
+                              Thinking through record...
+                            </TextShimmerWave>
+                          </div>
+                        )}
+
+                        {message.revealLawyers ? <LegalPathAndLawyers message={chatMessages.find(m => m.id === message.id - 1)?.content ?? ""} onRoadmapReady={onRoadmapChange} /> : null}
+                      </div>
+
+                      <MessageActions
+                        className={cn(
+                          "-ml-2 mt-2 flex gap-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100",
+                          isLastMessage && "opacity-100"
+                        )}
+                      >
+                        <MessageAction tooltip="Copy">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 rounded-full"
+                            onClick={() => copyText(message.content)}
+                          >
+                            <Copy className="size-3.5" />
+                          </Button>
+                        </MessageAction>
+                      </MessageActions>
+                    </div>
+                  ) : (
+                    <div className="group flex w-full max-w-[48rem] flex-col items-end gap-1">
+                      <div className="px-1 py-1 text-[0.94rem] leading-[1.9rem] tracking-[-0.01em] text-[#20160f]">
+                        {message.attachments?.length ? (
+                          <div className="mb-3 flex flex-wrap gap-2">
+                            {message.attachments.map((attachment) => (
+                              <MessageAttachmentSquare
+                                key={attachment.id}
+                                attachment={attachment}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {message.content ? (
+                          message.content
+                        ) : null}
+                      </div>
+                      <MessageActions className="flex gap-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        <MessageAction tooltip="Edit">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 rounded-full"
+                            onClick={() => editPrompt(message)}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                        </MessageAction>
+                        <MessageAction tooltip="Copy">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 rounded-full"
+                            onClick={() => copyText(message.content)}
+                          >
+                            <Copy className="size-3.5" />
+                          </Button>
+                        </MessageAction>
+                      </MessageActions>
+                    </div>
+                  )}
+                </Message>
+              )
+            })}
+            <ChatContainerScrollAnchor
+              ref={streamAnchorRef}
+              className="h-40 scroll-mt-72"
+            />
+          </ChatContainerContent>
+
+          <div className="absolute bottom-42 left-1/2 flex w-full max-w-3xl -translate-x-1/2 justify-end px-5">
+            <ScrollButton className="shadow-sm" />
+          </div>
+        </ChatContainerRoot>
+      </div>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center bg-gradient-to-t from-[#efe7d7] via-[#efe7d7]/96 to-transparent px-4 pb-4 pt-6">
+        <div className="mx-auto flex max-w-4xl flex-col items-center gap-3">
+          <PromptInput
+            isLoading={isLoading}
+            value={prompt}
+            onValueChange={setPrompt}
+            onSubmit={handleSubmit}
+            className="pointer-events-auto relative z-10 w-[min(100vw-2rem,52rem)] rounded-[1.55rem] border border-[#d9cab7] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,244,236,0.98))] p-0 shadow-[0_24px_60px_rgba(71,46,22,0.14)]"
+          >
+            {!prompt.trim() && attachments.length === 0 ? (
+              <div className="overflow-x-auto px-4 pt-3">
+                <div className="flex w-max min-w-full gap-2 pb-1">
+                  {QUICK_PROMPTS.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => {
+                        setPrompt(suggestion)
+                        toast(`Suggestion loaded: ${suggestion}`)
+                      }}
+                      className="shrink-0 rounded-full border border-[#eadfce] bg-[#faf6ef] px-3 py-1.5 text-[0.72rem] text-[#5b4331] transition hover:border-[#d9cab7] hover:bg-[#f4ecdf] hover:text-[#22170f]"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={async (event: ChangeEvent<HTMLInputElement>) => {
+                const files = Array.from(event.target.files ?? [])
+                event.target.value = ""
+                for (const file of files) {
+                  try {
+                    await uploadAssistantDocument(file)
+                    setAttachments((prev) => [
+                      ...prev,
+                      {
+                        id: `${file.name}-${file.lastModified}`,
+                        name: file.name,
+                        type: file.type,
+                        previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+                      },
+                    ])
+                    toast(`${file.name} ajouté`)
+                  } catch (err) {
+                    toast(err instanceof Error ? err.message : `${file.name} refusé — document non juridique`)
+                  }
+                }
+              }}
+            />
+            {attachments.length ? (
+              <div className="flex flex-wrap gap-2 px-4 pt-4">
+                {attachments.map((attachment) => (
+                  <AttachmentPreview
+                    key={attachment.id}
+                    attachment={attachment}
+                    onRemove={(id) =>
+                      setAttachments((prev) => {
+                        const removed = prev.find((item) => item.id === id)
+                        if (removed?.previewUrl) {
+                          URL.revokeObjectURL(removed.previewUrl)
+                        }
+                        return prev.filter((item) => item.id !== id)
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            ) : null}
+            <PromptInputTextarea
+              placeholder="Issue, objective, output."
+              className="min-h-[74px] px-5 pt-4 pb-2 text-[0.96rem] leading-7 text-[#20160f] placeholder:text-[#7f6f61]"
+            />
+            <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-0">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <PromptInputAction tooltip="Append files">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full border border-[#d9cab7] px-3 text-[0.78rem] text-[#5b4331] hover:bg-[#f4ecdf]"
+                    onClick={openFilePicker}
+                  >
+                    <Plus className="size-3.5" />
+                    Files
+                  </Button>
+                </PromptInputAction>
+              </div>
+              <PromptInputAction tooltip="Voice input">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-pressed={listening}
+                  onClick={toggleVoice}
+                  className={cn(
+                    "size-9 rounded-full text-[#5b4331] hover:bg-transparent hover:text-[#22170f]",
+                    listening && "bg-[#f4ecdf] text-[#22170f]"
+                  )}
+                >
+                  {listening ? (
+                    <span className="relative flex items-center justify-center">
+                      <span className="absolute inline-flex size-7 animate-ping rounded-full bg-[#cbd5e1]/80" />
+                      <Square className="relative z-10 size-3.5 fill-current" />
+                    </span>
+                  ) : (
+                    <Mic className="size-4.5" />
+                  )}
+                </Button>
+              </PromptInputAction>
+              <Button
+                size="icon"
+                disabled={!isLoading && !prompt.trim() && attachments.length === 0}
+                onClick={isLoading ? stopResponse : handleSubmit}
+                className="size-10 rounded-[1rem] bg-[#2f2218] text-white shadow-none hover:bg-[#24180f]"
+              >
+                {isLoading ? (
+                  <Square className="size-4 fill-current" />
+                ) : (
+                  <SendHorizontal className="size-4.5" />
+                )}
+              </Button>
+            </div>
+          </PromptInput>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+export function FullChatApp() {
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const [activeFileId, setActiveFileId] = useState<string | null>(null)
+  const [activeFile, setActiveFile] = useState<FileItem | null>(null)
+  const [folders, setFolders] = useState<FolderItem[]>(folderTree)
+  const [legalRoadmap, setLegalRoadmap] = useState<RoadmapStep[]>([])
+  const [legalSpecialty, setLegalSpecialty] = useState<string>("")
+  const [hasConversation, setHasConversation] = useState(false)
+  const [isThinking, setIsThinking] = useState(false)
+  const [responseContext, setResponseContext] = useState<ResponseContext | null>(null)
+
+  useEffect(() => {
+    getDrafts().then((drafts: unknown[]) => {
+      if (!Array.isArray(drafts) || drafts.length === 0) return
+      setFolders((prev) =>
+        prev.map((f) =>
+          f.id === "brouillons"
+            ? {
+                ...f,
+                files: drafts.map((d: Record<string, unknown>) => ({
+                  id: String(d.id),
+                  name: String(d.title ?? "Brouillon"),
+                  ext: "txt",
+                })),
+              }
+            : f
+        )
+      )
+    }).catch(() => {})
+  }, [])
+
+  const toggleFolder = (id: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const selectFile = (file: FileItem) => {
+    setActiveFileId(file.id)
+    setActiveFile(file)
+  }
+
+  const sidebarProps = {
+    folders,
+    expandedFolders,
+    onToggleFolder: toggleFolder,
+    activeFileId,
+    onSelectFile: selectFile,
+    onCreateFolder: () => {},
+    onAddFile: () => {},
+    onRenameFolder: () => {},
+    onDeleteFolder: () => {},
+    onOpenEditor: () => {},
+    onDeleteFile: () => {},
+    onMoveFile: () => {},
+  }
+
+  return (
+    <SidebarProvider>
+      <ChatSidebar side="left" {...sidebarProps} />
+      <SidebarInset>
+        <ChatContent
+          activeFile={activeFile}
+          onOpenEditor={() => {}}
+          onDocumentChange={() => {}}
+          onConversationStateChange={setHasConversation}
+          onThinkingStateChange={setIsThinking}
+          onResponseContextChange={setResponseContext}
+          onRoadmapChange={(roadmap, specialty) => {
+            setLegalRoadmap(roadmap)
+            setLegalSpecialty(specialty)
+          }}
+        />
+      </SidebarInset>
+      <ChatSidebar
+        side="right"
+        {...sidebarProps}
+        hasConversation={hasConversation}
+        isThinking={isThinking}
+        responseContext={responseContext}
+        legalRoadmap={legalRoadmap}
+        legalSpecialty={legalSpecialty}
+      />
+    </SidebarProvider>
+  )
+}
