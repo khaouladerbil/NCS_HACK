@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Link, useSearchParams } from "react-router-dom"
+import { gsap } from "gsap"
+import Lenis from "lenis"
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
 import {
   ArrowRight,
@@ -14,26 +16,14 @@ import {
   LockKeyhole,
   Menu,
   MessageSquareText,
-  Mic,
-  Paperclip,
-  Scale,
   ShieldCheck,
-  Sparkles,
   UploadCloud,
   X,
 } from "lucide-react"
 
 import { AuthDialog, type AuthMode } from "@/components/auth/auth-dialog"
-import { TextEffect } from "@/components/core/text-effect"
-import { Button } from "@/components/ui/button"
-import {
-  PromptInput,
-  PromptInputAction,
-  PromptInputActions,
-  PromptInputTextarea,
-} from "@/components/ui/prompt-input"
+import { ChatComposer } from "@/components/chat/chat-composer"
 import { LegalOrbitScene } from "@/components/website/legal-orbit-scene"
-import { cn } from "@/lib/utils"
 import logoMark from "../../Logo.svg"
 
 const navItems = [
@@ -92,13 +82,6 @@ const proofPoints = [
   "Editor exports for DOCX and PDF handoff",
 ]
 
-const caseLines = [
-  { label: "Uploaded", value: "Service agreement.pdf", tone: "gold" },
-  { label: "Found", value: "30-day notice window", tone: "blue" },
-  { label: "Risk", value: "Termination penalty needs review", tone: "red" },
-  { label: "Next", value: "Draft reply before filing", tone: "green" },
-]
-
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroPrompt, setHeroPrompt] = useState("")
@@ -112,8 +95,10 @@ export function LandingPage() {
     target: heroRef,
     offset: ["start start", "end start"],
   })
-  const heroSceneY = useTransform(scrollYProgress, [0, 1], [0, 130])
-  const heroCopyY = useTransform(scrollYProgress, [0, 1], [0, -42])
+  const heroSceneY = useTransform(scrollYProgress, [0, 1], [0, 170])
+  const heroCopyY = useTransform(scrollYProgress, [0, 1], [0, -58])
+  const heroSignalY = useTransform(scrollYProgress, [0, 1], [0, -120])
+  const heroComposerY = useTransform(scrollYProgress, [0, 1], [0, 42])
 
   function openAuthDialog(nextMode: AuthMode) {
     setAuthMode(nextMode)
@@ -130,6 +115,48 @@ export function LandingPage() {
     setShowLoginPrompt(true)
     openAuthDialog("signup")
   }
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.05,
+      smoothWheel: true,
+    })
+
+    let rafId = 0
+    const raf = (time: number) => {
+      lenis.raf(time)
+      rafId = window.requestAnimationFrame(raf)
+    }
+
+    rafId = window.requestAnimationFrame(raf)
+
+    const clickableSelector = "button, a, [role='button']"
+    const handlePointerDown = (event: Event) => {
+      const target = (event.target as HTMLElement | null)?.closest<HTMLElement>(clickableSelector)
+      if (!target) return
+
+      gsap.fromTo(
+        target,
+        { scale: 1 },
+        {
+          scale: 0.975,
+          duration: 0.08,
+          yoyo: true,
+          repeat: 1,
+          ease: "power2.out",
+          overwrite: true,
+        }
+      )
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown)
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown)
+      window.cancelAnimationFrame(rafId)
+      lenis.destroy()
+    }
+  }, [])
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -272,147 +299,74 @@ export function LandingPage() {
           ref={heroRef}
           className="relative isolate min-h-[92dvh] overflow-hidden bg-[#15110d] text-[#fff8eb]"
         >
-          <LegalOrbitScene className="opacity-90" />
-          <div className="landing-hero-vignette absolute inset-0" />
-          <div className="landing-technical-grid absolute inset-0 opacity-[0.18]" />
+          <motion.div style={shouldReduceMotion ? undefined : { y: heroSceneY }}>
+            <LegalOrbitScene className="opacity-45" />
+          </motion.div>
+          <div className="landing-hero-minimal absolute inset-0" />
 
-          <div className="relative z-10 mx-auto grid min-h-[92dvh] max-w-7xl items-start gap-10 px-4 pb-16 pt-28 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8 lg:pt-32">
+          <motion.div
+            aria-hidden="true"
+            style={shouldReduceMotion ? undefined : { y: heroSignalY }}
+            className="absolute inset-x-4 top-28 z-10 mx-auto hidden max-w-7xl justify-between text-xs font-semibold uppercase text-[#d6a850]/55 md:flex"
+          >
+            <span>evidence</span>
+            <span>draft</span>
+            <span>counsel</span>
+          </motion.div>
+
+          <div className="relative z-10 mx-auto flex min-h-[92dvh] max-w-5xl flex-col items-center justify-center px-4 pb-20 pt-28 text-center sm:px-6 lg:px-8">
             <motion.div
               style={shouldReduceMotion ? undefined : { y: heroCopyY }}
-              className="max-w-3xl"
+              className="w-full max-w-4xl"
             >
-              <div className="mb-7 inline-flex items-center gap-3 border border-[#d6a850]/35 bg-[#d6a850]/10 px-4 py-2 text-xs font-bold uppercase text-[#f4d696] backdrop-blur">
-                <Sparkles className="size-4" />
+              <p className="mb-8 text-sm font-semibold uppercase text-[#d6a850]">
                 Legal AI workspace
-              </div>
+              </p>
 
-              <h1 className="font-editor text-6xl leading-[0.86] text-white sm:text-8xl lg:text-[9.5rem] xl:text-[10.5rem]">
+              <h1 className="font-editor text-7xl leading-[0.82] text-white sm:text-8xl lg:text-[9.5rem]">
                 JusticePath
               </h1>
-              <p className="mt-7 max-w-2xl text-balance text-2xl leading-tight text-[#f2e6d1] sm:text-4xl">
-                From first upload to lawyer-ready draft, without losing the clause.
+              <p className="mx-auto mt-8 max-w-2xl text-balance text-2xl leading-tight text-[#f2e6d1] sm:text-4xl">
+                Ask the legal question. Keep the clause, draft, and next step in one place.
               </p>
-              <p className="mt-6 max-w-xl text-base leading-8 text-[#d6c7b3] sm:text-lg">
-                Built for people who need legal reading, drafting, and learning in one
-                evidence-aware workspace powered by proprietary models.
+              <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-[#d6c7b3] sm:text-lg">
+                Minimal surface. Real matter context. Powered by proprietary models.
               </p>
-
-              <div className="mt-6 border border-[#d6a850]/25 bg-[#fff8eb]/8 p-4 text-sm text-[#e8dcc8] backdrop-blur md:hidden">
-                <div className="flex items-center gap-3">
-                  <Scale className="size-4 shrink-0 text-[#d6a850]" />
-                  <span className="font-semibold text-[#fff8eb]">
-                    Service agreement.pdf
-                  </span>
-                </div>
-                <div className="mt-3 grid gap-2 text-xs">
-                  <span className="text-[#9dc7f4]">Found: 30-day notice window</span>
-                  <span className="text-[#a4eadf]">Next: draft reply before filing</span>
-                </div>
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => openAuthDialog("signup")}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#d6a850] px-6 text-base font-bold text-[#15110d] shadow-[0_18px_50px_rgba(214,168,80,0.28)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#efc878] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-                >
-                  Start a matter
-                  <ArrowRight className="size-5" />
-                </button>
-                <Link
-                  to="/assistant"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/18 px-6 text-base font-semibold text-[#fff8eb] transition duration-200 hover:-translate-y-0.5 hover:bg-white/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
-                >
-                  View workspace
-                  <ChevronRight className="size-5" />
-                </Link>
-              </div>
             </motion.div>
 
             <motion.div
-              style={shouldReduceMotion ? undefined : { y: heroSceneY }}
-              className="pointer-events-auto hidden md:absolute md:inset-x-6 md:bottom-5 md:block md:h-[30rem] lg:relative lg:inset-auto lg:h-auto lg:min-h-[42rem]"
-              aria-label="JusticePath matter workspace preview"
+              style={shouldReduceMotion ? undefined : { y: heroComposerY }}
+              className="mt-10 w-full max-w-2xl"
             >
-              <div className="absolute left-0 top-4 w-[min(24rem,82vw)] border border-white/12 bg-[#1f1912]/82 p-4 shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur-2xl sm:p-5 lg:left-6">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-bold uppercase text-[#d6a850]">
-                      Matter
-                    </p>
-                    <p className="mt-1 font-editor text-2xl text-white">
-                      Lease termination
-                    </p>
-                  </div>
-                  <div className="flex size-11 items-center justify-center rounded-full bg-[#65c7b8]/15 text-[#8ee6d8]">
-                    <Scale className="size-5" />
-                  </div>
-                </div>
+              <ChatComposer
+                draft={heroPrompt}
+                loading={false}
+                onDraftChange={setHeroPrompt}
+                onSubmit={handleDemoSubmit}
+              />
 
-                <div className="space-y-2">
-                  {caseLines.map((line, index) => (
-                    <div
-                      key={line.label}
-                      className={cn(
-                        "grid grid-cols-[5.5rem_1fr] items-center border-t border-white/10 py-3 text-sm",
-                        index > 1 && "hidden sm:grid"
-                      )}
-                    >
-                      <span className="font-semibold text-[#9d8f7d]">{line.label}</span>
-                      <span
-                        className={cn(
-                          "font-medium",
-                          line.tone === "gold" && "text-[#f2cd81]",
-                          line.tone === "blue" && "text-[#9dc7f4]",
-                          line.tone === "red" && "text-[#f0a7a7]",
-                          line.tone === "green" && "text-[#a4eadf]"
-                        )}
-                      >
-                        {line.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {showLoginPrompt ? (
+                <p className="mt-4 text-sm font-medium text-[#d8cbb7]">
+                  Create a workspace to continue with this matter.
+                </p>
+              ) : null}
 
-              <div className="absolute bottom-0 right-0 w-[min(33rem,92vw)] border border-[#d6a850]/24 bg-[#fff8eb]/94 p-3 text-[#15110d] shadow-[0_34px_100px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:p-4 lg:right-3">
-                <PromptInput
-                  value={heroPrompt}
-                  onValueChange={setHeroPrompt}
-                  onSubmit={handleDemoSubmit}
-                  className="border-0 bg-transparent p-0 shadow-none"
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-semibold text-[#c9baa4]">
+                <button
+                  type="button"
+                  onClick={() => openAuthDialog("signup")}
+                  className="inline-flex items-center gap-2 text-[#f3d18c] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
                 >
-                  <PromptInputTextarea
-                    aria-label="Ask JusticePath a legal question"
-                    placeholder="Can my landlord terminate before the 30-day notice window?"
-                    className="min-h-24 resize-none text-base leading-7 text-[#21180f] placeholder:text-[#7f715f]"
-                  />
-                  <PromptInputActions className="mt-3 justify-between border-t border-[#dccfb8] pt-3">
-                    <div className="flex items-center gap-1">
-                      <PromptInputAction tooltip="Upload file">
-                        <span className="inline-flex size-10 items-center justify-center rounded-full text-[#574735] transition hover:bg-[#eadbc1] hover:text-[#15110d]">
-                          <Paperclip className="size-4" />
-                        </span>
-                      </PromptInputAction>
-                      <PromptInputAction tooltip="Voice input">
-                        <span className="inline-flex size-10 items-center justify-center rounded-full text-[#574735] transition hover:bg-[#eadbc1] hover:text-[#15110d]">
-                          <Mic className="size-4" />
-                        </span>
-                      </PromptInputAction>
-                    </div>
-                    <Button className="size-11 rounded-full bg-[#15110d] text-[#fff8eb] hover:bg-[#2d2217]">
-                      <ArrowRight className="size-4" />
-                    </Button>
-                  </PromptInputActions>
-                </PromptInput>
-
-                {showLoginPrompt ? (
-                  <div className="mt-3 border-t border-[#dccfb8] pt-3 text-sm font-medium text-[#574735]">
-                    <TextEffect>
-                      Create an account to open this prompt in a live matter workspace.
-                    </TextEffect>
-                  </div>
-                ) : null}
+                  Start a matter
+                  <ArrowRight className="size-4" />
+                </button>
+                <Link
+                  to="/assistant"
+                  className="inline-flex items-center gap-2 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
+                >
+                  View workspace
+                  <ChevronRight className="size-4" />
+                </Link>
               </div>
             </motion.div>
           </div>

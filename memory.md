@@ -69,6 +69,7 @@ Last updated: 2026-06-27
 - Consultant now uses the shared refined beige/gold system with stronger typography and Pretext-backed reserved heights for streamed legal answer paragraphs.
 - Landing page now uses a production-grade dark editorial hero with a Three.js legal document orbit scene, parallax motion, a real matter preview, compact mobile proof strip, and a visible next-section rail at the fold.
 - Landing page sections now focus on concrete legal workflow: upload record, map legal path, draft from source, mode continuity, trust boundaries, and workspace access.
+- Landing hero was simplified into a minimal centered brand/input composition that reuses the assistant `ChatComposer`, with ambient Three.js background, Motion parallax labels, GSAP press feedback, and Lenis smooth scrolling.
 
 ## Notes
 

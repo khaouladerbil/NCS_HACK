@@ -223,6 +223,13 @@ select {
       linear-gradient(180deg, rgba(21, 17, 13, 0.42) 0%, rgba(21, 17, 13, 0.1) 45%, rgba(21, 17, 13, 0.78) 100%);
   }
 
+  .landing-hero-minimal {
+    background:
+      radial-gradient(circle at 50% 38%, rgba(214, 168, 80, 0.14), transparent 34%),
+      radial-gradient(circle at 12% 78%, rgba(101, 199, 184, 0.11), transparent 26%),
+      linear-gradient(180deg, rgba(21, 17, 13, 0.4) 0%, rgba(21, 17, 13, 0.08) 44%, rgba(21, 17, 13, 0.72) 100%);
+  }
+
   .landing-technical-grid {
     background-image:
       linear-gradient(rgba(255, 248, 235, 0.08) 1px, transparent 1px),
