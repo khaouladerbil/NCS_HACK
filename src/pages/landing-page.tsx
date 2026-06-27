@@ -5,81 +5,79 @@ import Lenis from "lenis"
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
 import {
   ArrowRight,
-  BookOpenText,
-  BrainCircuit,
-  CheckCircle2,
   ChevronRight,
-  FileCheck2,
   FilePenLine,
-  FolderSearch,
   GraduationCap,
-  LockKeyhole,
   Menu,
   MessageSquareText,
-  ShieldCheck,
-  UploadCloud,
   X,
 } from "lucide-react"
 
 import { AuthDialog, type AuthMode } from "@/components/auth/auth-dialog"
 import { ChatComposer } from "@/components/chat/chat-composer"
+import { TextEffect } from "@/components/core/text-effect"
 import { LegalOrbitScene } from "@/components/website/legal-orbit-scene"
 import logoMark from "../../Logo.svg"
 
 const navItems = [
-  { label: "Platform", href: "#platform" },
+  { label: "Showcase", href: "#showcase" },
   { label: "Workflow", href: "#workflow" },
-  { label: "Trust", href: "#trust" },
-  { label: "Access", href: "#access" },
+  { label: "Pricing", href: "#pricing" },
 ]
 
 const workflowSteps = [
-  {
-    step: "01",
-    title: "Upload the record",
-    body: "Drop a lease, brief, NDA, demand letter, or scanned evidence into one matter workspace.",
-    icon: UploadCloud,
-  },
-  {
-    step: "02",
-    title: "Map the legal path",
-    body: "JusticePath extracts deadlines, clauses, filings, and missing facts before drafting begins.",
-    icon: FolderSearch,
-  },
-  {
-    step: "03",
-    title: "Draft from source",
-    body: "Move the answer into an A4 editor with clause-level context, export, and review handoff.",
-    icon: FileCheck2,
-  },
+  ["01", "Upload", "PDF, DOCX, lease, brief, notice."],
+  ["02", "Ask", "Clause, risk, deadline, draft path."],
+  ["03", "Draft", "A4 editor, export, human handoff."],
 ]
 
 const modeStories = [
   {
     mode: "Consultant",
-    title: "Answers that keep the clause in view.",
-    body: "Ask the question you would normally save for intake. The assistant responds in plain legal-review language, then preserves the source trail.",
+    title: "Question in. Clause stays visible.",
+    body: "Ask once. Get practical next actions with the source trail intact.",
     icon: MessageSquareText,
   },
   {
     mode: "Editor",
-    title: "A legal document surface, not a text box.",
-    body: "Draft letters, petitions, and contract revisions on a quiet page with inline suggestions and DOCX/PDF export.",
+    title: "Draft on a page, not in a box.",
+    body: "Move from answer to letter, petition, or contract revision without context loss.",
     icon: FilePenLine,
   },
   {
     mode: "Professor",
-    title: "Learn the rule while working the matter.",
-    body: "Turn the same facts into guided checkpoints so legal doctrine becomes usable instead of abstract.",
+    title: "Learn the rule inside the matter.",
+    body: "Turn facts into short checkpoints instead of abstract legal theory.",
     icon: GraduationCap,
   },
 ]
 
-const proofPoints = [
-  "PDF and DOCX-aware workspace",
-  "Inline lawyer recommendations after answers finish",
-  "Clause, deadline, and next-action extraction",
-  "Editor exports for DOCX and PDF handoff",
+const showcaseRows = [
+  ["Record", "service-agreement.pdf"],
+  ["Found", "30-day written notice"],
+  ["Risk", "penalty clause needs counsel"],
+  ["Draft", "reply letter ready"],
+]
+
+const pricingPlans = [
+  {
+    name: "Starter",
+    price: "$19",
+    line: "Personal legal reading.",
+    items: ["10 matters", "PDF/DOCX review", "Draft exports"],
+  },
+  {
+    name: "Pro",
+    price: "$49",
+    line: "Serious document work.",
+    items: ["Unlimited drafts", "Lawyer matches", "Priority model runs"],
+  },
+  {
+    name: "Team",
+    price: "Custom",
+    line: "Clinics and legal ops.",
+    items: ["Shared matters", "Admin controls", "Private onboarding"],
+  },
 ]
 
 export function LandingPage() {
@@ -117,22 +115,18 @@ export function LandingPage() {
   }
 
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.05,
-      smoothWheel: true,
-    })
-
+    const lenis = new Lenis({ duration: 1.05, smoothWheel: true })
     let rafId = 0
     const raf = (time: number) => {
       lenis.raf(time)
       rafId = window.requestAnimationFrame(raf)
     }
-
     rafId = window.requestAnimationFrame(raf)
 
-    const clickableSelector = "button, a, [role='button']"
     const handlePointerDown = (event: Event) => {
-      const target = (event.target as HTMLElement | null)?.closest<HTMLElement>(clickableSelector)
+      const target = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+        "button, a, [role='button']"
+      )
       if (!target) return
 
       gsap.fromTo(
@@ -141,10 +135,10 @@ export function LandingPage() {
         {
           scale: 0.975,
           duration: 0.08,
-          yoyo: true,
-          repeat: 1,
           ease: "power2.out",
           overwrite: true,
+          repeat: 1,
+          yoyo: true,
         }
       )
     }
@@ -160,7 +154,6 @@ export function LandingPage() {
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
-
     document.body.style.overflow = mobileMenuOpen ? "hidden" : previousOverflow
 
     return () => {
@@ -170,7 +163,6 @@ export function LandingPage() {
 
   useEffect(() => {
     if (!mobileMenuOpen) return
-
     const closeMenu = () => setMobileMenuOpen(false)
     window.addEventListener("resize", closeMenu)
 
@@ -189,7 +181,7 @@ export function LandingPage() {
   }, [searchParams])
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f5efe2] text-[#1c1711] selection:bg-[#d6a850] selection:text-[#15110d]">
+    <div className="min-h-screen overflow-x-hidden bg-[#f5efe2] text-[#17120d] selection:bg-[#d6a850] selection:text-[#15110d]">
       <AuthDialog
         open={authDialogOpen}
         onOpenChange={(open) => {
@@ -197,18 +189,14 @@ export function LandingPage() {
             setAuthDialogOpen(true)
             return
           }
-
           closeAuthDialog()
         }}
         initialMode={authMode}
       />
 
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#15110d]/78 text-[#fff8eb] shadow-[0_18px_60px_rgba(0,0,0,0.18)] backdrop-blur-2xl">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#15110d]/72 text-[#fff8eb] backdrop-blur-2xl">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link
-            to="/"
-            className="flex min-w-0 items-center gap-3 text-[#fff8eb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
-          >
+          <Link to="/" className="flex min-w-0 items-center gap-3 text-[#fff8eb]">
             <img src={logoMark} alt="JusticePath" className="h-10 w-auto sm:h-11" />
             <span className="font-editor text-2xl leading-none sm:text-3xl">
               JusticePath
@@ -217,11 +205,7 @@ export function LandingPage() {
 
           <nav className="hidden items-center gap-7 text-sm font-medium text-[#d8cbb7] md:flex">
             {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
-              >
+              <a key={item.label} href={item.href} className="transition hover:text-white">
                 {item.label}
               </a>
             ))}
@@ -231,14 +215,14 @@ export function LandingPage() {
             <button
               type="button"
               onClick={() => openAuthDialog("signin")}
-              className="min-h-11 rounded-full px-4 text-sm font-semibold text-[#f2e4cd] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
+              className="min-h-11 rounded-full px-4 text-sm font-semibold text-[#f2e4cd] transition hover:text-white"
             >
               Sign in
             </button>
             <button
               type="button"
               onClick={() => openAuthDialog("signup")}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#d6a850] px-5 text-sm font-bold text-[#15110d] shadow-[0_14px_34px_rgba(214,168,80,0.24)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#efc878] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff8eb]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#d6a850] px-5 text-sm font-bold text-[#15110d] transition hover:bg-[#efc878]"
             >
               Open workspace
               <ArrowRight className="size-4" />
@@ -263,7 +247,7 @@ export function LandingPage() {
                 <a
                   key={item.label}
                   href={item.href}
-                  className="rounded-lg px-4 py-3 text-sm font-semibold text-[#e8dcc8] transition-colors hover:bg-white/8"
+                  className="rounded-lg px-4 py-3 text-sm font-semibold text-[#e8dcc8]"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
@@ -322,9 +306,8 @@ export function LandingPage() {
               <p className="mb-8 text-sm font-semibold uppercase text-[#d6a850]">
                 Legal AI workspace
               </p>
-
               <h1 className="font-editor text-7xl leading-[0.82] text-white sm:text-8xl lg:text-[9.5rem]">
-                JusticePath
+                <TextEffect per="char">JusticePath</TextEffect>
               </h1>
               <p className="mx-auto mt-8 max-w-2xl text-balance text-2xl leading-tight text-[#f2e6d1] sm:text-4xl">
                 Ask the legal question. Keep the clause, draft, and next step in one place.
@@ -355,14 +338,14 @@ export function LandingPage() {
                 <button
                   type="button"
                   onClick={() => openAuthDialog("signup")}
-                  className="inline-flex items-center gap-2 text-[#f3d18c] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
+                  className="inline-flex items-center gap-2 text-[#f3d18c] transition hover:text-white"
                 >
                   Start a matter
                   <ArrowRight className="size-4" />
                 </button>
                 <Link
                   to="/assistant"
-                  className="inline-flex items-center gap-2 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
+                  className="inline-flex items-center gap-2 transition hover:text-white"
                 >
                   View workspace
                   <ChevronRight className="size-4" />
@@ -373,52 +356,82 @@ export function LandingPage() {
         </section>
 
         <section
-          id="platform"
-          className="relative overflow-hidden border-y border-[#ddcfb7] bg-[#f5efe2] px-4 pb-20 pt-10 sm:px-6 lg:px-8 lg:pt-14"
+          id="showcase"
+          className="relative overflow-hidden border-y border-[#ddcfb7] bg-[#f5efe2] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
         >
-          <div className="mx-auto mb-12 flex max-w-7xl flex-col gap-2 border-b border-[#d8c8ab] pb-4 text-sm font-semibold text-[#5a4b3a] sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-[#8b642b]">Platform</span>
-            <span>Upload record / map legal path / draft from source</span>
-          </div>
-
-          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
             <Reveal>
-              <p className="text-sm font-bold uppercase text-[#8b642b]">
-                Platform
-              </p>
+              <p className="text-sm font-bold uppercase text-[#8b642b]">Showcase</p>
               <h2 className="mt-4 max-w-xl font-editor text-5xl leading-[0.95] text-[#17120d] sm:text-6xl">
-                Legal work needs memory, not more tabs.
+                One matter. Three surfaces.
               </h2>
               <p className="mt-6 max-w-lg text-lg leading-8 text-[#5a4b3a]">
-                JusticePath keeps consultation, document review, drafting, and study
-                attached to the same matter record.
+                Consultant, editor, and professor stay attached to the same file.
               </p>
             </Reveal>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              {workflowSteps.map((item, index) => {
-                const Icon = item.icon
-
-                return (
-                  <Reveal key={item.step} delay={index * 0.08}>
-                    <article className="h-full rounded-lg border border-[#d8c8ab] bg-[#fffaf0] p-6 shadow-[0_18px_48px_rgba(60,42,18,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(60,42,18,0.12)]">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#9e742f]">
-                          {item.step}
-                        </span>
-                        <Icon className="size-5 text-[#315a79]" />
-                      </div>
-                      <h3 className="mt-10 text-xl font-bold text-[#17120d]">
-                        {item.title}
-                      </h3>
-                      <p className="mt-4 text-base leading-7 text-[#61523f]">
-                        {item.body}
+            <Reveal delay={0.08}>
+              <motion.div
+                whileHover={{ rotateX: 1.5, rotateY: -2, y: -4 }}
+                transition={{ type: "spring", stiffness: 160, damping: 18 }}
+                className="relative min-h-[34rem] overflow-hidden border-y border-[#2a2117] bg-[#17120d] p-5 text-[#fff8eb] shadow-[0_34px_90px_rgba(36,21,6,0.22)] sm:p-8"
+              >
+                <div className="absolute inset-0 landing-crosshatch opacity-10" />
+                <div className="relative grid h-full gap-8 lg:grid-cols-[0.88fr_1.12fr]">
+                  <div className="flex flex-col justify-between gap-8">
+                    <div>
+                      <p className="text-xs font-bold uppercase text-[#d6a850]">
+                        Consultant
                       </p>
-                    </article>
-                  </Reveal>
-                )
-              })}
-            </div>
+                      <div className="mt-6 space-y-5">
+                        {showcaseRows.map(([label, value], index) => (
+                          <motion.div
+                            key={label}
+                            initial={shouldReduceMotion ? false : { opacity: 0, x: -18 }}
+                            whileInView={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: index * 0.07 }}
+                            className="border-b border-white/10 pb-4"
+                          >
+                            <p className="text-xs font-semibold text-[#8a7d6b]">
+                              {label}
+                            </p>
+                            <p className="mt-1 text-lg font-semibold text-[#f6ead6]">
+                              {value}
+                            </p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="max-w-sm text-sm leading-6 text-[#c9baa4]">
+                      Source trail visible before draft work starts.
+                    </p>
+                  </div>
+
+                  <div className="relative min-h-[27rem] bg-[#f8f1e5] p-8 text-[#24180d] shadow-[0_18px_60px_rgba(0,0,0,0.28)]">
+                    <div className="font-editor text-3xl leading-tight">
+                      Reply to Notice
+                    </div>
+                    <div className="mt-8 space-y-3 text-sm leading-7 text-[#4f412f]">
+                      <p>Dear Counsel,</p>
+                      <p>
+                        We acknowledge receipt of the termination notice. The agreement
+                        requires thirty days written notice before termination.
+                      </p>
+                      <p className="border-l-2 border-[#d6a850] pl-4 text-[#2b2117]">
+                        Suggested edit: cite Section 8 before discussing penalty exposure.
+                      </p>
+                    </div>
+                    <motion.div
+                      aria-hidden="true"
+                      className="absolute bottom-6 right-6 h-16 w-16 rounded-full border border-[#d6a850]"
+                      animate={shouldReduceMotion ? undefined : { rotate: 360 }}
+                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            </Reveal>
           </div>
         </section>
 
@@ -428,27 +441,30 @@ export function LandingPage() {
         >
           <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr]">
             <Reveal className="lg:sticky lg:top-28 lg:h-fit">
-              <p className="text-sm font-bold uppercase text-[#d6a850]">
-                Workflow
-              </p>
+              <p className="text-sm font-bold uppercase text-[#d6a850]">Workflow</p>
               <h2 className="mt-4 max-w-xl font-editor text-5xl leading-[0.95] text-white sm:text-6xl">
                 Three modes. One evidence trail.
               </h2>
-              <p className="mt-6 max-w-lg text-lg leading-8 text-[#d8cbb7]">
-                The product does not reset when the task changes. Guidance, drafting,
-                and learning share the same legal context.
-              </p>
+              <div className="mt-10 grid gap-6">
+                {workflowSteps.map(([step, title, body]) => (
+                  <div key={step} className="border-t border-white/10 pt-4">
+                    <p className="text-xs font-bold text-[#d6a850]">{step}</p>
+                    <p className="mt-2 text-xl font-semibold text-white">{title}</p>
+                    <p className="mt-2 text-sm leading-6 text-[#c9baa4]">{body}</p>
+                  </div>
+                ))}
+              </div>
             </Reveal>
 
-            <div className="space-y-4">
+            <div className="space-y-1 border-y border-white/10">
               {modeStories.map((item, index) => {
                 const Icon = item.icon
 
                 return (
                   <Reveal key={item.mode} delay={index * 0.08}>
-                    <article className="group rounded-lg border border-white/10 bg-white/[0.045] p-6 transition duration-300 hover:border-[#d6a850]/40 hover:bg-white/[0.075] sm:p-8">
+                    <article className="group border-b border-white/10 py-8 transition duration-300 hover:px-3">
                       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#d6a850]/15 text-[#f2cd81]">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#d6a850]/10 text-[#f2cd81] transition group-hover:rotate-6 group-hover:bg-[#d6a850]/20">
                           <Icon className="size-5" />
                         </div>
                         <div>
@@ -472,101 +488,63 @@ export function LandingPage() {
         </section>
 
         <section
-          id="trust"
+          id="pricing"
           className="relative overflow-hidden bg-[#fffaf0] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
         >
-          <div className="absolute inset-x-0 top-0 h-px bg-[#d8c8ab]" />
-          <div className="mx-auto max-w-7xl">
-            <Reveal className="grid gap-10 lg:grid-cols-[1fr_0.9fr] lg:items-end">
-              <div>
-                <p className="text-sm font-bold uppercase text-[#8b642b]">
-                  Trust
-                </p>
-                <h2 className="mt-4 max-w-3xl font-editor text-5xl leading-[0.95] text-[#17120d] sm:text-6xl">
-                  Serious by default. Clear when it must hand off.
-                </h2>
-              </div>
-              <p className="max-w-xl text-lg leading-8 text-[#5a4b3a]">
-                JusticePath is positioned as legal assistance, not a replacement for
-                counsel. It organizes facts, drafts, and recommendations so a human
-                reviewer starts from something coherent.
+          <motion.div
+            aria-hidden="true"
+            className="absolute left-1/2 top-10 h-44 w-44 -translate-x-1/2 rounded-full border border-[#d6a850]/30"
+            animate={
+              shouldReduceMotion
+                ? undefined
+                : { scale: [1, 1.08, 1], opacity: [0.35, 0.75, 0.35] }
+            }
+            transition={{ duration: 4, repeat: Infinity }}
+          />
+          <div className="relative mx-auto max-w-7xl">
+            <Reveal>
+              <p className="text-sm font-bold uppercase text-[#8b642b]">Pricing</p>
+              <h2 className="mt-4 max-w-3xl font-editor text-5xl leading-[0.95] text-[#17120d] sm:text-6xl">
+                Start small. Scale when legal work gets serious.
+              </h2>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-[#5a4b3a]">
+                Clean pricing for document-heavy legal assistance.
               </p>
             </Reveal>
 
-            <div className="mt-14 grid gap-px overflow-hidden rounded-lg border border-[#d8c8ab] bg-[#d8c8ab] md:grid-cols-2">
-              {proofPoints.map((point, index) => (
-                <Reveal key={point} delay={index * 0.05}>
-                  <div className="flex min-h-28 items-center gap-4 bg-[#fffaf0] p-6">
-                    <CheckCircle2 className="size-5 shrink-0 text-[#2e746a]" />
-                    <span className="text-lg font-semibold text-[#21180f]">
-                      {point}
-                    </span>
-                  </div>
+            <div className="mt-14 grid border-y border-[#d8c8ab] lg:grid-cols-3">
+              {pricingPlans.map((plan, index) => (
+                <Reveal key={plan.name} delay={index * 0.08}>
+                  <motion.article
+                    whileHover={{ y: -8 }}
+                    className="h-full border-b border-[#d8c8ab] py-8 lg:border-b-0 lg:border-r lg:px-8 last:lg:border-r-0"
+                  >
+                    <p className="text-sm font-bold uppercase text-[#8b642b]">
+                      {plan.name}
+                    </p>
+                    <p className="mt-8 font-editor text-6xl text-[#17120d]">
+                      <TextEffect per="char">{plan.price}</TextEffect>
+                    </p>
+                    <p className="mt-4 text-base font-semibold text-[#4f412f]">
+                      {plan.line}
+                    </p>
+                    <div className="mt-8 space-y-3 text-sm leading-6 text-[#5a4b3a]">
+                      {plan.items.map((item) => (
+                        <p key={item}>/ {item}</p>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openAuthDialog("signup")}
+                      className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-[#17120d] transition hover:text-[#8b642b]"
+                    >
+                      Choose
+                      <ArrowRight className="size-4" />
+                    </button>
+                  </motion.article>
                 </Reveal>
               ))}
             </div>
-
-            <Reveal className="mt-16 grid gap-6 lg:grid-cols-3">
-              <TrustMetric
-                icon={<ShieldCheck className="size-5" />}
-                label="Positioning"
-                value="Assistance first"
-                body="Terse legal workflow copy, explicit handoff language, and no fake guarantees."
-              />
-              <TrustMetric
-                icon={<LockKeyhole className="size-5" />}
-                label="Workspace"
-                value="Matter-scoped"
-                body="Documents, prompts, drafts, and recommendations stay tied to one case context."
-              />
-              <TrustMetric
-                icon={<BrainCircuit className="size-5" />}
-                label="Models"
-                value="Proprietary"
-                body="Built around JusticePath modes rather than a generic chat wrapper."
-              />
-            </Reveal>
-          </div>
-        </section>
-
-        <section
-          id="access"
-          className="relative overflow-hidden bg-[#213a5e] px-4 py-20 text-[#fff8eb] sm:px-6 lg:px-8"
-        >
-          <div className="absolute inset-0 landing-crosshatch opacity-20" />
-          <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-            <Reveal>
-              <p className="text-sm font-bold uppercase text-[#a4eadf]">
-                Access
-              </p>
-              <h2 className="mt-4 max-w-3xl font-editor text-5xl leading-[0.95] text-white sm:text-6xl">
-                Open a matter. Bring the messy file.
-              </h2>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-[#dce8f1]">
-                The landing page now points straight into the live workspace, with auth
-                handled in place and the product surface doing the selling.
-              </p>
-            </Reveal>
-
-            <Reveal delay={0.08}>
-              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                <button
-                  type="button"
-                  onClick={() => openAuthDialog("signup")}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#fff8eb] px-6 text-base font-bold text-[#17243a] transition duration-200 hover:-translate-y-0.5 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6a850]"
-                >
-                  Create workspace
-                  <ArrowRight className="size-5" />
-                </button>
-                <Link
-                  to="/assistant"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/24 px-6 text-base font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-                >
-                  Enter product
-                  <BookOpenText className="size-5" />
-                </Link>
-              </div>
-            </Reveal>
           </div>
         </section>
       </main>
@@ -583,8 +561,8 @@ export function LandingPage() {
           </p>
 
           <div className="flex flex-wrap items-center gap-5 text-sm font-semibold text-[#3b2e20]">
-            <a href="#trust" className="transition-colors hover:text-[#17120d]">
-              Trust
+            <a href="#pricing" className="transition-colors hover:text-[#17120d]">
+              Pricing
             </a>
             <Link to="/settings" className="transition-colors hover:text-[#17120d]">
               Settings
@@ -625,30 +603,5 @@ function Reveal({
     >
       {children}
     </motion.div>
-  )
-}
-
-function TrustMetric({
-  icon,
-  label,
-  value,
-  body,
-}: {
-  icon: ReactNode
-  label: string
-  value: string
-  body: string
-}) {
-  return (
-    <article className="rounded-lg border border-[#d8c8ab] bg-[#f5efe2] p-6">
-      <div className="flex items-center gap-3 text-[#315a79]">
-        {icon}
-        <span className="text-xs font-bold uppercase">
-          {label}
-        </span>
-      </div>
-      <h3 className="mt-7 text-2xl font-bold text-[#17120d]">{value}</h3>
-      <p className="mt-3 text-base leading-7 text-[#5a4b3a]">{body}</p>
-    </article>
   )
 }

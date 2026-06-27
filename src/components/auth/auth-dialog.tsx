@@ -8,10 +8,10 @@ import {
   Shield,
   UserRound,
 } from "lucide-react"
+import { motion } from "motion/react"
 import { useEffect, useState, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 
-import { AnimatedBackground } from "@/components/core/animated-background"
 import {
   Dialog,
   DialogClose,
@@ -145,42 +145,42 @@ export function AuthDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(92vh,48rem)] max-w-[34rem] overflow-hidden border border-[color:var(--jp-accent-soft)] bg-[linear-gradient(180deg,#fffdf8_0%,#f7f1e6_100%)] p-0 shadow-[0_28px_90px_rgba(41,28,8,0.22)]">
+      <DialogContent className="max-h-[min(92vh,46rem)] max-w-[30rem] overflow-hidden border border-[#ded6ca] bg-[#fbf8f1] p-0 shadow-[0_24px_80px_rgba(21,17,13,0.16)]">
         <div className="max-h-[min(92vh,48rem)] overflow-y-auto">
-          <div className="sticky top-0 z-10 border-b border-[color:var(--jp-accent-soft)] bg-[#fffaf2]/96 px-5 pb-4 pt-5 backdrop-blur">
+          <div className="sticky top-0 z-10 border-b border-[#ded6ca] bg-[#fbf8f1]/96 px-5 pb-4 pt-5 backdrop-blur">
             <DialogHeader className="pr-10">
-              <DialogTitle className="font-[Georgia,Times_New_Roman,serif] text-[1.55rem] tracking-[-0.04em] text-[#291c08]">
+              <DialogTitle className="font-editor text-2xl text-[#17120d]">
                 Enter JusticePath
               </DialogTitle>
-              <DialogDescription className="text-[#705c49]">
-                Private legal workspace. Quiet chrome. Fast start.
+              <DialogDescription className="text-sm text-[#675949]">
+                Private workspace. Fast start.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-4 rounded-full border border-[color:var(--jp-accent-soft)] bg-white/88 p-1 shadow-[0_10px_30px_rgba(41,28,8,0.08)]">
-              <AnimatedBackground
-                defaultValue={mode}
-                onValueChange={(value) => {
-                  setMode(value as AuthMode)
-                  setStage("auth")
-                  setStep(0)
-                }}
-                className="rounded-full bg-[#f4ecdf]"
-              >
+            <div className="relative mt-5 grid grid-cols-2 border border-[#ded6ca] bg-white p-1">
+              <motion.div
+                aria-hidden="true"
+                className="absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] bg-[#17120d]"
+                animate={{ x: mode === "signin" ? 0 : "100%" }}
+                transition={{ type: "spring", stiffness: 280, damping: 28 }}
+              />
                 {AUTH_MODES.map((item) => (
                   <button
                     key={item.id}
-                    data-id={item.id}
                     type="button"
+                    onClick={() => {
+                      setMode(item.id)
+                      setStage("auth")
+                      setStep(0)
+                    }}
                     className={cn(
-                      "inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium text-[#705c49] transition-colors",
-                      mode === item.id && "text-[#291c08]"
+                      "relative z-10 inline-flex h-9 items-center justify-center px-4 text-sm font-medium text-[#675949] transition-colors",
+                      mode === item.id && "text-white"
                     )}
                   >
                     {item.label}
                   </button>
                 ))}
-              </AnimatedBackground>
             </div>
           </div>
 
@@ -190,9 +190,9 @@ export function AuthDialog({
                 <button
                   type="button"
                   onClick={continueWithGoogle}
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[1rem] border border-[color:var(--jp-accent-soft)] bg-white text-sm font-medium text-[#291c08] transition hover:bg-[#fcf7ef]"
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 border border-[#ded6ca] bg-white text-sm font-medium text-[#17120d] transition hover:bg-[#f4efe5]"
                 >
-                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-[color:var(--jp-accent-muted)] text-[0.7rem] font-semibold text-[#291c08]">
+                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-[#17120d] text-[0.7rem] font-semibold text-white">
                     G
                   </span>
                   {isSignup ? "Continue with Google" : "Sign in with Google"}
@@ -227,7 +227,7 @@ export function AuthDialog({
 
                 <Button
                   onClick={finishAuth}
-                  className="h-11 w-full rounded-[1rem] bg-[#291c08] text-sm text-white hover:bg-[#1d1406]"
+                  className="h-11 w-full rounded-none bg-[#17120d] text-sm text-white hover:bg-[#2a2117]"
                 >
                   {isSignup ? "Continue" : "Sign in"}
                 </Button>
@@ -239,12 +239,12 @@ export function AuthDialog({
                     <div
                       key={index}
                       className={cn(
-                        "rounded-[1rem] border p-3 text-center text-xs font-medium",
+                        "border p-3 text-center text-xs font-medium",
                         step === index
-                          ? "border-[#291c08] bg-[#291c08] text-white"
+                          ? "border-[#17120d] bg-[#17120d] text-white"
                           : step > index
-                            ? "border-[color:var(--jp-accent-soft)] bg-[color:var(--jp-accent-muted)] text-[#291c08]"
-                            : "border-[color:var(--jp-accent-soft)] bg-white text-[#705c49]"
+                            ? "border-[#ded6ca] bg-[#eee6da] text-[#17120d]"
+                            : "border-[#ded6ca] bg-white text-[#675949]"
                       )}
                     >
                       {step > index ? <Check className="mx-auto size-4" /> : `0${index + 1}`}
@@ -305,13 +305,13 @@ export function AuthDialog({
                   <Button
                     variant="outline"
                     onClick={prevStep}
-                    className="h-11 flex-1 rounded-[1rem] border-[color:var(--jp-accent-soft)] bg-white text-sm text-[#291c08] hover:bg-[#fcf7ef]"
+                    className="h-11 flex-1 rounded-none border-[#ded6ca] bg-white text-sm text-[#17120d] hover:bg-[#f4efe5]"
                   >
                     Back
                   </Button>
                   <Button
                     onClick={nextStep}
-                    className="h-11 flex-1 rounded-[1rem] bg-[#291c08] text-sm text-white hover:bg-[#1d1406]"
+                    className="h-11 flex-1 rounded-none bg-[#17120d] text-sm text-white hover:bg-[#2a2117]"
                   >
                     {step === 2 ? "Enter workspace" : "Next"}
                     <ArrowRight className="size-4" />
@@ -322,7 +322,7 @@ export function AuthDialog({
           </div>
         </div>
 
-        <DialogClose className="text-[#705c49] hover:bg-white/70 hover:text-[#291c08]" />
+        <DialogClose className="text-[#675949] hover:bg-white hover:text-[#17120d]" />
       </DialogContent>
     </Dialog>
   )
@@ -345,7 +345,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-[0.72rem] font-medium tracking-[0.12em] text-[#705c49] uppercase">
+      <span className="mb-2 flex items-center gap-2 text-[0.72rem] font-medium text-[#675949] uppercase">
         <Icon className="size-3.5 text-[color:var(--jp-accent)]" />
         {label}
       </span>
@@ -354,7 +354,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-[1rem] border border-[color:var(--jp-accent-soft)] bg-white px-4 text-sm text-[#291c08] outline-none transition focus:ring-2 focus:ring-[color:var(--jp-accent)]/25"
+        className="h-11 w-full border border-[#ded6ca] bg-white px-4 text-sm text-[#17120d] outline-none transition focus:ring-2 focus:ring-[#d6a850]/25"
       />
     </label>
   )
@@ -375,14 +375,14 @@ function FieldSelect({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-[0.72rem] font-medium tracking-[0.12em] text-[#705c49] uppercase">
+      <span className="mb-2 flex items-center gap-2 text-[0.72rem] font-medium text-[#675949] uppercase">
         <Icon className="size-3.5 text-[color:var(--jp-accent)]" />
         {label}
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-[1rem] border border-[color:var(--jp-accent-soft)] bg-white px-4 text-sm text-[#291c08] outline-none transition focus:ring-2 focus:ring-[color:var(--jp-accent)]/25"
+        className="h-11 w-full border border-[#ded6ca] bg-white px-4 text-sm text-[#17120d] outline-none transition focus:ring-2 focus:ring-[#d6a850]/25"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -396,7 +396,7 @@ function FieldSelect({
 
 function StepBox({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[1.25rem] border border-[color:var(--jp-accent-soft)] bg-white/88 p-4">
+    <div className="border border-[#ded6ca] bg-white p-4">
       {children}
     </div>
   )
@@ -419,10 +419,10 @@ function ChoiceGrid({
           type="button"
           onClick={() => onChange(option)}
           className={cn(
-            "rounded-[1rem] border px-4 py-4 text-left text-sm transition",
+            "border px-4 py-4 text-left text-sm transition",
             value === option
-              ? "border-[#291c08] bg-[#291c08] text-white"
-              : "border-[color:var(--jp-accent-soft)] bg-white text-[#4b3825] hover:bg-[#fcf7ef]"
+              ? "border-[#17120d] bg-[#17120d] text-white"
+              : "border-[#ded6ca] bg-white text-[#4b3825] hover:bg-[#f4efe5]"
           )}
         >
           {option}
