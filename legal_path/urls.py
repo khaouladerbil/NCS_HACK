@@ -8,6 +8,7 @@ from .views import (
     RequiredDocumentViewSet,
     RecommendationViewSet,
     TimelineEventViewSet,
+    AnalyzeLegalCaseView,
     lawyer_map_view,
 )
 
@@ -28,4 +29,5 @@ urlpatterns = [
         include(nested_router.urls),
     ),
     path("map/<int:request_id>/", lawyer_map_view, name="lawyer-map"),
+    path("analyze/", AnalyzeLegalCaseView.as_view(), name="analyze-legal-case"),
 ]

@@ -2,9 +2,10 @@ import json
 from django.shortcuts import render
 
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from directory_data.serializers import LawyerMapSerializer
 
@@ -116,6 +117,24 @@ class RecommendationViewSet(NestedViewSet):
 class TimelineEventViewSet(NestedViewSet):
     serializer_class = TimelineEventSerializer
     queryset = TimelineEvent.objects.all()
+
+
+class AnalyzeLegalCaseView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        message = request.data.get("message", "")
+        if not message:
+            return Response({"error": "message requis"}, status=400)
+        try:
+            lat = float(request.data["lat"]) if request.data.get("lat") else None
+            lon = float(request.data["lon"]) if request.data.get("lon") else None
+        except (ValueError, TypeError):
+            lat, lon = None, None
+
+        from .services.analyze_service import build_analyze_response
+        result = build_analyze_response(message, lat=lat, lon=lon)
+        return Response(result)
 
 
 def lawyer_map_view(request, request_id):
