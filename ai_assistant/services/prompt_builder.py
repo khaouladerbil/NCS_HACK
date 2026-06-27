@@ -19,7 +19,7 @@ def build_writer_prompt(template, situation, context, language="fr", example_tex
     situation = (situation or "")[:MAX_WRITER_SITUATION_CHARS]
     example_text = (example_text or "")[:MAX_WRITER_EXAMPLE_CHARS]
 
-    return f"""Tu es JurididAI Legal Writer, assistant de redaction juridique pour l'Algerie.
+    return f"""Tu es JusticePath AI Legal Writer, assistant de redaction juridique pour l'Algerie.
 
 Objectif:
 Rediger un document juridique professionnel, clair et directement reutilisable.

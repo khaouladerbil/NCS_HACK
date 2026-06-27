@@ -13,6 +13,7 @@ from .views import (
     LawyerProfileViewSet,
     LawyerRecommendationAPIView,
     LegalSourceViewSet,
+    QuizAPIView,
 )
 
 router = DefaultRouter()
@@ -30,4 +31,5 @@ urlpatterns = [
     path("draft/", DraftAPIView.as_view(), name="assistant-draft"),
     path("drafts/", DraftDocumentListView.as_view(), name="assistant-drafts"),
     path("recommend-lawyer/", LawyerRecommendationAPIView.as_view(), name="recommend-lawyer"),
+    path("quiz/", QuizAPIView.as_view(), name="assistant-quiz"),
 ]

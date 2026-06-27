@@ -48,10 +48,9 @@ class ChatService:
 
         if not is_legal_query(data["message"]):
             answer = (
-                "Je suis un assistant juridique specialise dans le droit algerien. "
-                "Je ne peux pas répondre aux questions qui ne concernent pas le domaine juridique. "
-                "Posez-moi une question sur vos droits, vos démarches juridiques, ou une situation legale "
-                "et je vous aiderai avec plaisir."
+                "Je suis JusticePath AI, spécialisé dans le droit algérien. "
+                "Cette question sort de mon domaine. "
+                "Posez-moi une question juridique — divorce, travail, bail, héritage, procédures administratives — et je vous aide."
             )
             with transaction.atomic():
                 ChatMessage.objects.create(
@@ -219,7 +218,7 @@ def _format_history(session, limit=8):
     for message in messages:
         role = {
             "user": "Utilisateur",
-            "assistant": "JurididAI",
+            "assistant": "JusticePath AI",
             "system": "Systeme",
         }.get(message.role, message.role)
         content = (

@@ -6,7 +6,7 @@ from .models import LawyerProfile, Address
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
-        fields = ["city", "state", "latitude", "longitude"]
+        fields = ["street", "city", "state", "latitude", "longitude"]
 
 
 class LawyerMapSerializer(serializers.ModelSerializer):

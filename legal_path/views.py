@@ -2,7 +2,7 @@ import json
 from django.shortcuts import render
 
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -121,18 +121,19 @@ class TimelineEventViewSet(NestedViewSet):
 
 
 class AnalyzeLegalCaseView(APIView):
-    """Public endpoint: classify message → legal path steps + nearest lawyers."""
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     def post(self, request):
         message = request.data.get("message", "")
+        if not message:
+            return Response({"error": "message requis"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            lat = float(request.data.get("lat", 36.7372))
-            lon = float(request.data.get("lon", 3.0865))
-        except (TypeError, ValueError):
-            lat, lon = 36.7372, 3.0865
+            lat = float(request.data["lat"]) if request.data.get("lat") else None
+            lon = float(request.data["lon"]) if request.data.get("lon") else None
+        except (ValueError, TypeError):
+            lat, lon = None, None
 
-        result = build_analyze_response(message, lat, lon)
+        result = build_analyze_response(message, lat=lat, lon=lon)
         return Response(result)
 
 

@@ -14,7 +14,7 @@ def haversine_km(lat1, lon1, lat2, lon2):
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
     a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    return 2 * R * math.asin(math.sqrt(a))
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 class LawyerViewSet(viewsets.ReadOnlyModelViewSet):
@@ -24,11 +24,11 @@ class LawyerViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["get"], url_path="nearest")
     def nearest(self, request):
         try:
-            user_lat = float(request.query_params["lat"])
-            user_lon = float(request.query_params["lon"])
+            lat = float(request.query_params["lat"])
+            lon = float(request.query_params["lon"])
         except (KeyError, ValueError):
             return Response(
-                {"error": "lat and lon query parameters are required."},
+                {"error": "lat et lon requis"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -37,31 +37,30 @@ class LawyerViewSet(viewsets.ReadOnlyModelViewSet):
         except ValueError:
             limit = 5
 
-        specialization = request.query_params.get("specialization", "").strip().lower()
+        specialty = request.query_params.get("specialty", "").lower()
 
         lawyers = LawyerProfile.objects.select_related("address").filter(
             approved=True,
             address__latitude__isnull=False,
             address__longitude__isnull=False,
         )
+        if specialty:
+            lawyers = lawyers.filter(specialization__icontains=specialty)
 
         results = []
         for lawyer in lawyers:
-            if specialization and specialization not in lawyer.specialization.lower():
-                continue
             addr = lawyer.address
-            dist = haversine_km(
-                user_lat, user_lon,
-                float(addr.latitude), float(addr.longitude),
-            )
+            dist = haversine_km(lat, lon, float(addr.latitude), float(addr.longitude))
             results.append((dist, lawyer))
 
         results.sort(key=lambda x: x[0])
+        nearest = [lw for _, lw in results[:limit]]
 
+        serializer = self.get_serializer(nearest, many=True)
         data = []
-        for dist, lawyer in results[:limit]:
-            entry = LawyerMapSerializer(lawyer).data
-            entry["distance_km"] = round(dist, 2)
+        for item, (dist, _) in zip(serializer.data, results[:limit]):
+            entry = dict(item)
+            entry["distance_km"] = round(dist, 1)
             data.append(entry)
 
         return Response(data)

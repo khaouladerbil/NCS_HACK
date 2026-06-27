@@ -1,97 +1,110 @@
-import re
+from directory_data.models import LawyerProfile
+from directory_data.serializers import LawyerMapSerializer
+from directory_data.views import haversine_km
 
-from .legal_paths import LEGAL_PATHS, SPECIALTY_LABELS
-from .lawyer_recommendation_service import LawyerRecommendationService
+from .legal_paths import get_roadmap, SPECIALTY_LABELS
 
-KEYWORDS = {
-    "labor": [
-        "travail", "salaire", "licenciement", "employeur", "contrat de travail",
-        "cnss", "preavis", "conge", "accident de travail", "عمل", "راتب",
-        "فصل", "اجر", "patron", "work", "fired", "salary", "contract",
+SPECIALTY_KEYWORDS = {
+    "travail": [
+        "travail", "emploi", "licenciement", "salaire", "employeur", "salarie", "conge",
+        "preavis", "cnas", "accident travail", "greve", "syndicat", "contrat travail",
+        "فصل", "عمل", "أجر", "راتب", "صاحب العمل", "تسريح",
+        "work", "employment", "fired", "salary", "employer", "employee",
     ],
-    "family": [
-        "famille", "divorce", "garde", "pension", "mariage", "succession",
-        "heritage", "kafala", "طلاق", "حضانة", "نفقة", "زواج", "ميراث",
-        "family", "custody", "alimony", "marriage",
+    "famille": [
+        "divorce", "mariage", "garde", "pension", "enfant", "heritage", "succession",
+        "famille", "epoux", "epouse", "nafqah", "hadana", "conciliation", "testament",
+        "طلاق", "زواج", "حضانة", "نفقة", "ميراث", "أسرة", "أبناء",
+        "custody", "alimony", "inheritance", "marriage", "child",
     ],
-    "property": [
-        "logement", "loyer", "location", "voisin", "propriete", "bail",
-        "expulsion", "notaire", "سكن", "ايجار", "إيجار", "ملكية", "عقار",
-        "طرد", "house", "rent", "landlord", "tenant", "property",
+    "immobilier": [
+        "bail", "loyer", "logement", "locataire", "proprietaire", "expulsion", "terrain",
+        "construction", "permis", "foncier", "voisinage", "copropriete",
+        "إيجار", "سكن", "طرد", "أرض", "بناء", "ملكية",
+        "rent", "tenant", "landlord", "eviction", "property", "land",
     ],
     "commercial": [
-        "societe", "commerce", "facture", "client", "fournisseur", "entreprise",
-        "registre de commerce", "dette", "creance", "شركة", "تجارة", "فاتورة",
-        "ديون", "rc", "business", "invoice", "debt", "company",
+        "societe", "sarl", "registre commerce", "contrat", "facture", "dette", "creance",
+        "faillite", "commercial", "association", "partenariat", "entreprise",
+        "شركة", "تجاري", "عقد", "دين", "فاتورة",
+        "company", "contract", "debt", "invoice", "business", "bankruptcy",
     ],
-    "administrative": [
-        "commune", "wilaya", "ministere", "administration", "certificat",
-        "daira", "attestation", "passeport", "permis", "autorisation",
-        "بلدية", "ولاية", "وزارة", "شهادة", "ترخيص", "permit", "license",
+    "administratif": [
+        "administration", "mairie", "commune", "wilaya", "prefecture", "permis",
+        "refus", "recours", "fonctionnaire", "etat civil", "passeport", "visa",
+        "إدارة", "بلدية", "ولاية", "رفض", "جواز",
+        "administrative", "municipality", "civil servant",
     ],
-    "consumer": [
-        "remboursement", "garantie", "vendeur", "consommateur", "arnaque",
-        "achat", "livraison", "استرداد", "ضمان", "مستهلك", "احتيال",
-        "produit", "defectueux", "refund", "warranty", "scam", "purchase",
+    "penal": [
+        "plainte", "police", "gendarmerie", "vol", "agression", "violence", "arnaque",
+        "escroquerie", "penal", "prison", "arrestation", "accusation", "victime",
+        "شرطة", "شكوى", "سرقة", "اعتداء", "عنف", "جريمة", "سجن",
+        "complaint", "theft", "assault", "fraud", "arrest", "victim",
     ],
-    "criminal": [
-        "plainte", "convocation", "police", "tribunal", "penal", "arrestation",
-        "prison", "infraction", "delit", "crime", "parquet", "agression",
-        "شكوى", "شرطة", "محكمة", "جنائي", "توقيف", "اعتقال", "جريمة",
-        "complaint", "arrest", "assault", "theft",
+    "consommation": [
+        "garantie", "defectueux", "remboursement", "vendeur", "produit", "consommateur",
+        "achat", "retour", "livraison", "qualite",
+        "ضمان", "معيب", "استرداد",
+        "warranty", "defective", "refund", "consumer", "product",
     ],
 }
 
-
-def _normalize(text: str) -> str:
-    return re.sub(r"\s+", " ", (text or "").lower()).strip()
+SPECIALTY_TO_DB = {
+    "famille": "familial",
+    "travail": "travail",
+    "immobilier": "immobilier",
+    "commercial": "commercial",
+    "administratif": "administratif",
+    "penal": "pénal",
+    "consommation": "consommation",
+}
 
 
 def classify_specialty(text: str) -> str:
-    normalized = _normalize(text)
-    scores: dict[str, int] = {}
-    for specialty, keywords in KEYWORDS.items():
-        score = 0
-        for keyword in keywords:
-            if keyword in normalized:
-                score += 2 if " " in keyword else 1
-        scores[specialty] = score
+    text_lower = text.lower()
+    scores = {specialty: 0 for specialty in SPECIALTY_KEYWORDS}
+    for specialty, keywords in SPECIALTY_KEYWORDS.items():
+        for kw in keywords:
+            if kw in text_lower:
+                scores[specialty] += 1
     best = max(scores, key=scores.get)
-    return best if scores[best] else "other"
+    return best if scores[best] > 0 else "other"
 
 
-def build_analyze_response(message: str, lat: float, lon: float, limit: int = 3) -> dict:
+def get_nearest_lawyers(specialty: str, lat: float = None, lon: float = None, limit: int = 3):
+    qs = LawyerProfile.objects.select_related("address").filter(
+        approved=True,
+        address__latitude__isnull=False,
+        address__longitude__isnull=False,
+    )
+    db_term = SPECIALTY_TO_DB.get(specialty)
+    if db_term:
+        qs = qs.filter(specialization__icontains=db_term)
+
+    if lat is not None and lon is not None:
+        results = []
+        for lawyer in qs:
+            addr = lawyer.address
+            dist = haversine_km(lat, lon, float(addr.latitude), float(addr.longitude))
+            results.append((dist, lawyer))
+        results.sort(key=lambda x: x[0])
+        lawyers = [lw for _, lw in results[:limit]]
+        distances = [round(d, 1) for d, _ in results[:limit]]
+    else:
+        lawyers = list(qs[:limit])
+        distances = [None] * len(lawyers)
+
+    serialized = LawyerMapSerializer(lawyers, many=True).data
+    for item, dist in zip(serialized, distances):
+        item["distance_km"] = dist
+    return list(serialized)
+
+
+def build_analyze_response(message: str, lat: float = None, lon: float = None) -> dict:
     specialty = classify_specialty(message)
-    steps = LEGAL_PATHS.get(specialty, LEGAL_PATHS["other"])
-    label = SPECIALTY_LABELS.get(specialty, "Conseil juridique général")
-
-    results = LawyerRecommendationService.recommend(
-        None,
-        specialty,
-        lat=str(lat),
-        lng=str(lon),
-    )[:limit]
-
-    lawyers = []
-    for r in results:
-        lw = r["lawyer"]
-        addr = lw.address
-        lawyers.append({
-            "id": lw.id,
-            "first_name": lw.first_name,
-            "last_name": lw.last_name,
-            "rating": lw.rating,
-            "address": {
-                "city": addr.city if addr else "",
-                "state": addr.state if addr else "",
-            },
-            "specializations": r["specializations"],
-            "distance_km": r["distance_km"],
-        })
-
     return {
         "specialty": specialty,
-        "specialty_label": label,
-        "steps": steps,
-        "lawyers": lawyers,
+        "specialty_label": SPECIALTY_LABELS.get(specialty, "Conseil juridique général"),
+        "roadmap": get_roadmap(specialty),
+        "lawyers": get_nearest_lawyers(specialty, lat, lon),
     }

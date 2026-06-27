@@ -808,10 +808,16 @@ function apiLawyerToLawyer(l: {
   }
 }
 
+type RoadmapStep = {
+  step: number
+  title: string
+  description: string
+}
+
 type AnalyzeResult = {
   specialty: string
   specialty_label: string
-  steps: { title: string; description: string }[]
+  roadmap: RoadmapStep[]
   lawyers: {
     id: number
     first_name: string
@@ -880,10 +886,10 @@ function LegalPathAndLawyers({ message }: { message: string }) {
           </h3>
         </div>
         <ol className="space-y-4">
-          {data.steps.map((step, i) => (
-            <li key={i} className="flex gap-3">
+          {data.roadmap.map((step) => (
+            <li key={step.step} className="flex gap-3">
               <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#2f2218] text-[0.6rem] font-bold text-white">
-                {i + 1}
+                {step.step}
               </span>
               <div>
                 <p className="text-[0.82rem] font-semibold leading-5 text-[#241910]">
