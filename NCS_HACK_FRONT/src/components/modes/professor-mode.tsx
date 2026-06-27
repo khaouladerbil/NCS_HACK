@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "@heroui/react"
-import { BookOpen, CheckCircle, ChevronRight, Loader2, RefreshCw, XCircle } from "lucide-react"
+import { BookOpen, CheckCircle, ChevronRight, Loader2, RefreshCw, SendHorizontal, Trophy, XCircle } from "lucide-react"
 import { TextEffect } from "@/components/core/text-effect"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { generateQuiz } from "@/lib/backend"
+import { useLang } from "@/lib/language"
 
 const TOPICS = [
   "Divorce et séparation", "Droit du travail", "Héritage et succession",
@@ -25,13 +26,45 @@ type Quiz = {
   questions: Question[]
 }
 
+type ScoreEntry = {
+  topic: string
+  score: number
+  total: number
+  date: string
+}
+
+const SCORES_KEY = "quiz_scores"
+
+function loadScores(): ScoreEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(SCORES_KEY) ?? "[]")
+  } catch {
+    return []
+  }
+}
+
+function saveScore(entry: ScoreEntry) {
+  const prev = loadScores()
+  localStorage.setItem(SCORES_KEY, JSON.stringify([entry, ...prev].slice(0, 20)))
+}
+
+function medal(score: number, total: number) {
+  const pct = score / total
+  if (pct === 1) return "🥇"
+  if (pct >= 0.6) return "🥈"
+  return "🥉"
+}
+
 export function ProfessorMode() {
+  const { t } = useLang()
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
+  const [customTopic, setCustomTopic] = useState("")
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [revealed, setRevealed] = useState<Record<number, boolean>>({})
   const [finished, setFinished] = useState(false)
+  const [scores, setScores] = useState<ScoreEntry[]>(() => loadScores())
 
   function score() {
     if (!quiz) return 0
@@ -66,24 +99,41 @@ export function ProfessorMode() {
     quiz.questions.forEach((q) => { allRevealed[q.id] = true })
     setRevealed(allRevealed)
     setFinished(true)
+
+    const entry: ScoreEntry = {
+      topic: quiz.topic,
+      score: score(),
+      total: quiz.questions.length,
+      date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }),
+    }
+    saveScore(entry)
+    setScores(loadScores())
   }
 
   const allAnswered = quiz ? quiz.questions.every((q) => answers[q.id] !== undefined) : false
 
+  function launchCustomTopic() {
+    const trimmed = customTopic.trim()
+    if (!trimmed) return
+    setSelectedTopic(trimmed)
+    setCustomTopic("")
+    void loadQuiz(trimmed)
+  }
+
   return (
-    <div className="flex flex-1 flex-col bg-[#f4f5f7] px-6 py-8 overflow-y-auto">
+    <div className="flex flex-1 flex-col px-6 py-8 overflow-y-auto">
       <div className="mx-auto w-full max-w-2xl">
 
         {/* Header */}
         <div className="mb-8">
-          <p className="text-[0.68rem] font-semibold tracking-[0.18em] text-[#374151] uppercase">Quiz juridique</p>
+          <p className="text-[0.68rem] font-semibold tracking-[0.18em] text-[#374151] uppercase">{t("quiz.title")}</p>
           <h2 className="mt-3 text-[1.55rem] font-semibold tracking-[-0.03em] text-[#111827]">
             <TextEffect per="word" preset="fade">
-              Testez vos connaissances en droit algérien.
+              {t("quiz.subtitle")}
             </TextEffect>
           </h2>
           <p className="mt-2 text-[0.9rem] leading-6 text-[#4b5563]">
-            Choisissez un thème ou lancez un quiz aléatoire généré par IA.
+            {t("quiz.description")}
           </p>
         </div>
 
@@ -94,7 +144,7 @@ export function ProfessorMode() {
               {TOPICS.map((topic) => (
                 <button
                   key={topic}
-                  onClick={() => { setSelectedTopic(topic); loadQuiz(topic) }}
+                  onClick={() => { setSelectedTopic(topic); void loadQuiz(topic) }}
                   className="rounded-xl border border-[#e2d9ce] bg-white px-4 py-3 text-left text-sm font-medium text-[#291c08] hover:border-[#291c08] hover:bg-[#faf7f4] transition-colors"
                 >
                   {topic}
@@ -102,11 +152,74 @@ export function ProfessorMode() {
               ))}
             </div>
             <button
-              onClick={() => { setSelectedTopic(null); loadQuiz() }}
+              onClick={() => { setSelectedTopic(null); void loadQuiz() }}
               className="w-full rounded-xl border-2 border-dashed border-[#c4b49a] bg-white px-4 py-3 text-sm font-semibold text-[#291c08] hover:bg-[#faf7f4] transition-colors flex items-center justify-center gap-2"
             >
-              <BookOpen className="size-4" /> Quiz aléatoire
+              <BookOpen className="size-4" /> {t("quiz.random")}
             </button>
+
+            {/* Custom topic */}
+            <div className="flex gap-2">
+              <input
+                value={customTopic}
+                onChange={(e) => setCustomTopic(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") launchCustomTopic() }}
+                placeholder={t("quiz.custom.placeholder")}
+                className="min-w-0 flex-1 rounded-xl border border-[#e2d9ce] bg-white px-4 py-3 text-sm text-[#291c08] outline-none placeholder:text-[#8a7762] transition-colors focus:border-[#291c08]"
+              />
+              <button
+                onClick={launchCustomTopic}
+                disabled={!customTopic.trim()}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#e2d9ce] bg-white px-4 py-3 text-sm font-semibold text-[#291c08] transition-colors hover:border-[#291c08] hover:bg-[#faf7f4] disabled:opacity-40"
+              >
+                <SendHorizontal className="size-4" />
+                {t("quiz.custom.launch")}
+              </button>
+            </div>
+
+            {/* Historique des scores */}
+            {scores.length > 0 && (
+              <div className="rounded-xl border border-[#e2d9ce] bg-white p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Trophy className="size-4 text-[#8a7762]" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#8a7762]">
+                    Historique des scores
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  {scores.map((entry, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded-lg bg-[#faf7f4] px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base">{medal(entry.score, entry.total)}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-[#291c08] truncate">{entry.topic}</p>
+                          <p className="text-[10px] text-[#8a7762]">{entry.date}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0 ml-3">
+                        <span className={cn(
+                          "text-sm font-bold",
+                          entry.score === entry.total ? "text-green-600" :
+                          entry.score / entry.total >= 0.6 ? "text-[#291c08]" : "text-red-500"
+                        )}>
+                          {entry.score}
+                        </span>
+                        <span className="text-xs text-[#8a7762]">/ {entry.total}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => { localStorage.removeItem(SCORES_KEY); setScores([]) }}
+                  className="text-[10px] text-[#c4b49a] hover:text-red-400 transition-colors"
+                >
+                  Effacer l'historique
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -114,7 +227,7 @@ export function ProfessorMode() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="size-8 animate-spin text-[#291c08]" />
-            <p className="text-sm text-[#6b5c4d]">Génération du quiz par Gemini...</p>
+            <p className="text-sm text-[#6b5c4d]">{t("quiz.loading")}</p>
           </div>
         )}
 
@@ -127,7 +240,7 @@ export function ProfessorMode() {
                 onClick={() => { setQuiz(null); setSelectedTopic(null) }}
                 className="flex items-center gap-1 text-xs text-[#8a7762] hover:text-[#291c08]"
               >
-                <RefreshCw className="size-3" /> Nouveau quiz
+                <RefreshCw className="size-3" /> {t("quiz.new")}
               </button>
             </div>
 
@@ -179,14 +292,15 @@ export function ProfessorMode() {
             {/* Score final */}
             {finished ? (
               <div className="rounded-xl bg-[#291c08] px-6 py-5 text-center text-white space-y-2">
+                <p className="text-4xl">{medal(score(), quiz.questions.length)}</p>
                 <p className="text-2xl font-bold">{score()} / {quiz.questions.length}</p>
                 <p className="text-sm opacity-80">
-                  {score() === quiz.questions.length ? "Parfait ! Excellent juriste." :
-                   score() >= 3 ? "Bon résultat ! Continuez à apprendre." :
-                   "Révisez et réessayez !"}
+                  {score() === quiz.questions.length ? t("quiz.score.perfect") :
+                   score() >= 3 ? t("quiz.score.good") :
+                   t("quiz.score.retry")}
                 </p>
                 <button
-                  onClick={() => loadQuiz(selectedTopic ?? undefined)}
+                  onClick={() => void loadQuiz(selectedTopic ?? undefined)}
                   className="mt-2 flex items-center gap-1 mx-auto text-xs text-[#c4b49a] hover:text-white"
                 >
                   <RefreshCw className="size-3" /> Nouveau quiz sur ce thème

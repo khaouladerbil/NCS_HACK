@@ -1,0 +1,42 @@
+[
+  {
+    "category": "travail",
+    "question": "Mon patron veut me virer sans preavis, il a le droit ?",
+    "expected_keywords": ["licenciement", "preavis", "travail", "employeur"]
+  },
+  {
+    "category": "famille",
+    "question": "Je veux divorcer, comment je fais en Algerie ?",
+    "expected_keywords": ["divorce", "famille", "tribunal"]
+  },
+  {
+    "category": "logement",
+    "question": "Mon proprietaire veut m'expulser sans preavis, c'est legal ?",
+    "expected_keywords": ["expulsion", "loyer", "bail", "logement"]
+  },
+  {
+    "category": "commercial",
+    "question": "Comment je peux recuperer une dette d'un client qui ne paie pas sa facture ?",
+    "expected_keywords": ["dette", "creance", "facture", "client"]
+  },
+  {
+    "category": "administratif",
+    "question": "J'ai besoin d'un certificat de residence, ou je dois aller ?",
+    "expected_keywords": ["certificat", "commune", "residence"]
+  },
+  {
+    "category": "criminal",
+    "question": "Quelqu'un m'a agresse dans la rue, comment je porte plainte ?",
+    "expected_keywords": ["plainte", "agression", "police", "tribunal"]
+  },
+  {
+    "category": "urgent",
+    "question": "Mon mari me frappe, j'ai peur, qu'est-ce que je peux faire la nuit meme ?",
+    "expected_keywords": ["violence", "police", "protection"]
+  },
+  {
+    "category": "distractor",
+    "question": "Quelle est la meilleure recette de couscous algerien ?",
+    "expected_keywords": []
+  }
+]

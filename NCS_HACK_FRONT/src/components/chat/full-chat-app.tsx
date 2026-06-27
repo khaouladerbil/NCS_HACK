@@ -1,19 +1,23 @@
 "use client"
 
 import {
+  AlertTriangle,
   BookOpen,
+  CheckCircle2,
   Copy,
   ExternalLink,
   FileText,
   Folder,
   FolderOpen,
   GripVertical,
+  Loader2,
   Mic,
   MoreHorizontal,
   Pencil,
   Plus,
   Quote,
   Scale,
+  ShieldAlert,
   Sparkles,
   Settings2,
   Square,
@@ -93,6 +97,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
 import {
@@ -109,7 +114,8 @@ import {
 import { useElementWidth } from "@/hooks/use-element-width"
 import { measurePretextBlock } from "@/lib/pretext"
 import { cn } from "@/lib/utils"
-import { sendAssistantMessage, getLawyers, getAccessToken, getDrafts, uploadAssistantDocument } from "@/lib/backend"
+import { useLang } from "@/lib/language"
+import { sendAssistantMessage, getLawyers, getAccessToken, getDrafts, uploadAssistantDocument, analyzeDocument, type DocumentAnalysis } from "@/lib/backend"
 import type { OutlineItem } from "@/lib/document"
 import type { WorkspaceMode } from "@/pages/assistant-page"
 import logoMark from "../../../Logo.svg"
@@ -118,6 +124,7 @@ export type FileItem = {
   id: string
   name: string
   ext?: string
+  sourceUrl?: string
 }
 
 export type FolderItem = {
@@ -308,15 +315,9 @@ const LAWYERS: Lawyer[] = [
 
 // Matches explicit lawyer requests OR common legal situations (divorce, eviction, contract dispute, etc.)
 const LAWYER_QUERY_RE =
-  /\b(lawyer|lawyers|attorney|attorneys|counsel|solicitor|advocate|avocat|avocats|conseiller juridique|محامي|محامٍ|مستشار قانوني)\b|\b(je veux|je cherche|trouver|recommande[r]?|besoin d[e'])\s+(un\s+)?avocat\b|\bavocat\s+(spécialis[eé]|en droit|de famille|du travail|pénal|immobilier)\b|\b(divorc|licenci[eé]|licencier|expuls[eé]|expulser|plainte|poursuivre|tribunal|gar[dt]e d['e]enfant|pension alimentaire|succession|heritage|loyer|bail|arnaque|escroquerie|accident de travail|contrat de travail|droit d[eu]|problème (de|avec|juridique)|litige|سرقة|طلاق|فصل|عقد)\b/i
+  /\b(lawyer|lawyers|attorney|attorneys|counsel|solicitor|advocate|avocat|avocats|conseiller juridique|محامي|محامٍ|مستشار قانوني)\b|\b(je veux|je cherche|trouver|recommande[r]?|besoin d[e'])\s+(un\s+)?avocat\b|\bavocat\s+(spécialis[eé]|en droit|de famille|du travail|pénal|immobilier)\b|\b(divorc\w*|licenci\w*|expuls\w*|plainte|poursuivre|tribunal|garde\s+d['e]enfant|pension\s+alimentaire|succession|heritage|loyer|bail|arnaque|escroquerie|accident\s+de\s+travail|contrat\s+de\s+travail|procedure|démarche\w*|طلاق|فصل|عقد|سرقة)/i
 
 const initialMessages: ChatMessage[] = []
-
-const QUICK_PROMPTS = [
-  "Tighten this clause.",
-  "Draft formal notice.",
-  "Summarize exposure.",
-]
 
 const CONSULTANT_LINE_HEIGHT = 30
 const CONSULTANT_BODY_FONT =
@@ -568,6 +569,30 @@ function WorkflowTimeline({
         </ChainOfThought>
       </div>
 
+      {legalRoadmap && legalRoadmap.length > 0 && (
+        <div
+          data-flow-step
+          className="rounded-[1.35rem] border border-[#d4e8d4] bg-[linear-gradient(180deg,#f4faf4_0%,#edf6ed_100%)] px-3 py-3 shadow-[0_10px_28px_rgba(8,41,8,0.05)]"
+        >
+          <p className="text-[0.62rem] font-semibold tracking-[0.18em] text-[#2d6a2d] uppercase mb-2">
+            Procédures à suivre
+          </p>
+          <ol className="space-y-2">
+            {legalRoadmap.map((s) => (
+              <li key={s.step} className="flex gap-2 items-start">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#2d6a2d] text-[9px] font-bold text-white mt-0.5">
+                  {s.step}
+                </span>
+                <div>
+                  <p className="text-[0.66rem] font-semibold text-[#1a3d1a] leading-4">{s.title}</p>
+                  <p className="text-[0.58rem] leading-3.5 text-[#4b6e4b] mt-0.5">{s.description}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       <div
         data-flow-step
         className="rounded-[1.35rem] border border-[#eadfce] bg-[linear-gradient(180deg,#faf5ed_0%,#f6efe3_100%)] px-3 py-3 shadow-[0_10px_28px_rgba(41,28,8,0.05)]"
@@ -688,9 +713,10 @@ function MorphingDialogBasicTwo({ lawyer }: { lawyer: Lawyer }) {
     ? `https://www.google.com/maps?q=${lawyer.lat},${lawyer.lon}`
     : `https://www.google.com/maps/search/${encodeURIComponent(fullAddress + ", Algérie")}`
 
-  const mapSrc = lawyer.lat && lawyer.lon
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${lawyer.lon - 0.03},${lawyer.lat - 0.03},${lawyer.lon + 0.03},${lawyer.lat + 0.03}&layer=mapnik&marker=${lawyer.lat},${lawyer.lon}`
-    : null
+  const mapQuery = lawyer.lat && lawyer.lon
+    ? `${lawyer.lat},${lawyer.lon}`
+    : encodeURIComponent(fullAddress + ", Algérie")
+  const mapSrc = `https://maps.google.com/maps?q=${mapQuery}&z=15&output=embed`
 
   return (
     <MorphingDialog
@@ -793,17 +819,16 @@ function MorphingDialogBasicTwo({ lawyer }: { lawyer: Lawyer }) {
                     Ouvrir dans Google Maps
                   </a>
                 </div>
-                {mapSrc && (
-                  <iframe
-                    src={mapSrc}
-                    title="Localisation avocat"
-                    width="100%"
-                    height="220"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                )}
+                <iframe
+                  src={mapSrc}
+                  title="Localisation avocat"
+                  width="100%"
+                  height="220"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
               </div>
             </div>
           </ScrollArea>
@@ -868,7 +893,7 @@ function LegalPathAndLawyers({ message, onRoadmapReady }: { message: string; onR
   type RawLawyer = {
     first_name?: unknown
     last_name?: unknown
-    specialization?: unknown
+    specializations?: unknown[]
     rating?: unknown
     distance_km?: unknown
     address?: { street?: string; city?: string; state?: string; latitude?: number; longitude?: number }
@@ -878,10 +903,11 @@ function LegalPathAndLawyers({ message, onRoadmapReady }: { message: string; onR
     const city = l.address?.city ?? ""
     const wilaya = l.address?.state ?? ""
     const location = [city, wilaya].filter(Boolean).join(", ") || "Algérie"
+    const specs = Array.isArray(l.specializations) ? l.specializations.map(String) : []
     return {
       name: `${l.first_name ?? ""} ${l.last_name ?? ""}`.trim() || "Avocat",
       firm: location,
-      practice: String(l.specialization ?? "Droit général"),
+      practice: specs.length ? specs.join(", ") : "Droit général",
       jurisdiction: wilaya || "Algérie",
       image: "",
       body: [],
@@ -932,6 +958,107 @@ function LegalPathAndLawyers({ message, onRoadmapReady }: { message: string; onR
   )
 }
 
+function DocumentAnalysisCard({
+  name,
+  analysis,
+  loading,
+  onClose,
+}: {
+  name: string
+  analysis: DocumentAnalysis | null
+  loading: boolean
+  onClose: () => void
+}) {
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-[#e2d9ce] bg-[#faf7f4] px-4 py-3 text-sm text-[#6b5c4d]">
+        <Loader2 className="size-4 animate-spin" />
+        Analyse de <span className="font-medium">{name}</span> en cours...
+      </div>
+    )
+  }
+  if (!analysis) return null
+
+  const risk = analysis.fraud_risk
+  const riskStyle =
+    risk === "eleve"
+      ? { bg: "bg-red-50", border: "border-red-300", text: "text-red-700", label: "Risque élevé" }
+      : risk === "moyen"
+      ? { bg: "bg-orange-50", border: "border-orange-300", text: "text-orange-700", label: "Risque moyen" }
+      : { bg: "bg-green-50", border: "border-green-300", text: "text-green-700", label: "Risque faible" }
+
+  return (
+    <div className={cn("rounded-xl border p-4 space-y-3", riskStyle.border, riskStyle.bg)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {analysis.is_suspicious ? (
+            <ShieldAlert className={cn("size-5 shrink-0", riskStyle.text)} />
+          ) : (
+            <CheckCircle2 className="size-5 shrink-0 text-green-600" />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#291c08] truncate">{name}</p>
+            <p className="text-xs text-[#6b5c4d]">{analysis.document_type}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-semibold", riskStyle.bg, riskStyle.text)}>
+            {riskStyle.label}
+          </span>
+          <button onClick={onClose} className="text-[#8a7762] hover:text-[#291c08]">
+            <X className="size-4" />
+          </button>
+        </div>
+      </div>
+
+      {analysis.summary && (
+        <p className="text-sm text-[#291c08] leading-relaxed">{analysis.summary}</p>
+      )}
+
+      {analysis.red_flags.length > 0 && (
+        <div className="space-y-1">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-red-600">
+            <AlertTriangle className="size-3.5" /> Éléments suspects
+          </p>
+          <ul className="space-y-1">
+            {analysis.red_flags.map((flag, i) => (
+              <li key={i} className="text-xs text-red-700 flex gap-1.5">
+                <span>•</span><span>{flag}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {analysis.missing_elements.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#8a7762]">Éléments manquants</p>
+          <ul className="space-y-1">
+            {analysis.missing_elements.map((el, i) => (
+              <li key={i} className="text-xs text-[#6b5c4d] flex gap-1.5">
+                <span>•</span><span>{el}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {analysis.recommendations.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#8a7762]">Recommandations</p>
+          <ul className="space-y-1">
+            {analysis.recommendations.map((rec, i) => (
+              <li key={i} className="text-xs text-[#291c08] flex gap-1.5">
+                <span>→</span><span>{rec}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 type AttachmentPreviewProps = {
   attachment: AttachmentItem
   onRemove: (id: string) => void
@@ -943,7 +1070,7 @@ function AttachmentPreview({ attachment, onRemove }: AttachmentPreviewProps) {
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger render={<span />}>
         <div className="relative inline-flex size-12 items-center justify-center overflow-hidden rounded-xl bg-[#f6efe4]">
           {isImage && attachment.previewUrl ? (
             <img
@@ -978,7 +1105,7 @@ function MessageAttachmentSquare({ attachment }: { attachment: AttachmentItem })
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger render={<span />}>
         <div className="inline-flex size-14 items-center justify-center overflow-hidden rounded-xl bg-[#f6efe4]">
           {isImage && attachment.previewUrl ? (
             <img
@@ -1040,7 +1167,7 @@ function ConditionalTooltip({
 
   return (
     <Tooltip>
-      <TooltipTrigger>{children}</TooltipTrigger>
+      <TooltipTrigger render={<span />}>{children}</TooltipTrigger>
       <TooltipContent>{content}</TooltipContent>
     </Tooltip>
   )
@@ -1449,8 +1576,12 @@ export function ChatSidebar({
           {side === "right" ? (
             <div className="h-5" />
           ) : (
-            <div className="flex justify-start py-0.5 pl-1">
+            <div className="flex items-center justify-between py-0.5 pl-1 pr-0.5">
               <img src={logoMark} alt="JusticePath" className="h-auto w-[3.1rem]" />
+              <SidebarTrigger
+                side="left"
+                className="size-8 rounded-full text-[#9ca3af] transition hover:bg-[#eef2f7] hover:text-[#374151]"
+              />
             </div>
           )}
         </SidebarHeader>
@@ -1705,15 +1836,14 @@ export function ChatSidebar({
         </SidebarContent>
 
         {side === "left" ? (
-          <SidebarFooter className="px-3.5 py-3">
+          <SidebarFooter className="px-3 pb-4 pt-2">
             <NavLink
               to="/settings"
-              className="mb-2 flex h-9 items-center gap-2 rounded-full px-2.5 text-[0.68rem] font-medium text-[#4b5563] transition hover:bg-[#eef2f7] hover:text-[#111827]"
-              aria-label="Settings"
-              title="Settings"
+              className="flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-[0.78rem] font-medium text-[#6b5c4d] transition hover:bg-[#f0ebe4] hover:text-[#1f140d]"
+              aria-label="Paramètres"
             >
-              <Settings2 className="size-3.5" />
-              Settings
+              <Settings2 className="size-4 shrink-0" />
+              Paramètres
             </NavLink>
           </SidebarFooter>
         ) : null}
@@ -1747,10 +1877,12 @@ export function ChatContent({
   activeCitationId,
   onActiveCitationChange,
 }: ChatContentProps) {
+  const { t } = useLang()
   const [prompt, setPrompt] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages)
   const [attachments, setAttachments] = useState<AttachmentItem[]>([])
+  const [analyses, setAnalyses] = useState<{ id: string; name: string; analysis: DocumentAnalysis | null; loading: boolean }[]>([])
   const [listening, setListening] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const streamAnchorRef = useRef<HTMLDivElement>(null)
@@ -2007,16 +2139,28 @@ export function ChatContent({
         <ChatContainerRoot className="h-full">
           <ChatContainerContent className="space-y-0 px-4 pb-64 pt-4 md:pb-72 md:pt-5">
             {chatMessages.length === 0 ? (
-              <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl items-center justify-center px-4 text-center">
+              <motion.div
+                className="mx-auto flex min-h-[50vh] w-full max-w-3xl items-center justify-center px-4 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35, delay: 0.05 }}
+              >
                 <div>
                   <h1 className="font-editor text-[clamp(1.75rem,2.8vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#24170d]">
-                    Start a legal task.
+                    <TextEffect per="word" preset="fade">
+                      {t("chat.empty.title")}
+                    </TextEffect>
                   </h1>
-                  <p className="mt-3 text-[0.88rem] text-[#5f5245]">
-                    Review, draft, cite, strategize.
-                  </p>
+                  <motion.p
+                    className="mt-3 text-[0.88rem] text-[#5f5245]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.32, duration: 0.3 }}
+                  >
+                    {t("chat.empty.subtitle")}
+                  </motion.p>
                 </div>
-              </div>
+              </motion.div>
             ) : null}
 
             {chatMessages.map((message, index) => {
@@ -2164,25 +2308,6 @@ export function ChatContent({
             onSubmit={handleSubmit}
             className="pointer-events-auto relative z-10 w-[min(100vw-2rem,52rem)] rounded-[1.55rem] border border-[#d9cab7] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,244,236,0.98))] p-0 shadow-[0_24px_60px_rgba(71,46,22,0.14)]"
           >
-            {!prompt.trim() && attachments.length === 0 ? (
-              <div className="overflow-x-auto px-4 pt-3">
-                <div className="flex w-max min-w-full gap-2 pb-1">
-                  {QUICK_PROMPTS.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() => {
-                        setPrompt(suggestion)
-                        toast(`Suggestion loaded: ${suggestion}`)
-                      }}
-                      className="shrink-0 rounded-full border border-[#eadfce] bg-[#faf6ef] px-3 py-1.5 text-[0.72rem] text-[#5b4331] transition hover:border-[#d9cab7] hover:bg-[#f4ecdf] hover:text-[#22170f]"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
             <input
               ref={fileInputRef}
               type="file"
@@ -2192,18 +2317,36 @@ export function ChatContent({
                 const files = Array.from(event.target.files ?? [])
                 event.target.value = ""
                 for (const file of files) {
+                  const itemId = `${file.name}-${file.lastModified}`
                   try {
-                    await uploadAssistantDocument(file)
+                    const uploaded = await uploadAssistantDocument(file) as { id?: number }
                     setAttachments((prev) => [
                       ...prev,
                       {
-                        id: `${file.name}-${file.lastModified}`,
+                        id: itemId,
                         name: file.name,
                         type: file.type,
                         previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
                       },
                     ])
-                    toast(`${file.name} ajouté`)
+                    toast(`${file.name} ajouté — analyse en cours...`)
+
+                    // Analyse IA + détection de fraude
+                    if (uploaded?.id) {
+                      setAnalyses((prev) => [...prev, { id: itemId, name: file.name, analysis: null, loading: true }])
+                      analyzeDocument(uploaded.id)
+                        .then((analysis) => {
+                          setAnalyses((prev) => prev.map((a) => a.id === itemId ? { ...a, analysis, loading: false } : a))
+                          if (analysis.is_suspicious) {
+                            toast(`⚠️ ${file.name} : document suspect détecté`)
+                          } else {
+                            toast(`✓ ${file.name} analysé`)
+                          }
+                        })
+                        .catch(() => {
+                          setAnalyses((prev) => prev.map((a) => a.id === itemId ? { ...a, loading: false } : a))
+                        })
+                    }
                   } catch (err) {
                     toast(err instanceof Error ? err.message : `${file.name} refusé — document non juridique`)
                   }
@@ -2229,8 +2372,21 @@ export function ChatContent({
                 ))}
               </div>
             ) : null}
+            {analyses.length ? (
+              <div className="space-y-2 px-4 pt-3">
+                {analyses.map((entry) => (
+                  <DocumentAnalysisCard
+                    key={entry.id}
+                    name={entry.name}
+                    analysis={entry.analysis}
+                    loading={entry.loading}
+                    onClose={() => setAnalyses((prev) => prev.filter((a) => a.id !== entry.id))}
+                  />
+                ))}
+              </div>
+            ) : null}
             <PromptInputTextarea
-              placeholder="Issue, objective, output."
+              placeholder={t("chat.placeholder")}
               className="min-h-[74px] px-5 pt-4 pb-2 text-[0.96rem] leading-7 text-[#20160f] placeholder:text-[#7f6f61]"
             />
             <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-0">
@@ -2243,7 +2399,7 @@ export function ChatContent({
                     onClick={openFilePicker}
                   >
                     <Plus className="size-3.5" />
-                    Files
+                    {t("chat.files")}
                   </Button>
                 </PromptInputAction>
               </div>

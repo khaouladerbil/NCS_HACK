@@ -20,6 +20,7 @@ import {
   type EditorToolbarButton,
   type EditorToolbarState,
 } from "@/components/modes/markdown-editor-mode"
+import { KiboEditorMode } from "@/components/modes/kibo-editor-mode"
 import { ProfessorMode } from "@/components/modes/professor-mode"
 import { cn } from "@/lib/utils"
 
@@ -62,6 +63,9 @@ export function WorkspaceModes({
   onRoadmapChange,
 }: WorkspaceModesProps) {
   const [toolbarState, setToolbarState] = useState<EditorToolbarState | null>(null)
+
+  const ext = activeFile?.ext?.toLowerCase() ?? ""
+  const isViewerFile = ext === "pdf" || ext === "docx"
 
   useEffect(() => {
     if (mode !== "editor") setToolbarState(null)
@@ -197,20 +201,6 @@ export function WorkspaceModes({
                       Source file
                     </a>
                   ) : null}
-                  <ToolbarGroup>
-                    <ToolbarTextButton
-                      label="Export DOCX"
-                      onClick={() => triggerEditorAction("export-docx")}
-                    >
-                      DOCX
-                    </ToolbarTextButton>
-                    <ToolbarTextButton
-                      label="Export PDF"
-                      onClick={() => triggerEditorAction("export-pdf")}
-                    >
-                      PDF
-                    </ToolbarTextButton>
-                  </ToolbarGroup>
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -218,29 +208,44 @@ export function WorkspaceModes({
         </div>
       </header>
 
-      {mode === "consultant" ? (
-        <ChatContent
-          activeFile={activeFile}
-          onOpenEditor={() => onModeChange("editor")}
-          onDocumentChange={onDocumentChange}
-          onConversationStateChange={onConversationStateChange}
-          onThinkingStateChange={onThinkingStateChange}
-          onResponseContextChange={onResponseContextChange}
-          onResponseProgressChange={onResponseProgressChange}
-          activeCitationId={activeCitationId}
-          onActiveCitationChange={onActiveCitationChange}
-          onRoadmapChange={onRoadmapChange}
-        />
-      ) : mode === "editor" ? (
-        <MarkdownEditorMode
-          activeFile={activeFile}
-          value={documentValue}
-          onChange={onDocumentChange}
-          onToolbarStateChange={setToolbarState}
-        />
-      ) : (
-        <ProfessorMode />
-      )}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={mode}
+          className="flex min-h-0 flex-1 flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          {mode === "consultant" ? (
+            <ChatContent
+              activeFile={activeFile}
+              onOpenEditor={() => onModeChange("editor")}
+              onDocumentChange={onDocumentChange}
+              onConversationStateChange={onConversationStateChange}
+              onThinkingStateChange={onThinkingStateChange}
+              onResponseContextChange={onResponseContextChange}
+              onResponseProgressChange={onResponseProgressChange}
+              activeCitationId={activeCitationId}
+              onActiveCitationChange={onActiveCitationChange}
+              onRoadmapChange={onRoadmapChange}
+            />
+          ) : mode === "editor" ? (
+            isViewerFile ? (
+              <MarkdownEditorMode
+                activeFile={activeFile}
+                value={documentValue}
+                onChange={onDocumentChange}
+                onToolbarStateChange={setToolbarState}
+              />
+            ) : (
+              <KiboEditorMode value={documentValue} onChange={onDocumentChange} />
+            )
+          ) : (
+            <ProfessorMode />
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }
@@ -280,24 +285,3 @@ function ToolbarIconButton({
   )
 }
 
-function ToolbarTextButton({
-  children,
-  label,
-  onClick,
-}: {
-  children: ReactNode
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="inline-flex h-8 items-center justify-center rounded-full px-3 text-[0.66rem] font-semibold tracking-[0.14em] text-[#6d5640] transition-colors hover:bg-[#f4ecdf] hover:text-[#24170d] lg:h-9"
-    >
-      {children}
-    </button>
-  )
-}

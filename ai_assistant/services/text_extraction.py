@@ -75,17 +75,37 @@ def _extract_docx(path):
         return ""
 
 
-def _extract_image(path):
-    try:
-        from paddleocr import PaddleOCR
+_EASYOCR_READER = None
 
-        ocr = PaddleOCR(use_angle_cls=True, lang="fr")
-        result = ocr.ocr(str(path), cls=True)
-        lines = []
-        for page in result or []:
-            for item in page or []:
-                if len(item) > 1 and item[1]:
-                    lines.append(item[1][0])
-        return "\n".join(lines)
+
+def _extract_image(path):
+    # 1) Tesseract (léger, si le binaire est installé)
+    text = _extract_image_tesseract(path)
+    if text.strip():
+        return text
+    # 2) EasyOCR (autonome, multilingue) en fallback
+    return _extract_image_easyocr(path)
+
+
+def _extract_image_tesseract(path):
+    try:
+        import pytesseract
+        from PIL import Image
+
+        return pytesseract.image_to_string(Image.open(str(path)), lang="fra+ara+eng")
+    except Exception:
+        return ""
+
+
+def _extract_image_easyocr(path):
+    global _EASYOCR_READER
+    try:
+        import easyocr
+
+        if _EASYOCR_READER is None:
+            # 'ar' n'est pas compatible avec le latin dans un même reader → fr+en
+            _EASYOCR_READER = easyocr.Reader(["fr", "en"], gpu=False)
+        result = _EASYOCR_READER.readtext(str(path), detail=0)
+        return "\n".join(result)
     except Exception:
         return ""

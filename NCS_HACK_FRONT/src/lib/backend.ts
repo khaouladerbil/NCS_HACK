@@ -194,6 +194,44 @@ export async function uploadAssistantDocument(file: File) {
   return res.json()
 }
 
+export type DocumentAnalysis = {
+  document_type: string
+  summary: string
+  is_legal_document?: boolean
+  fraud_risk: "faible" | "moyen" | "eleve"
+  is_suspicious: boolean
+  red_flags: string[]
+  missing_elements: string[]
+  key_points: string[]
+  recommendations: string[]
+}
+
+export async function generateLegalText(prompt: string, language: "fr" | "ar" | "en" = "fr"): Promise<string> {
+  const res = await apiFetch("/api/assistant/generate-legal-text/", {
+    method: "POST",
+    body: JSON.stringify({ prompt, language }),
+  })
+  if (!res.ok) {
+    const msg = await parseApiError(res)
+    throw new Error(msg || "Génération impossible.")
+  }
+  const data = (await res.json()) as { content: string }
+  return data.content
+}
+
+export async function analyzeDocument(documentId: number): Promise<DocumentAnalysis> {
+  const res = await apiFetch("/api/assistant/analyze-document/", {
+    method: "POST",
+    body: JSON.stringify({ document_id: documentId }),
+  })
+  if (!res.ok) {
+    const msg = await parseApiError(res)
+    throw new Error(msg || "Analyse impossible.")
+  }
+  const data = (await res.json()) as { analysis: DocumentAnalysis }
+  return data.analysis
+}
+
 // ── Drafts ────────────────────────────────────────────────────────────────────
 
 export async function getDrafts() {

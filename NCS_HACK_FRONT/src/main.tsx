@@ -13,7 +13,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <LanguageProvider>
-        <Toast.Provider placement="bottom" width="fit-content" />
+        <Toast.Provider placement="top-center" width="fit-content" />
         <TooltipProvider>
           <App />
         </TooltipProvider>

@@ -21,4 +21,6 @@ class LawyerMapSerializer(serializers.ModelSerializer):
         ]
 
     def get_specializations(self, obj):
-        return [s.strip() for s in obj.specialization.split(",") if s.strip()]
+        raw = obj.specialization or ""
+        sep = "|" if "|" in raw else ","
+        return [s.strip() for s in raw.split(sep) if s.strip()]

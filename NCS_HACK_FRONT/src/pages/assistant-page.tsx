@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "@heroui/react"
 import { gsap } from "gsap"
 import Lenis from "lenis"
+import { FileText, Image, Upload } from "lucide-react"
 import type { Transition, Variants } from "motion/react"
 
 import { ChatSidebar, folderTree, type ResponseContext, type RoadmapStep } from "@/components/chat/full-chat-app"
@@ -35,6 +36,9 @@ export function AssistantPage() {
   const [creationMode, setCreationMode] = useState<"folder" | "file" | null>(null)
   const [creationValue, setCreationValue] = useState("")
   const [creationFolderId, setCreationFolderId] = useState<string | null>(null)
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null)
+  const [uploadDragOver, setUploadDragOver] = useState(false)
+  const filePickerRef = useRef<HTMLInputElement | null>(null)
   const [renamingFileId, setRenamingFileId] = useState<string | null>(null)
   const [renamingFileValue, setRenamingFileValue] = useState("")
   const [deletionTarget, setDeletionTarget] = useState<{
@@ -143,7 +147,7 @@ export function AssistantPage() {
     toast(`Folder created: ${name}`)
   }
 
-  const addFileToFolder = (folderId: string, name: string) => {
+  const addFileToFolder = (folderId: string, name: string, sourceUrl?: string) => {
     if (!name) return
 
     const ext = name.split(".").pop()?.toLowerCase() ?? "md"
@@ -151,6 +155,7 @@ export function AssistantPage() {
       id: `file-${Date.now()}`,
       name,
       ext,
+      sourceUrl,
     }
 
     setFolders((prev) =>
@@ -159,27 +164,37 @@ export function AssistantPage() {
       )
     )
     setExpandedFolders((prev) => new Set(prev).add(folderId))
-    toast(`File added: ${name}`)
+    toast(`Fichier ajouté : ${name}`)
+  }
+
+  const handleUploadFile = (file: File) => {
+    const url = URL.createObjectURL(file)
+    setUploadedFileUrl(url)
+    setCreationValue(file.name)
   }
 
   const openCreationDialog = (type: "folder" | "file", folderId?: string) => {
     setCreationMode(type)
     setCreationFolderId(folderId ?? null)
-    setCreationValue(type === "folder" ? "New Folder" : "Untitled Draft.md")
+    setCreationValue(type === "folder" ? "New Folder" : "")
   }
 
   const closeCreationDialog = () => {
     setCreationMode(null)
     setCreationFolderId(null)
     setCreationValue("")
+    setUploadedFileUrl(null)
+    setUploadDragOver(false)
   }
 
   const submitCreation = () => {
-    const name = creationValue.trim()
-    if (!name || !creationMode) return
+    if (!creationMode) return
+    const name = creationValue.trim() || (creationMode === "file" ? "Untitled Draft.md" : "")
+    if (!name) return
 
     if (creationMode === "folder") createFolder(name)
-    if (creationMode === "file" && creationFolderId) addFileToFolder(creationFolderId, name)
+    if (creationMode === "file" && creationFolderId)
+      addFileToFolder(creationFolderId, name, uploadedFileUrl ?? undefined)
 
     closeCreationDialog()
   }
@@ -377,39 +392,115 @@ export function AssistantPage() {
       >
         <DialogContent className="w-full max-w-md bg-white p-6">
           <DialogHeader>
-            <DialogTitle className="text-zinc-900">
-              {creationMode === "folder" ? "Create folder" : "Create file"}
+            <DialogTitle className="text-[#111827]">
+              {creationMode === "folder" ? "Nouveau dossier" : "Ajouter un fichier"}
             </DialogTitle>
-            <DialogDescription className="text-zinc-600">
-              {creationMode === "folder" ? "Enter folder name." : "Enter file name."}
+            <DialogDescription className="text-[#6b7280]">
+              {creationMode === "folder"
+                ? "Entrez le nom du dossier."
+                : "Importez un PDF, une image ou un document, ou créez un brouillon vide."}
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-6 flex flex-col space-y-4">
-            <label htmlFor="creation-name" className="sr-only">
-              Name
-            </label>
-            <input
-              id="creation-name"
-              value={creationValue}
-              onChange={(event) => setCreationValue(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault()
-                  submitCreation()
-                }
-              }}
-              className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-base text-zinc-900 outline-hidden focus:ring-2 focus:ring-black/5 sm:text-sm"
-              placeholder="Enter name"
-              autoFocus
-            />
-            <button
-              className="inline-flex items-center justify-center self-end rounded-lg bg-black px-4 py-2 text-sm font-medium text-zinc-50"
-              type="button"
-              onClick={submitCreation}
-            >
-              Create
-            </button>
-          </div>
+
+          {creationMode === "file" ? (
+            <div className="mt-5 flex flex-col gap-3">
+              <input
+                ref={filePickerRef}
+                type="file"
+                accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.webp,.txt,.md"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleUploadFile(file)
+                  e.target.value = ""
+                }}
+              />
+              {/* Drop zone */}
+              <button
+                type="button"
+                onClick={() => filePickerRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setUploadDragOver(true) }}
+                onDragLeave={() => setUploadDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setUploadDragOver(false)
+                  const file = e.dataTransfer.files[0]
+                  if (file) handleUploadFile(file)
+                }}
+                className={`flex w-full flex-col items-center gap-2.5 rounded-xl border-2 border-dashed px-6 py-7 text-center transition-colors ${
+                  uploadDragOver
+                    ? "border-[#291c08] bg-[#faf7f4]"
+                    : uploadedFileUrl
+                    ? "border-green-400 bg-green-50"
+                    : "border-[#e2d9ce] bg-[#fdfaf7] hover:border-[#c4b49a] hover:bg-[#faf7f4]"
+                }`}
+              >
+                {uploadedFileUrl ? (
+                  <>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                      <FileText className="size-4.5 text-green-600" />
+                    </div>
+                    <p className="text-sm font-medium text-green-700">Fichier importé</p>
+                    <p className="text-xs text-green-600">{creationValue}</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0ebe4]">
+                      <Upload className="size-4 text-[#8a7762]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#291c08]">
+                        Glissez un fichier ici ou{" "}
+                        <span className="underline underline-offset-2">parcourir</span>
+                      </p>
+                      <p className="mt-1 text-xs text-[#8a7762]">PDF, DOCX, image, TXT, MD</p>
+                    </div>
+                  </>
+                )}
+              </button>
+
+              {/* Name input */}
+              <input
+                value={creationValue}
+                onChange={(e) => setCreationValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitCreation() } }}
+                className="h-9 w-full rounded-lg border border-[#e2d9ce] bg-white px-3 text-sm text-[#111827] outline-none placeholder:text-[#b5a899] focus:border-[#291c08]"
+                placeholder="Nom du fichier…"
+                autoFocus
+              />
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <p className="text-xs text-[#a0927e]">
+                  Laissez vide pour créer un brouillon
+                </p>
+                <button
+                  className="inline-flex items-center justify-center rounded-lg bg-[#291c08] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1d1406]"
+                  type="button"
+                  onClick={submitCreation}
+                >
+                  Ajouter
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-col gap-4">
+              <input
+                value={creationValue}
+                onChange={(e) => setCreationValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitCreation() } }}
+                className="h-9 w-full rounded-lg border border-[#e2d9ce] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#291c08] focus:ring-2 focus:ring-[#291c08]/8"
+                placeholder="Nouveau dossier"
+                autoFocus
+              />
+              <button
+                className="inline-flex items-center justify-center self-end rounded-lg bg-[#291c08] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1d1406]"
+                type="button"
+                onClick={submitCreation}
+              >
+                Créer
+              </button>
+            </div>
+          )}
           <DialogClose />
         </DialogContent>
       </Dialog>
@@ -499,23 +590,6 @@ export function AssistantPage() {
             mode={mode}
             activeFile={activeFile}
             documentOutline={documentOutline}
-            {...sharedSidebarProps}
-          />
-        }
-        rightSidebar={
-          <ChatSidebar
-            side="right"
-            mode={mode}
-            activeFile={activeFile}
-            documentOutline={documentOutline}
-            hasConversation={hasConversation}
-            isThinking={mode === "consultant" && isThinking}
-            responseContext={responseContext}
-            responseProgress={responseProgress}
-            activeCitationId={activeCitationId}
-            onCitationSelect={setActiveCitationId}
-            legalRoadmap={legalRoadmap}
-            legalSpecialty={legalSpecialty}
             {...sharedSidebarProps}
           />
         }

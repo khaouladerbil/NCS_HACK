@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "motion/react"
 import {
   Bold,
   Code2,
+  Download,
   FileText,
   Heading1,
   Heading2,
@@ -19,13 +20,22 @@ import {
   Link2,
   List,
   ListOrdered,
+  Loader2,
   MessageSquareQuote,
+  Sparkles,
   Strikethrough,
   Underline,
 } from "lucide-react"
+import { toast } from "@heroui/react"
+import { generateLegalText } from "@/lib/backend"
 
 import { Markdown } from "@/components/ui/markdown"
+import {
+  PromptInput,
+  PromptInputTextarea,
+} from "@/components/ui/prompt-input"
 import { cn } from "@/lib/utils"
+import { useLang } from "@/lib/language"
 import {
   getDocxComputedStyle,
   parseDocxFile,
@@ -201,6 +211,7 @@ export function MarkdownEditorMode({
   onChange,
   onToolbarStateChange,
 }: MarkdownEditorModeProps) {
+  const { t } = useLang()
   const textareaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({})
   const pageRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const [activePage, setActivePage] = useState(0)
@@ -214,6 +225,24 @@ export function MarkdownEditorMode({
   const [docxStyles, setDocxStyles] = useState<Map<string, DocxStyleDefinition>>(new Map())
   const [docxLoading, setDocxLoading] = useState(false)
   const [docxError, setDocxError] = useState<string | null>(null)
+  const [aiPrompt, setAiPrompt] = useState("")
+  const [aiGenerating, setAiGenerating] = useState(false)
+
+  async function handleGenerate() {
+    const trimmed = aiPrompt.trim()
+    if (!trimmed || aiGenerating) return
+    setAiGenerating(true)
+    try {
+      const content = await generateLegalText(trimmed)
+      onChange(content)
+      setAiPrompt("")
+      toast("Document généré — vous pouvez le modifier")
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Génération impossible")
+    } finally {
+      setAiGenerating(false)
+    }
+  }
 
   const ext = activeFile?.ext?.toLowerCase() ?? "md"
   const isDocx = ext === "docx"
@@ -805,7 +834,43 @@ export function MarkdownEditorMode({
 
   return (
     <section className="flex min-h-0 flex-1 flex-col bg-[radial-gradient(circle_at_top,_rgba(214,171,102,0.12),transparent_22%),linear-gradient(180deg,#f8f3ea_0%,#efe6d6_100%)]">
-      <div className="flex flex-1 justify-center overflow-y-auto px-3 pb-10 pt-4 md:px-5">
+      {!isPdf && !isDocx ? (
+        <motion.div
+          className="shrink-0 px-3 pt-3 md:px-5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="mx-auto w-full max-w-[860px]">
+            <PromptInput
+              value={aiPrompt}
+              onValueChange={setAiPrompt}
+              onSubmit={() => void handleGenerate()}
+              isLoading={aiGenerating}
+              disabled={aiGenerating}
+              className="rounded-xl border border-[#e2d9ce] bg-white shadow-none"
+            >
+              <div className="flex items-center gap-2 px-2">
+                <Sparkles className="size-4 shrink-0 text-[#b1842f]" />
+                <PromptInputTextarea
+                  placeholder={t("editor.placeholder")}
+                  className="min-h-[36px] text-[0.86rem] text-[#22170f] placeholder:text-[#9c8a76]"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleGenerate()}
+                  disabled={aiGenerating || !aiPrompt.trim()}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#291c08] px-3.5 py-1.5 text-[0.72rem] font-semibold text-white transition hover:bg-[#1d1406] disabled:opacity-50"
+                >
+                  {aiGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                  {aiGenerating ? t("editor.generating") : t("editor.generate")}
+                </button>
+              </div>
+            </PromptInput>
+          </div>
+        </motion.div>
+      ) : null}
+      <div className="flex flex-1 justify-center overflow-y-auto px-3 pb-4 pt-4 md:px-5">
         <div className="flex w-full max-w-[1400px] flex-col items-center gap-6">
           {isDocx
             ? visibleDocxPages.map(({ page: _page, paragraphs }, pageIndex) => (
@@ -836,18 +901,14 @@ export function MarkdownEditorMode({
                       }}
                     >
                       {docxLoading ? (
-                        <div
-                          className="pt-8 text-center text-[#6e5a49]"
-                          style={{ fontSize: `${metrics.fontSize * 0.92}px` }}
-                        >
-                          Loading DOCX...
+                        <div className="flex flex-col items-center gap-3 pt-16">
+                          <Loader2 className="size-7 animate-spin text-[#b1842f]" />
+                          <p className="text-[0.82rem] text-[#8a7762]">{t("editor.loading")}</p>
                         </div>
                       ) : docxError ? (
-                        <div
-                          className="pt-8 text-center text-[#9f2d20]"
-                          style={{ fontSize: `${metrics.fontSize * 0.92}px` }}
-                        >
-                          {docxError}
+                        <div className="mx-auto mt-12 max-w-xs rounded-xl border border-[#ead0cb] bg-[#fbefed] px-5 py-4 text-center">
+                          <p className="text-[0.78rem] font-semibold text-[#9f2d20]">Impossible de charger le fichier</p>
+                          <p className="mt-1 text-[0.7rem] leading-4 text-[#b05040]">{docxError}</p>
                         </div>
                       ) : (
                         <div
@@ -986,6 +1047,26 @@ export function MarkdownEditorMode({
               ))}
         </div>
       </div>
+      {!isPdf ? (
+        <div className="shrink-0 flex items-center justify-center gap-2 px-3 pb-4 pt-1 md:px-5">
+          <button
+            type="button"
+            onClick={() => void exportDocumentAsDocx(fileName, value)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#dcccb7] bg-white/88 px-4 py-1.5 text-[0.68rem] font-semibold tracking-[0.1em] text-[#6d5640] shadow-[0_6px_16px_rgba(71,46,22,0.07)] transition hover:bg-[#f4ecdf] hover:text-[#24170d]"
+          >
+            <Download className="size-3.5" />
+            {t("editor.export.docx")}
+          </button>
+          <button
+            type="button"
+            onClick={() => exportDocumentAsPdf(fileName, value)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#dcccb7] bg-white/88 px-4 py-1.5 text-[0.68rem] font-semibold tracking-[0.1em] text-[#6d5640] shadow-[0_6px_16px_rgba(71,46,22,0.07)] transition hover:bg-[#f4ecdf] hover:text-[#24170d]"
+          >
+            <Download className="size-3.5" />
+            {t("editor.export.pdf")}
+          </button>
+        </div>
+      ) : null}
     </section>
   )
 }

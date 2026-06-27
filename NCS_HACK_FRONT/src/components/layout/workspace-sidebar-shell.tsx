@@ -10,53 +10,32 @@ import {
 type WorkspaceSidebarShellProps = {
   children: ReactNode
   leftSidebar: ReactNode
-  rightSidebar: ReactNode
 }
 
 export function WorkspaceSidebarShell({
   children,
   leftSidebar,
-  rightSidebar,
 }: WorkspaceSidebarShellProps) {
   return (
-    <SidebarProvider defaultOpen defaultOpenRight={false} className="relative">
-      <SidebarEdgeTriggers />
+    <SidebarProvider defaultOpen className="relative">
+      <LeftReopenTrigger />
       {leftSidebar}
       <div className="absolute inset-0 min-w-0">
         <SidebarInset className="min-h-dvh">{children}</SidebarInset>
       </div>
-      {rightSidebar}
     </SidebarProvider>
   )
 }
 
-function SidebarEdgeTriggers() {
-  const { open, openRight } = useSidebar()
-
+function LeftReopenTrigger() {
+  const { open } = useSidebar()
+  if (open) return null
   return (
-    <>
-      <div
-        className="fixed top-[4.85rem] z-[60] transition-[left] duration-200 ease-linear"
-        style={{
-          left: open ? "calc(18.75rem - 0.9rem)" : "0px",
-        }}
-      >
-        <SidebarTrigger
-          side="left"
-          className="rounded-full bg-white text-[#111827] shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
-        />
-      </div>
-      <div
-        className="fixed top-[4.85rem] z-[60] transition-[right] duration-200 ease-linear"
-        style={{
-          right: openRight ? "calc(18.75rem - 0.9rem)" : "0px",
-        }}
-      >
-        <SidebarTrigger
-          side="right"
-          className="rounded-full bg-white text-[#111827] shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
-        />
-      </div>
-    </>
+    <div className="fixed left-3 top-4 z-[60]">
+      <SidebarTrigger
+        side="left"
+        className="size-9 rounded-full bg-white text-[#374151] shadow-[0_8px_20px_rgba(15,23,42,0.1)] hover:bg-[#f8f5f0]"
+      />
+    </div>
   )
 }

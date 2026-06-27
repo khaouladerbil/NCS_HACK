@@ -172,8 +172,12 @@ Draft next filing, notice, or client-facing explanation.
 `
 }
 
-export function getDocumentAsset(file: { name: string } | null) {
+export function getDocumentAsset(file: { name: string; sourceUrl?: string } | null) {
   if (!file) return null
+  if (file.sourceUrl) {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
+    return { sourceUrl: file.sourceUrl, editable: ext !== "pdf", pages: undefined, draft: undefined, outline: undefined }
+  }
   return TEST_DOCUMENTS[file.name] ?? null
 }
 

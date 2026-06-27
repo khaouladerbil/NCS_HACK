@@ -1,9 +1,27 @@
 import logging
 import os
+import socket
 import time
 
 import requests
 from django.conf import settings
+
+# Le DNS système Windows échoue pour Python alors que le browser utilise DoH.
+# On patch getaddrinfo pour résoudre via Google DNS (8.8.8.8) directement.
+_orig_getaddrinfo = socket.getaddrinfo
+
+def _google_dns_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    try:
+        import dns.resolver
+        resolver = dns.resolver.Resolver(configure=False)
+        resolver.nameservers = ["8.8.8.8", "8.8.4.4"]
+        answers = resolver.resolve(host, "A")
+        ip = str(answers[0])
+        return _orig_getaddrinfo(ip, port, socket.AF_INET, type, proto, flags)
+    except Exception:
+        return _orig_getaddrinfo(host, port, family, type, proto, flags)
+
+socket.getaddrinfo = _google_dns_getaddrinfo
 
 logger = logging.getLogger(__name__)
 

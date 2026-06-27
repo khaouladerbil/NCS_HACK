@@ -310,6 +310,99 @@ class QuizAPIView(APIView):
             return Response({"error": "Erreur interne."}, status=500)
 
 
+class GenerateLegalTextAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .services.gemini_client import GeminiError
+        from .services.legal_generator import generate_legal_text
+
+        prompt = (request.data.get("prompt") or "").strip()
+        if not prompt:
+            return Response({"error": "Décrivez le document souhaité."}, status=status.HTTP_400_BAD_REQUEST)
+
+        language = request.data.get("language", "fr")
+
+        # Contexte RAG (best-effort, non bloquant)
+        context = ""
+        try:
+            from .services.retrieval import format_context, retrieve_context
+            results = retrieve_context(prompt, request.user, include_user_docs=True, limit=6)
+            context, _ = format_context(results)
+        except Exception:
+            context = ""
+
+        try:
+            content = generate_legal_text(prompt, language=language, context=context)
+        except GeminiError:
+            return Response(
+                {"error": "La génération est temporairement indisponible."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            logger.exception("Legal text generation failed: %s", exc)
+            return Response({"error": "Erreur lors de la génération."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not content:
+            return Response({"error": "Le document généré est vide."}, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response({"content": content})
+
+
+class DocumentAnalysisAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        from .services.document_analysis import analyze_document
+        from .services.gemini_client import GeminiError
+
+        extracted = ""
+        document = None
+
+        # Cas 1: document déjà uploadé (document_id)
+        document_id = request.data.get("document_id")
+        if document_id:
+            document = AssistantDocument.objects.filter(id=document_id, user=request.user).first()
+            if document is None:
+                return Response({"error": "Document introuvable."}, status=status.HTTP_404_NOT_FOUND)
+            extracted = document.extracted_text or ""
+            if not extracted:
+                try:
+                    extracted = extract_text_from_file(document.file)
+                except Exception:
+                    extracted = ""
+
+        # Cas 2: fichier envoyé directement
+        elif request.FILES.get("file"):
+            file = request.FILES["file"]
+            try:
+                extracted = extract_text_from_file(file)
+            except Exception:
+                extracted = ""
+        else:
+            return Response({"error": "document_id ou file requis."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            analysis = analyze_document(extracted)
+        except GeminiError:
+            return Response(
+                {"error": "L'analyse IA est temporairement indisponible."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            logger.exception("Document analysis failed: %s", exc)
+            return Response({"error": "Erreur lors de l'analyse."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if document is not None:
+            meta = document.metadata or {}
+            meta["analysis"] = analysis
+            document.metadata = meta
+            document.save(update_fields=["metadata"])
+
+        return Response({"analysis": analysis})
+
+
 class LawyerRecommendationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 

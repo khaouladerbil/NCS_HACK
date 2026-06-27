@@ -90,6 +90,40 @@ html {
   font-family: "Geist Variable", "Geist", "Inter", sans-serif;
 }
 
+html.dark {
+  color-scheme: dark;
+  --background: oklch(0.12 0.015 64);
+  --foreground: oklch(0.92 0.01 75);
+  --card: oklch(0.15 0.012 64);
+  --card-foreground: oklch(0.92 0.01 75);
+  --popover: oklch(0.14 0.012 64);
+  --popover-foreground: oklch(0.92 0.01 75);
+  --primary: oklch(0.78 0.04 72);
+  --primary-foreground: oklch(0.12 0.015 64);
+  --secondary: oklch(0.2 0.015 64);
+  --secondary-foreground: oklch(0.82 0.015 72);
+  --muted: oklch(0.19 0.01 64);
+  --muted-foreground: oklch(0.58 0.018 70);
+  --accent: oklch(0.22 0.02 64);
+  --accent-foreground: oklch(0.88 0.015 72);
+  --destructive: oklch(0.6 0.245 27.325);
+  --border: oklch(0.26 0.018 64);
+  --input: oklch(0.26 0.018 64);
+  --ring: oklch(0.55 0.025 68);
+  --sidebar: oklch(0.13 0.014 64 / 0.95);
+  --sidebar-foreground: oklch(0.88 0.012 72);
+  --sidebar-primary: oklch(0.78 0.04 72);
+  --sidebar-primary-foreground: oklch(0.12 0.015 64);
+  --sidebar-accent: oklch(0.2 0.018 64);
+  --sidebar-accent-foreground: oklch(0.88 0.015 72);
+  --sidebar-border: oklch(0.26 0.018 64);
+  --sidebar-ring: oklch(0.55 0.025 68);
+  --jp-accent: #c49a4a;
+  --jp-accent-strong: #e8c068;
+  --jp-accent-muted: #2a2216;
+  --jp-accent-soft: #352c1c;
+}
+
 body {
   min-height: 100vh;
   margin: 0;
@@ -98,6 +132,13 @@ body {
     radial-gradient(circle at right, rgba(115, 87, 53, 0.08), transparent 22%),
     linear-gradient(180deg, #fbf8f1 0%, #f3eee2 100%);
   color: var(--foreground);
+}
+
+html.dark body {
+  background:
+    radial-gradient(circle at top left, rgba(80, 55, 20, 0.25), transparent 24%),
+    radial-gradient(circle at right, rgba(50, 35, 10, 0.15), transparent 22%),
+    linear-gradient(180deg, #111008 0%, #0d0b05 100%);
 }
 
 #root {

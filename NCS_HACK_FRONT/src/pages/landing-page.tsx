@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowRight,
   FilePenLine,
@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 
 import { TextEffect } from "@/components/core/text-effect"
-import { AuthDialog, type AuthMode } from "@/components/auth/auth-dialog"
 import { Button } from "@/components/ui/button"
 import {
   PromptInput,
@@ -86,68 +85,30 @@ const floatingReplies = [
 ]
 
 export function LandingPage() {
+  const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroPrompt, setHeroPrompt] = useState("")
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
-  const [authDialogOpen, setAuthDialogOpen] = useState(false)
-  const [authMode, setAuthMode] = useState<AuthMode>("signup")
-  const [searchParams, setSearchParams] = useSearchParams()
 
-  function openAuthDialog(nextMode: AuthMode) {
-    setAuthMode(nextMode)
-    setAuthDialogOpen(true)
-    setSearchParams({ auth: nextMode }, { replace: true })
-  }
-
-  function closeAuthDialog() {
-    setAuthDialogOpen(false)
-    setSearchParams({}, { replace: true })
+  function openAuth(mode: "signin" | "signup") {
+    navigate(`/auth?mode=${mode}`)
   }
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
-
     document.body.style.overflow = mobileMenuOpen ? "hidden" : previousOverflow
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
+    return () => { document.body.style.overflow = previousOverflow }
   }, [mobileMenuOpen])
 
   useEffect(() => {
     if (!mobileMenuOpen) return
-
     const closeMenu = () => setMobileMenuOpen(false)
     window.addEventListener("resize", closeMenu)
-
     return () => window.removeEventListener("resize", closeMenu)
   }, [mobileMenuOpen])
 
-  useEffect(() => {
-    const requestedAuth = searchParams.get("auth")
-    if (requestedAuth === "signin" || requestedAuth === "signup") {
-      setAuthMode(requestedAuth)
-      setAuthDialogOpen(true)
-      return
-    }
-
-    setAuthDialogOpen(false)
-  }, [searchParams])
-
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#fcf9f1_0%,#fcf9f1_52%,#fffdf8_100%)] text-[#4E453D]">
-      <AuthDialog
-        open={authDialogOpen}
-        onOpenChange={(open) => {
-          if (open) {
-            setAuthDialogOpen(true)
-            return
-          }
-
-          closeAuthDialog()
-        }}
-        initialMode={authMode}
-      />
 
       <header className="sticky top-0 z-50 border-b border-[#E9E2D4]/90 bg-[#FCF9F1]/88 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -177,14 +138,14 @@ export function LandingPage() {
           <div className="hidden items-center gap-3 md:flex">
             <button
               type="button"
-              onClick={() => openAuthDialog("signin")}
+              onClick={() => openAuth("signin")}
               className="rounded-full px-4 py-2 text-sm font-medium text-[#4E453D] transition-colors hover:text-[#1F1407]"
             >
               Sign In
             </button>
             <button
               type="button"
-              onClick={() => openAuthDialog("signup")}
+              onClick={() => openAuth("signup")}
               className="inline-flex items-center gap-2 rounded-full bg-[#35230F] px-5 py-3 text-sm font-semibold text-[#FBF8F0] shadow-[0_12px_30px_rgba(53,35,15,0.14)] transition-colors hover:bg-[#241506]"
             >
               Get started
@@ -220,7 +181,7 @@ export function LandingPage() {
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false)
-                  openAuthDialog("signin")
+                  openAuth("signin")
                 }}
                 className="rounded-2xl border border-[#D8CFC0] bg-white px-4 py-3 text-sm font-medium text-[#35230F]"
               >
@@ -230,7 +191,7 @@ export function LandingPage() {
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false)
-                  openAuthDialog("signup")
+                  openAuth("signup")
                 }}
                 className="rounded-2xl bg-[#35230F] px-4 py-3 text-sm font-semibold text-[#FBF8F0]"
               >
@@ -269,7 +230,7 @@ export function LandingPage() {
                   onValueChange={setHeroPrompt}
                   onSubmit={() => {
                     setShowLoginPrompt(true)
-                    openAuthDialog("signup")
+                    openAuth("signup")
                   }}
                   className="rounded-[2rem] border-[#D8CFC0] bg-white/94 p-4 shadow-[0_30px_80px_rgba(36,21,6,0.12)] backdrop-blur-xl sm:p-5"
                 >
@@ -307,14 +268,14 @@ export function LandingPage() {
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                       <button
                         type="button"
-                        onClick={() => openAuthDialog("signup")}
+                        onClick={() => openAuth("signup")}
                         className="inline-flex items-center justify-center rounded-full bg-[#35230F] px-5 py-3 text-sm font-semibold text-[#FBF8F0] transition-colors hover:bg-[#241506]"
                       >
                         Sign up
                       </button>
                       <button
                         type="button"
-                        onClick={() => openAuthDialog("signin")}
+                        onClick={() => openAuth("signin")}
                         className="inline-flex items-center justify-center rounded-full border border-[#D8CFC0] bg-white px-5 py-3 text-sm font-medium text-[#35230F] transition-colors hover:bg-[#FCF9F1]"
                       >
                         Sign in
@@ -454,7 +415,7 @@ export function LandingPage() {
 
               <button
                 type="button"
-                onClick={() => openAuthDialog("signup")}
+                onClick={() => openAuth("signup")}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#35230F] px-6 py-3.5 text-base font-semibold text-[#FBF8F0] transition-colors hover:bg-[#241506]"
               >
                 Launch app
@@ -486,7 +447,7 @@ export function LandingPage() {
 
               <button
                 type="button"
-                onClick={() => openAuthDialog("signup")}
+                onClick={() => openAuth("signup")}
                 className="inline-flex items-center gap-2 self-start rounded-full border border-[#8D6A38] px-5 py-3 text-sm font-semibold text-[#FBF8F0] transition-colors hover:bg-white/8"
               >
                 Enter workspace
@@ -519,7 +480,7 @@ export function LandingPage() {
             </Link>
             <button
               type="button"
-              onClick={() => openAuthDialog("signup")}
+              onClick={() => openAuth("signup")}
               className="inline-flex items-center gap-1 font-medium text-[#35230F]"
             >
               Open app
