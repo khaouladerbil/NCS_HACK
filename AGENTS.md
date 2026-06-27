@@ -52,6 +52,8 @@
 - Toasts should stay centered across the workspace.
 - Editor should stay visually quiet: full-screen paper, one inline suggestion only, and explicit DOCX/PDF export.
 - File rows should stay type-aware, with smaller labels and confirmation before destructive deletion.
+- Landing page should feel publish-ready and premium: dark editorial hero, Three.js legal document orbit visual, concrete legal workflow copy, responsive mobile proof strip, parallax/scroll motion, and a visible next-section fold hint.
+- Landing copy should stay specific to legal assistance workflows rather than generic SaaS filler.
 
 ## Workflow
 

@@ -1,6 +1,6 @@
 # JusticePath Memory
 
-Last updated: 2026-06-26
+Last updated: 2026-06-27
 
 ## Current Build
 
@@ -67,6 +67,8 @@ Last updated: 2026-06-26
 - Editor formatting controls now flank the always-centered mode tabs, sharing the same pill/tab button styling.
 - Editor now uses a more premium docs-style paper system with typography-scaled zoom, inline ghost autocomplete at the caret, completion chips, and Pretext-backed text measurement.
 - Consultant now uses the shared refined beige/gold system with stronger typography and Pretext-backed reserved heights for streamed legal answer paragraphs.
+- Landing page now uses a production-grade dark editorial hero with a Three.js legal document orbit scene, parallax motion, a real matter preview, compact mobile proof strip, and a visible next-section rail at the fold.
+- Landing page sections now focus on concrete legal workflow: upload record, map legal path, draft from source, mode continuity, trust boundaries, and workspace access.
 
 ## Notes
 
@@ -75,5 +77,6 @@ Last updated: 2026-06-26
 - Lightweight local motion text components added in `src/components/core/text-effect.tsx` and `src/components/core/text-shimmer-wave.tsx`.
 - `motion-primitives` morphing dialog was installed, then ported into `src/components/core/morphing-dialog.tsx`.
 - Browser runtime verified clean after fixing nested-button and tooltip wrapper issues from generated components.
+- `three` and `@types/three` are installed for the landing page WebGL scene in `src/components/website/legal-orbit-scene.tsx`.
 - `npm run build` passes.
 - `npm run lint` passes with existing generated-component / hook-deps warnings in shared UI primitives.

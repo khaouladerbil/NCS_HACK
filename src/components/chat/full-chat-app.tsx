@@ -281,57 +281,6 @@ const TIMELINE: TimelineStep[] = [
   },
 ]
 
-const LAWYERS: Lawyer[] = [
-  {
-    name: "Nora Patel",
-    firm: "Patel Legal",
-    practice: "Commercial disputes",
-    jurisdiction: "London, UK",
-    body: [
-      "Commercial disputes and urgent injunction work.",
-      "Pre-action pressure, settlement framing, and contract breach escalation.",
-      "Jurisdiction: London, UK.",
-    ],
-    image:
-      "data:image/svg+xml;charset=utf-8," +
-      encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#334155"/></linearGradient></defs><rect width="600" height="800" fill="url(#g)"/><circle cx="300" cy="275" r="120" fill="#e2e8f0"/><rect x="165" y="410" width="270" height="210" rx="105" fill="#cbd5e1"/><text x="300" y="725" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" fill="#ffffff">NP</text></svg>`
-      ),
-  },
-  {
-    name: "Daniel Okafor",
-    firm: "Okafor & Co",
-    practice: "Employment law",
-    jurisdiction: "New York, US",
-    body: [
-      "Wrongful termination, policy review, and workplace investigations.",
-      "Useful where employer records, notices, or internal findings matter.",
-      "Jurisdiction: New York, US.",
-    ],
-    image:
-      "data:image/svg+xml;charset=utf-8," +
-      encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><defs><linearGradient id="g" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#111827"/><stop offset="100%" stop-color="#1f2937"/></linearGradient></defs><rect width="600" height="800" fill="url(#g)"/><circle cx="300" cy="275" r="120" fill="#d1d5db"/><rect x="165" y="410" width="270" height="210" rx="105" fill="#9ca3af"/><text x="300" y="725" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" fill="#ffffff">DO</text></svg>`
-      ),
-  },
-  {
-    name: "Elena Torres",
-    firm: "Torres Counsel",
-    practice: "Family and civil matters",
-    jurisdiction: "California, US",
-    body: [
-      "Family disputes, protective orders, and settlement-first civil handling.",
-      "Useful where sensitive personal facts and court pacing both matter.",
-      "Jurisdiction: California, US.",
-    ],
-    image:
-      "data:image/svg+xml;charset=utf-8," +
-      encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#475569"/></linearGradient></defs><rect width="600" height="800" fill="url(#g)"/><circle cx="300" cy="275" r="120" fill="#e5e7eb"/><rect x="165" y="410" width="270" height="210" rx="105" fill="#cbd5e1"/><text x="300" y="725" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" fill="#ffffff">ET</text></svg>`
-      ),
-  },
-]
-
 const LAWYER_QUERY_RE =
   /\b(lawyer|attorney|counsel|solicitor|advocate|avocat|juriste|محامي|محامى|licenci|salaire|salary|loyer|rent|expuls|divorce|garde|custody|pension|succession|heritage|kafala|wilaya|commune|administration|plainte|complaint|agress|assault|crime|vol|theft|arnaque|fraude|scam|contrat|contract|bail|logement|propr|commercial|societ|famille|mariage|marriage|police|gendarm|tribunal|droit|litige|emploi|employ|travail|work|fired|dismiss|probleme|problème|aide juridique|legal|juridique)\b/i
 
