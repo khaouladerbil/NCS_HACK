@@ -16,7 +16,6 @@ import {
 import { AuthDialog, type AuthMode } from "@/components/auth/auth-dialog"
 import { ChatComposer } from "@/components/chat/chat-composer"
 import { TextEffect } from "@/components/core/text-effect"
-import { LegalOrbitScene } from "@/components/website/legal-orbit-scene"
 import logoMark from "../../Logo.svg"
 
 const navItems = [
@@ -71,6 +70,27 @@ const pricingPlans = [
     price: "Custom",
     line: "For heavier Algerian matter volume.",
     items: ["5 cases", "Lawyer matches", "10 document exports"],
+  },
+]
+
+const heroResponses = [
+  {
+    name: "Amina",
+    issue: "Lease notice",
+    response:
+      "Reply drafted. It cites the notice period and flags the penalty clause for review.",
+  },
+  {
+    name: "Yacine",
+    issue: "Contract risk",
+    response:
+      "Short answer sent. The termination clause needs a written addendum before signature.",
+  },
+  {
+    name: "Sara",
+    issue: "Filing prep",
+    response:
+      "Next steps ready. Gather the attachment list, then export the clean draft set.",
   },
 ]
 
@@ -277,10 +297,12 @@ export function LandingPage() {
           ref={heroRef}
           className="relative isolate min-h-[92dvh] overflow-hidden bg-[#15110d] text-[#fff8eb]"
         >
-          <motion.div style={shouldReduceMotion ? undefined : { y: heroSceneY }}>
-            <LegalOrbitScene className="opacity-45" />
-          </motion.div>
           <div className="landing-hero-minimal absolute inset-0" />
+          <motion.div
+            aria-hidden="true"
+            style={shouldReduceMotion ? undefined : { y: heroSceneY }}
+            className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(214,168,80,0.18),transparent_18%),radial-gradient(circle_at_80%_65%,rgba(214,168,80,0.1),transparent_20%)]"
+          />
 
           <motion.div
             aria-hidden="true"
@@ -313,37 +335,64 @@ export function LandingPage() {
 
             <motion.div
               style={shouldReduceMotion ? undefined : { y: heroComposerY }}
-              className="mt-10 w-full max-w-2xl"
+              className="mt-10 w-full max-w-4xl"
             >
-              <ChatComposer
-                draft={heroPrompt}
-                loading={false}
-                onDraftChange={setHeroPrompt}
-                onSubmit={handleDemoSubmit}
-              />
+              <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
+                <div>
+                  <ChatComposer
+                    draft={heroPrompt}
+                    loading={false}
+                    onDraftChange={setHeroPrompt}
+                    onSubmit={handleDemoSubmit}
+                    className="rounded-[2rem] border border-white/10 bg-[#f8f1e5]/96 p-3 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur"
+                    textareaClassName="min-h-16 text-sm leading-6 text-[#24180d] placeholder:text-[#7e715e]"
+                  />
 
-              {showLoginPrompt ? (
-                <p className="mt-4 text-sm font-medium text-[#d8cbb7]">
-                  Create a workspace to continue with this matter.
-                </p>
-              ) : null}
+                  {showLoginPrompt ? (
+                    <p className="mt-4 text-sm font-medium text-[#d8cbb7]">
+                      Create a workspace to continue with this matter.
+                    </p>
+                  ) : null}
 
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-semibold text-[#c9baa4]">
-                <button
-                  type="button"
-                  onClick={() => openAuthDialog("signup")}
-                  className="inline-flex items-center gap-2 text-[#f3d18c] transition hover:text-white"
-                >
-                  Start a matter
-                  <ArrowRight className="size-4" />
-                </button>
-                <Link
-                  to="/assistant"
-                  className="inline-flex items-center gap-2 transition hover:text-white"
-                >
-                  View workspace
-                  <ChevronRight className="size-4" />
-                </Link>
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-semibold text-[#c9baa4]">
+                    <button
+                      type="button"
+                      onClick={() => openAuthDialog("signup")}
+                      className="inline-flex items-center gap-2 text-[#f3d18c] transition hover:text-white"
+                    >
+                      Start a matter
+                      <ArrowRight className="size-4" />
+                    </button>
+                    <Link
+                      to="/assistant"
+                      className="inline-flex items-center gap-2 transition hover:text-white"
+                    >
+                      View workspace
+                      <ChevronRight className="size-4" />
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 text-left">
+                  {heroResponses.map((item, index) => (
+                    <motion.div
+                      key={item.name}
+                      initial={shouldReduceMotion ? false : { opacity: 0, y: 14 }}
+                      whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.08 }}
+                      className="border border-white/10 bg-white/6 p-4 text-[#f6ead6] shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur"
+                    >
+                      <div className="flex items-center justify-between text-xs font-semibold uppercase text-[#d6a850]/70">
+                        <span>{item.name}</span>
+                        <span>{item.issue}</span>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-[#f2e6d1]">
+                        {item.response}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </div>

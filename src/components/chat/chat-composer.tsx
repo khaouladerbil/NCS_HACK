@@ -14,6 +14,8 @@ type ChatComposerProps = {
   loading: boolean
   onDraftChange: (value: string) => void
   onSubmit: () => void
+  className?: string
+  textareaClassName?: string
 }
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
@@ -42,6 +44,8 @@ export function ChatComposer({
   loading,
   onDraftChange,
   onSubmit,
+  className,
+  textareaClassName,
 }: ChatComposerProps) {
   const [listening, setListening] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -129,7 +133,7 @@ export function ChatComposer({
       onValueChange={onDraftChange}
       onSubmit={onSubmit}
       isLoading={loading}
-      className="rounded-3xl border-border bg-background/96 p-3 shadow-lg shadow-black/5 backdrop-blur"
+      className={className ?? "rounded-3xl border-border bg-background/96 p-3 shadow-lg shadow-black/5 backdrop-blur"}
     >
       <input
         ref={fileInputRef}
@@ -139,7 +143,10 @@ export function ChatComposer({
       />
       <PromptInputTextarea
         placeholder="Issue, deadline, output."
-        className="min-h-16 text-sm leading-6 text-foreground placeholder:text-muted-foreground"
+        className={
+          textareaClassName ??
+          "min-h-16 text-sm leading-6 text-foreground placeholder:text-muted-foreground"
+        }
       />
       <PromptInputActions className="mt-2 justify-between">
         <div className="flex items-center gap-1">
