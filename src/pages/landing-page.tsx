@@ -73,27 +73,6 @@ const pricingPlans = [
   },
 ]
 
-const heroResponses = [
-  {
-    name: "Amina",
-    issue: "Lease notice",
-    response:
-      "Reply drafted. It cites the notice period and flags the penalty clause for review.",
-  },
-  {
-    name: "Yacine",
-    issue: "Contract risk",
-    response:
-      "Short answer sent. The termination clause needs a written addendum before signature.",
-  },
-  {
-    name: "Sara",
-    issue: "Filing prep",
-    response:
-      "Next steps ready. Gather the attachment list, then export the clean draft set.",
-  },
-]
-
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [heroPrompt, setHeroPrompt] = useState("")
@@ -261,7 +240,7 @@ export function LandingPage() {
                 <a
                   key={item.label}
                   href={item.href}
-                  className="rounded-lg px-4 py-3 text-sm font-semibold text-[#e8dcc8]"
+                  className="rounded-full px-4 py-3 text-sm font-semibold text-[#e8dcc8]"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
@@ -273,7 +252,7 @@ export function LandingPage() {
                   setMobileMenuOpen(false)
                   openAuthDialog("signin")
                 }}
-                className="rounded-lg border border-white/12 px-4 py-3 text-left text-sm font-semibold text-[#fff8eb]"
+                className="rounded-full border border-white/12 px-4 py-3 text-left text-sm font-semibold text-[#fff8eb]"
               >
                 Sign in
               </button>
@@ -283,7 +262,7 @@ export function LandingPage() {
                   setMobileMenuOpen(false)
                   openAuthDialog("signup")
                 }}
-                className="rounded-lg bg-[#d6a850] px-4 py-3 text-left text-sm font-bold text-[#15110d]"
+                className="rounded-full bg-[#d6a850] px-4 py-3 text-left text-sm font-bold text-[#15110d]"
               >
                 Open workspace
               </button>
@@ -295,19 +274,19 @@ export function LandingPage() {
       <main id="main-content">
         <section
           ref={heroRef}
-          className="relative isolate min-h-[92dvh] overflow-hidden bg-[#15110d] text-[#fff8eb]"
+          className="relative isolate min-h-[92dvh] overflow-hidden bg-[#f8f1e5] text-[#17120d]"
         >
-          <div className="landing-hero-minimal absolute inset-0" />
+          <div className="landing-hero-light absolute inset-0" />
           <motion.div
             aria-hidden="true"
             style={shouldReduceMotion ? undefined : { y: heroSceneY }}
-            className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(214,168,80,0.18),transparent_18%),radial-gradient(circle_at_80%_65%,rgba(214,168,80,0.1),transparent_20%)]"
+            className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(214,168,80,0.12),transparent_18%),radial-gradient(circle_at_80%_65%,rgba(214,168,80,0.06),transparent_20%)]"
           />
 
           <motion.div
             aria-hidden="true"
             style={shouldReduceMotion ? undefined : { y: heroSignalY }}
-            className="absolute inset-x-4 top-28 z-10 mx-auto hidden max-w-7xl justify-between text-xs font-semibold uppercase text-[#d6a850]/55 md:flex"
+            className="absolute inset-x-4 top-28 z-10 mx-auto hidden max-w-7xl justify-between text-xs font-semibold uppercase text-[#8b642b]/70 md:flex"
           >
             <span>evidence</span>
             <span>draft</span>
@@ -319,80 +298,55 @@ export function LandingPage() {
               style={shouldReduceMotion ? undefined : { y: heroCopyY }}
               className="w-full max-w-4xl"
             >
-              <p className="mb-8 text-sm font-semibold uppercase text-[#d6a850]">
+              <p className="mb-8 text-sm font-semibold uppercase text-[#8b642b]">
                 Algerian legal AI workspace
               </p>
-              <h1 className="font-editor text-7xl leading-[0.82] text-white sm:text-8xl lg:text-[9.5rem]">
+              <h1 className="font-editor text-7xl leading-[0.82] text-[#17120d] sm:text-8xl lg:text-[9.5rem]">
                 <TextEffect per="char">JusticePath</TextEffect>
               </h1>
-              <p className="mx-auto mt-8 max-w-2xl text-balance text-2xl leading-tight text-[#f2e6d1] sm:text-4xl">
+              <p className="mx-auto mt-8 max-w-2xl text-balance text-2xl leading-tight text-[#2a2117] sm:text-4xl">
                 Ask the legal question. Keep the clause, draft, and next step in one place.
               </p>
-              <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-[#d6c7b3] sm:text-lg">
+              <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-[#5a4b3a] sm:text-lg">
                 Minimal surface. Built for Algerian matters. Powered by proprietary models.
               </p>
             </motion.div>
 
             <motion.div
               style={shouldReduceMotion ? undefined : { y: heroComposerY }}
-              className="mt-10 w-full max-w-4xl"
+              className="mt-10 w-full max-w-2xl"
             >
-              <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
-                <div>
-                  <ChatComposer
-                    draft={heroPrompt}
-                    loading={false}
-                    onDraftChange={setHeroPrompt}
-                    onSubmit={handleDemoSubmit}
-                    className="rounded-[2rem] border border-white/10 bg-[#f8f1e5]/96 p-3 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur"
-                    textareaClassName="min-h-16 text-sm leading-6 text-[#24180d] placeholder:text-[#7e715e]"
-                  />
+              <ChatComposer
+                draft={heroPrompt}
+                loading={false}
+                onDraftChange={setHeroPrompt}
+                onSubmit={handleDemoSubmit}
+                className="rounded-[2rem] border border-[#dfd3bf] bg-[#fffdf8]/96 p-3 shadow-[0_20px_50px_rgba(35,23,10,0.08)] backdrop-blur"
+                textareaClassName="min-h-16 text-sm leading-6 text-[#24180d] placeholder:text-[#7e715e]"
+              />
 
-                  {showLoginPrompt ? (
-                    <p className="mt-4 text-sm font-medium text-[#d8cbb7]">
-                      Create a workspace to continue with this matter.
-                    </p>
-                  ) : null}
+              {showLoginPrompt ? (
+                <p className="mt-4 text-sm font-medium text-[#675949]">
+                  Create a workspace to continue with this matter.
+                </p>
+              ) : null}
 
-                  <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-semibold text-[#c9baa4]">
-                    <button
-                      type="button"
-                      onClick={() => openAuthDialog("signup")}
-                      className="inline-flex items-center gap-2 text-[#f3d18c] transition hover:text-white"
-                    >
-                      Start a matter
-                      <ArrowRight className="size-4" />
-                    </button>
-                    <Link
-                      to="/assistant"
-                      className="inline-flex items-center gap-2 transition hover:text-white"
-                    >
-                      View workspace
-                      <ChevronRight className="size-4" />
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 text-left">
-                  {heroResponses.map((item, index) => (
-                    <motion.div
-                      key={item.name}
-                      initial={shouldReduceMotion ? false : { opacity: 0, y: 14 }}
-                      whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.08 }}
-                      className="border border-white/10 bg-white/6 p-4 text-[#f6ead6] shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur"
-                    >
-                      <div className="flex items-center justify-between text-xs font-semibold uppercase text-[#d6a850]/70">
-                        <span>{item.name}</span>
-                        <span>{item.issue}</span>
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-[#f2e6d1]">
-                        {item.response}
-                      </p>
-                    </motion.div>
-                  ))}
-                </div>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-semibold text-[#5a4b3a]">
+                <button
+                  type="button"
+                  onClick={() => openAuthDialog("signup")}
+                  className="inline-flex items-center gap-2 text-[#8b642b] transition hover:text-[#17120d]"
+                >
+                  Start a matter
+                  <ArrowRight className="size-4" />
+                </button>
+                <Link
+                  to="/assistant"
+                  className="inline-flex items-center gap-2 transition hover:text-[#17120d]"
+                >
+                  View workspace
+                  <ChevronRight className="size-4" />
+                </Link>
               </div>
             </motion.div>
           </div>
@@ -417,7 +371,7 @@ export function LandingPage() {
               <motion.div
                 whileHover={{ rotateX: 1.5, rotateY: -2, y: -4 }}
                 transition={{ type: "spring", stiffness: 160, damping: 18 }}
-                className="relative min-h-[34rem] overflow-hidden border-y border-[#2a2117] bg-[#17120d] p-5 text-[#fff8eb] shadow-[0_34px_90px_rgba(36,21,6,0.22)] sm:p-8"
+                className="relative min-h-[34rem] overflow-hidden rounded-[2rem] border border-[#d8c8ab] bg-[#17120d] p-5 text-[#fff8eb] shadow-[0_34px_90px_rgba(36,21,6,0.22)] sm:p-8"
               >
                 <div className="absolute inset-0 landing-crosshatch opacity-10" />
                 <div className="relative grid h-full gap-8 lg:grid-cols-[0.88fr_1.12fr]">
@@ -560,7 +514,7 @@ export function LandingPage() {
                 <Reveal key={plan.name} delay={index * 0.08}>
                   <motion.article
                     whileHover={{ y: -8 }}
-                    className="h-full border-b border-[#d8c8ab] py-8 lg:border-b-0 lg:border-r lg:px-8 last:lg:border-r-0"
+                    className="h-full rounded-[1.75rem] border-b border-[#d8c8ab] px-6 py-8 lg:border-b-0 lg:border-r lg:px-8 last:lg:border-r-0"
                   >
                     <p className="text-sm font-bold uppercase text-[#8b642b]">
                       {plan.name}
