@@ -79,5 +79,6 @@ Last updated: 2026-06-27
 - `motion-primitives` morphing dialog was installed, then ported into `src/components/core/morphing-dialog.tsx`.
 - Browser runtime verified clean after fixing nested-button and tooltip wrapper issues from generated components.
 - `three` and `@types/three` are installed for the landing page WebGL scene in `src/components/website/legal-orbit-scene.tsx`.
+- A detailed business model canvas draft now lives in `docs/justicepath-bmc.tex`, grounded in repo behavior and public competitor research.
 - `npm run build` passes.
 - `npm run lint` passes with existing generated-component / hook-deps warnings in shared UI primitives.

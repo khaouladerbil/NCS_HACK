@@ -55,6 +55,7 @@
 - Landing page should feel publish-ready and premium: dark editorial hero, Three.js legal document orbit visual, concrete legal workflow copy, responsive mobile proof strip, parallax/scroll motion, and a visible next-section fold hint.
 - Landing copy should stay specific to legal assistance workflows rather than generic SaaS filler.
 - Landing hero should stay minimal and composer-led, reusing the assistant `ChatComposer` rather than separate prompt UI.
+- Strategic product documentation can live under `docs/`; the current business model canvas draft is `docs/justicepath-bmc.tex`.
 
 ## Workflow
 
